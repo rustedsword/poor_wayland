@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poor_stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -301,17 +302,17 @@ static int display_set_address(struct poor_wl_display *display, const char *name
 	}
 	display->addr.sun_family = AF_LOCAL;
 	if (path_is_absolute)
-		name_size = snprintf(display->addr.sun_path, sizeof(display->addr.sun_path), "%s", name) + 1;
+		name_size = snprintf_array(display->addr.sun_path, "%s", name) + 1;
 	else
-		name_size = snprintf(display->addr.sun_path, sizeof(display->addr.sun_path), "%s/%s", runtime_dir, name) + 1;
+		name_size = snprintf_array(display->addr.sun_path, "%s/%s", runtime_dir, name) + 1;
 	assert(name_size > 0);
-	if (name_size > (int)sizeof(display->addr.sun_path)) {
+	if (name_size > (int)ARRAY_SIZE(display->addr.sun_path)) {
 		if (!path_is_absolute)
 			poor_wl_log("error: socket path \"%s/%s\" plus null terminator exceeds %zu bytes\n", runtime_dir, name,
-			       sizeof(display->addr.sun_path));
+			       ARRAY_SIZE(display->addr.sun_path));
 		else
 			poor_wl_log("error: socket path \"%s\" plus null terminator exceeds %zu bytes\n", name,
-			       sizeof(display->addr.sun_path));
+			       ARRAY_SIZE(display->addr.sun_path));
 		errno = ENAMETOOLONG;
 		return -1;
 	}
@@ -464,7 +465,7 @@ static int display_dispatch_message(struct poor_wl_display *display, uint32_t le
 	uint32_t p[2], id, opcode, size;
 	struct poor_wl_proxy *proxy;
 
-	poor_wl_connection_copy(connection, p, sizeof(p));
+	poor_wl_connection_copy(connection, p);
 	id = p[0];
 	opcode = p[1] & 0xffff;
 	size = p[1] >> 16;

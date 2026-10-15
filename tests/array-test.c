@@ -36,9 +36,9 @@ TEST(array_init)
 	struct poor_wl_array array;
 	char storage[16];
 
-	poor_wl_array_init(&array, storage, sizeof(storage));
+	poor_wl_array_init(&array, storage);
 	assert(array.size == 0);
-	assert(array.alloc == sizeof(storage));
+	assert(array.alloc == ARRAY_SIZE_BYTES(storage));
 	assert(array.data == storage);
 }
 
@@ -48,7 +48,7 @@ TEST(array_init_macro)
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 
 	assert(array.size == 0);
-	assert(array.alloc == sizeof(storage));
+	assert(array.alloc == ARRAY_SIZE_BYTES(storage));
 	assert(array.data == storage);
 }
 
@@ -64,7 +64,7 @@ TEST(array_add)
 	static struct mydata storage[iterations];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 
-	for (unsigned i = 0; i < iterations; i++) {
+	foreach_array_index(storage, i) {
 		struct mydata *ptr = poor_wl_array_add(&array, sizeof(*ptr));
 
 		assert(ptr == &storage[i]);
@@ -74,7 +74,7 @@ TEST(array_add)
 		ptr->c = (double)i;
 		ptr->d = (double)(i / 2.);
 	}
-	for (unsigned i = 0; i < iterations; ++i) {
+	foreach_array_index(storage, i) {
 		struct mydata *check = (struct mydata *)array.data + i;
 
 		assert(check->a == i * 3);
@@ -94,7 +94,7 @@ TEST(array_add_beyond_storage)
 	assert(array.size == 6);
 	assert(poor_wl_array_add(&array, 4) == storage + 6);
 	assert(!poor_wl_array_add(&array, 1));
-	assert(poor_wl_array_add(&array, 0) == storage + 10);
+	assert(poor_wl_array_add(&array, 0) == array_end_ref(storage));
 }
 
 TEST(array_copy)
@@ -105,21 +105,21 @@ TEST(array_copy)
 	struct poor_wl_array copy = POOR_WL_ARRAY_INIT(copy_storage);
 	struct poor_wl_array small = POOR_WL_ARRAY_INIT(small_storage);
 
-	for (int i = 0; i < iterations; i++) {
-		int *p = poor_wl_array_add(&source, sizeof(int));
+	foreach_array_index(source_storage, i) {
+		int *p = poor_wl_array_add(&source, sizeof(*p));
 
 		assert(p);
 		*p = i * 2 + i;
 	}
 	assert(poor_wl_array_copy(&copy, &source) == 0);
 	assert(copy.size == source.size);
-	for (int i = 0; i < iterations; i++) {
+	foreach_array_index(source_storage, i) {
 		int *s = (int *)source.data + i;
 		int *c = (int *)copy.data + i;
 
 		assert(*s == *c);
 		assert(s != c);
-		assert(*s == i * 2 + i);
+		assert(*s == (int)(i * 2 + i));
 	}
 	assert(poor_wl_array_copy(&small, &source) == -1);
 	assert(small.size == 0);
@@ -128,20 +128,19 @@ TEST(array_copy)
 TEST(array_for_each)
 {
 	static const int elements[] = { 77, 12, 45192, 53280, 334455 };
-	int storage[5];
+	int storage[ARRAY_SIZE(elements)];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
+	size_t i = 0;
 	int *p;
-	int i;
 
-	for (i = 0; i < 5; i++) {
+	foreach_array_const_ref(elements, element) {
 		p = poor_wl_array_add(&array, sizeof(*p));
 		assert(p);
-		*p = elements[i];
+		*p = *element;
 	}
-	i = 0;
 	poor_wl_array_for_each(p, &array) {
 		assert(*p == elements[i]);
 		i++;
 	}
-	assert(i == 5);
+	assert(i == ARRAY_SIZE(elements));
 }

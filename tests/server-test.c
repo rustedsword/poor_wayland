@@ -4,8 +4,12 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <poor_loop_fd.h>
+#include <poor_poll.h>
+#include <poor_socket.h>
+#include <poor_stdio.h>
+#include <poor_uio.h>
+#include <poor_unistd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,11 +128,11 @@ static void log_handler(const char *fmt, va_list ap)
 	char line[8192];
 	size_t len;
 
-	vsnprintf(line, sizeof(line), fmt, ap);
+	vsnprintf_array(line, fmt, ap);
 	fprintf(stderr, "server: %s", line);
 	len = strlen(line);
-	if (log_len + len < sizeof(log_text)) {
-		memcpy(log_text + log_len, line, len + 1);
+	if (log_len + len < ARRAY_SIZE(log_text)) {
+		copy_array(arrview_cfront(log_len, log_text), arrview_first(len + 1, line));
 		log_len += len;
 	}
 }
@@ -227,13 +231,15 @@ static void peer_send_fds(struct peer *p, uint32_t id, uint32_t opcode, const ui
 {
 	alignas(struct cmsghdr) char control[CMSG_SPACE(32 * sizeof(int))];
 	uint32_t words[64];
-	struct iovec iov = { words, (count + 2) * sizeof(*words) };
+
+	assert(count + 2 <= ARRAY_SIZE(words) && nfds <= 32);
+	auto message = arrview_first(count + 2, words);
+	struct iovec iov = array_iovec(message);
 	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
 	struct cmsghdr *cmsg;
 
-	assert(count + 2 <= ARRAY_SIZE(words) && nfds <= 32);
 	words[0] = id;
-	words[1] = (uint32_t)iov.iov_len << 16 | opcode;
+	words[1] = ARRAY_SIZE_BYTES(message) << 16 | opcode;
 	if (count)
 		memcpy(words + 2, args, count * sizeof(*words));
 	if (nfds) {
@@ -278,7 +284,7 @@ static bool readable(int fd)
 {
 	struct pollfd pfd = { .fd = fd, .events = POLLIN };
 
-	return poll(&pfd, 1, 0) == 1;
+	return poll_array(array_ptr(&pfd), 0) == 1;
 }
 
 /*
@@ -291,7 +297,7 @@ static ssize_t peer_read(struct peer *p)
 
 	while (!readable(p->fd))
 		run_for(1'000'000);
-	n = recv(p->fd, (char *)p->buf + p->len, sizeof(p->buf) - p->len, MSG_DONTWAIT);
+	n = recv_array(p->fd, arrview_cfront(p->len, arrview_bytes(p->buf)), MSG_DONTWAIT);
 	assert(n >= 0);
 	p->len += n;
 	return n;
@@ -626,7 +632,7 @@ TEST(client_resources)
 	server_start();
 	peer_connect(&p);
 	poor_wl_client_add_resource_created_listener(&p.client, &listener);
-	for (unsigned i = 0; i < ARRAY_SIZE(children); i++)
+	foreach_array_index(children, i)
 		assert(!poor_test_child_resource_init(&children[i], &p.client, 1, i ? 0 : peer_new_id(&p)));
 	assert(resources_created == 3);
 	poor_wl_client_for_each_resource(&p.client, count_resource, &count);
@@ -736,10 +742,10 @@ TEST(request_in_pieces)
 	server_start();
 	peer_connect(&p);
 	run_until(p.client.ready);
-	assert(write(p.fd, sync, 10) == 10);
+	assert(write_array(p.fd, arrview_first(10, arrview_bytes(sync))) == 10);
 	run_for(20'000'000);
 	assert(!readable(p.fd));
-	assert(write(p.fd, (const char *)sync + 10, 2) == 2);
+	assert(write_array(p.fd, arrview_cfront(10, arrview_bytes(sync))) == 2);
 	e = peer_event(&p);
 	assert(e.id == 2 && e.opcode == POOR_WL_CALLBACK_DONE);
 	peer_close(&p);
@@ -786,8 +792,7 @@ TEST(client_sends_too_many_fds)
 	struct peer a, b;
 	int fds[32];
 
-	for (unsigned i = 0; i < ARRAY_SIZE(fds); i++)
-		fds[i] = STDERR_FILENO;
+	fill_array(fds, STDERR_FILENO);
 	server_start();
 	peer_connect(&a);
 	peer_connect(&b);
@@ -981,7 +986,7 @@ TEST(registry_bind_errors)
 
 	server_start();
 	poor_wl_global_init(&global, &display, &poor_test_global_interface, 2, nullptr, bind_nothing);
-	for (unsigned i = 0; i < ARRAY_SIZE(p); i++) {
+	foreach_array_index(p, i) {
 		peer_connect(&p[i]);
 		name = poor_wl_global_get_name(&global, &p[i].client);
 		registry = peer_get_registry(&p[i]);
@@ -1063,9 +1068,9 @@ TEST(invalid_requests)
 	struct event e;
 
 	server_start();
-	for (unsigned i = 0; i < ARRAY_SIZE(p); i++)
-		peer_connect(&p[i]);
-	assert(write(p[0].fd, too_large, sizeof(too_large)) == sizeof(too_large));
+	foreach_array_ref(p, peer)
+		peer_connect(peer);
+	assert(write_array(p[0].fd, too_large) == (ssize_t)ARRAY_SIZE_BYTES(too_large));
 	peer_send(&p[1], 7, 0, nullptr, 0);
 	peer_send(&p[2], 1, 5, nullptr, 0);
 	peer_send(&p[3], 1, DISPLAY_SYNC, nullptr, 0);
@@ -1081,8 +1086,8 @@ TEST(invalid_requests)
 	assert(!strcmp(error_message(&e), "invalid arguments for wl_display#1.sync"));
 	e = expect_error(&p[4], 1, POOR_WL_DISPLAY_ERROR_INVALID_METHOD);
 	assert(!strcmp(error_message(&e), "invalid arguments for wl_fixes#2.destroy_registry"));
-	for (unsigned i = 0; i < ARRAY_SIZE(p); i++)
-		peer_close(&p[i]);
+	foreach_array_ref(p, peer)
+		peer_close(peer);
 	server_stop();
 }
 
@@ -1210,7 +1215,7 @@ TEST(debug_log)
 	assert(poor_wl_array_add(&array, 3));
 	poor_test_global_send_echoed(&global, -1, 1, poor_wl_fixed_from_double(-1.5), "s", nullptr, &global, &array, fd);
 	peer_event(&p);
-	snprintf(line, sizeof(line), " -> test_global#3.echoed(-1, 1, -1.50000000, \"s\", nil, test_global#3, array[3], fd %d)", fd);
+	snprintf_array(line, " -> test_global#3.echoed(-1, 1, -1.50000000, \"s\", nil, test_global#3, array[3], fd %d)", fd);
 	assert(logged(line));
 	peer_close(&p);
 	server_stop();
@@ -1258,16 +1263,18 @@ static void socket_close(struct test_socket *s)
 	run_until(s->done);
 }
 
-static void runtime_path(char *path, size_t size, const char *name)
+static void runtime_path_impl(size_t size, char (*path)[size], const char *name)
 {
-	snprintf(path, size, "%s/%s", getenv("XDG_RUNTIME_DIR"), name);
+	snprintf_array(path, "%s/%s", getenv("XDG_RUNTIME_DIR"), name);
 }
+
+#define runtime_path(path, name) runtime_path_impl(ARRAY_SIZE(path), &auto_arr(path), name)
 
 static void connect_socket(int fd, const char *name)
 {
 	struct sockaddr_un addr = { .sun_family = AF_LOCAL };
 
-	runtime_path(addr.sun_path, sizeof(addr.sun_path), name);
+	runtime_path(addr.sun_path, name);
 	assert(!connect(fd, (struct sockaddr *)&addr, sizeof(addr)));
 }
 
@@ -1286,8 +1293,8 @@ TEST(socket_names)
 	struct test_socket s;
 
 	server_start();
-	memset(name, 'a', sizeof(name) - 1);
-	name[sizeof(name) - 1] = '\0';
+	memset_array(arrview_str(name), 'a');
+	*array_last_ref(name) = '\0';
 	socket_init(&s);
 	assert(poor_wl_socket_listen(&s.socket, name) == -1 && errno == ENAMETOOLONG);
 	setenv("WAYLAND_DISPLAY", "wayland-env", 1);
@@ -1317,8 +1324,8 @@ TEST(socket_files_in_the_way)
 	char stale[256], other[256];
 	struct test_socket s;
 
-	runtime_path(stale, sizeof(stale), "wayland-stale");
-	runtime_path(other, sizeof(other), "wayland-other");
+	runtime_path(stale, "wayland-stale");
+	runtime_path(other, "wayland-other");
 	server_start();
 	poor_loop_close_fd_or_submit(&loop, open(stale, O_CREAT | O_CLOEXEC | O_WRONLY, 0600), 0);
 	poor_loop_close_fd_or_submit(&loop, open(other, O_CREAT | O_CLOEXEC | O_WRONLY, 0400), 0);
@@ -1351,7 +1358,7 @@ static int hold_lock(const char *name)
 	char path[256];
 	int fd;
 
-	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	snprintf_array(path, "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
 	fd = open(path, O_CREAT | O_CLOEXEC | O_RDWR, 0600);
 	assert(fd >= 0 && !flock(fd, LOCK_EX | LOCK_NB));
 	return fd;
@@ -1361,7 +1368,7 @@ static void release_lock(const char *name, int fd)
 {
 	char path[256];
 
-	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	snprintf_array(path, "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
 	assert(!unlink(path));
 	poor_loop_close_fd_or_submit(&loop, fd, 0);
 }
@@ -1373,16 +1380,16 @@ TEST(socket_auto_without_free_names)
 	int locks[33];
 
 	server_start();
-	for (unsigned i = 0; i < ARRAY_SIZE(locks); i++) {
-		snprintf(name, sizeof(name), "wayland-%u", i);
+	foreach_array_index(locks, i) {
+		snprintf_array(name, "wayland-%zu", i);
 		locks[i] = hold_lock(name);
 	}
 	socket_init(&s);
 	assert(!poor_wl_socket_listen_auto(&s.socket));
 	run_until(s.done);
 	assert(!s.ready && s.socket.error == EINVAL);
-	for (unsigned i = 0; i < ARRAY_SIZE(locks); i++) {
-		snprintf(name, sizeof(name), "wayland-%u", i);
+	foreach_array_index(locks, i) {
+		snprintf_array(name, "wayland-%zu", i);
 		release_lock(name, locks[i]);
 	}
 	server_stop();
@@ -1394,7 +1401,7 @@ TEST(socket_destroyed_while_starting)
 	char lock[256];
 	struct test_socket s;
 
-	runtime_path(lock, sizeof(lock), "wayland-early.lock");
+	runtime_path(lock, "wayland-early.lock");
 	server_start();
 	socket_init(&s);
 	assert(!poor_wl_socket_listen(&s.socket, "wayland-early"));
@@ -1470,11 +1477,11 @@ TEST(socket_accepts_clients)
 	socket_init(&s);
 	assert(!poor_wl_socket_listen(&s.socket, "wayland-accept"));
 	run_until(s.ready);
-	for (unsigned i = 0; i < ARRAY_SIZE(fds); i++)
-		fds[i] = connect_to("wayland-accept");
+	foreach_array_ref(fds, fd)
+		*fd = connect_to("wayland-accept");
 	run_until(s.accepted == ARRAY_SIZE(fds));
-	for (unsigned i = 0; i < ARRAY_SIZE(fds); i++)
-		poor_loop_close_fd_or_submit(&loop, fds[i], 0);
+	foreach_array_const_ref(fds, fd)
+		poor_loop_close_fd_or_submit(&loop, *fd, 0);
 	server_stop();
 	assert(s.done);
 }
@@ -1569,14 +1576,14 @@ TEST(shm_formats)
 	struct event e;
 
 	shm_start();
-	poor_wl_display_set_shm_formats(&display, formats, ARRAY_SIZE(formats));
+	poor_wl_display_set_shm_formats(&display, formats);
 	peer_connect(&p);
 	shm = peer_bind_shm(&p, 1);
 	e = peer_event(&p);
 	assert(e.opcode == POOR_WL_REGISTRY_GLOBAL);
-	for (unsigned i = 0; i < ARRAY_SIZE(expected); i++) {
+	foreach_array_const_ref(expected, format) {
 		e = peer_event(&p);
-		assert(e.id == shm && e.opcode == POOR_WL_SHM_FORMAT && e.args[0] == expected[i]);
+		assert(e.id == shm && e.opcode == POOR_WL_SHM_FORMAT && e.args[0] == *format);
 	}
 	peer_close(&p);
 	server_stop();
@@ -1591,7 +1598,7 @@ TEST(shm_buffers)
 	uint32_t id;
 
 	shm_start();
-	poor_wl_display_set_shm_formats(&display, formats, ARRAY_SIZE(formats));
+	poor_wl_display_set_shm_formats(&display, formats);
 	buffer = shm_client_init(&c, 8192);
 	assert(buffer && poor_wl_shm_buffer_get_width(buffer) == 16 && poor_wl_shm_buffer_get_height(buffer) == 16);
 	assert(poor_wl_shm_buffer_get_stride(buffer) == 64 && poor_wl_shm_buffer_get_format(buffer) == POOR_WL_SHM_FORMAT_ARGB8888);
@@ -1700,7 +1707,7 @@ TEST(shm_truncated_pool)
 	struct event e;
 
 	shm_start();
-	for (unsigned i = 0; i < ARRAY_SIZE(c); i++) {
+	foreach_array_index(c, i) {
 		buffers[i] = shm_client_init(&c[i], 4096);
 		poor_wl_shm_buffer_ref(buffers[i]);
 		assert(!ftruncate(c[i].fd, 0));
@@ -1715,7 +1722,7 @@ TEST(shm_truncated_pool)
 	poor_wl_client_destroy(&c[2].peer.client);
 	run_until(c[2].peer.done);
 	assert(read_pixel(buffers[2]) == 0);
-	for (unsigned i = 0; i < ARRAY_SIZE(c); i++) {
+	foreach_array_index(c, i) {
 		poor_wl_shm_buffer_unref(buffers[i]);
 		shm_client_fini(&c[i]);
 	}
@@ -1744,18 +1751,18 @@ TEST(shm_errors)
 	poor_loop_close_fd_or_submit(&loop, fds[0], 0);
 	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
 	expect_error(&p[1], shm[1], POOR_WL_SHM_ERROR_INVALID_FD);
-	for (unsigned i = 0; i < ARRAY_SIZE(c); i++)
-		shm_client_init(&c[i], 4096);
+	foreach_array_ref(c, client)
+		shm_client_init(client, 4096);
 	peer_create_buffer(&c[0].peer, c[0].pool, 0, 16, POOR_WL_SHM_FORMAT_RGB565);
 	e = expect_error(&c[0].peer, c[0].pool, POOR_WL_SHM_ERROR_INVALID_FORMAT);
-	snprintf(message, sizeof(message), "invalid format 0x%x", POOR_WL_SHM_FORMAT_RGB565);
+	snprintf_array(message, "invalid format 0x%x", POOR_WL_SHM_FORMAT_RGB565);
 	assert(!strcmp(error_message(&e), message));
 	peer_create_buffer(&c[1].peer, c[1].pool, 0, 65, POOR_WL_SHM_FORMAT_ARGB8888);
 	expect_error(&c[1].peer, c[1].pool, POOR_WL_SHM_ERROR_INVALID_STRIDE);
 	peer_create_buffer(&c[2].peer, c[2].pool, -4, 16, POOR_WL_SHM_FORMAT_ARGB8888);
 	expect_error(&c[2].peer, c[2].pool, POOR_WL_SHM_ERROR_INVALID_STRIDE);
-	for (unsigned i = 0; i < ARRAY_SIZE(c); i++)
-		shm_client_fini(&c[i]);
+	foreach_array_ref(c, client)
+		shm_client_fini(client);
 	peer_close(&p[0]);
 	peer_close(&p[1]);
 	server_stop();
@@ -1769,7 +1776,7 @@ TEST(shm_without_memory)
 	int fd = memfd(4096);
 
 	shm_start();
-	for (unsigned i = 0; i < ARRAY_SIZE(p); i++) {
+	foreach_array_index(p, i) {
 		peer_connect(&p[i]);
 		alloc_budget = i + 1;
 		shm = peer_bind_shm(&p[i], 1);

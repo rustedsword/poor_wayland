@@ -42,8 +42,8 @@ static void map_init(struct poor_wl_map *map, uint32_t side, struct map_memory *
 	struct poor_wl_connection_memory memory = {
 		.client_objects = m->client,
 		.server_objects = m->server,
-		.client_objects_size = 8,
-		.server_objects_size = 4,
+		.client_objects_size = ARRAY_SIZE(m->client),
+		.server_objects_size = ARRAY_SIZE(m->server),
 	};
 
 	poor_wl_map_init(map, side, &memory);
@@ -79,7 +79,7 @@ TEST(map_insert_new_full)
 	uint32_t a;
 
 	map_init(&map, POOR_WL_MAP_SERVER_SIDE, &memory);
-	for (int i = 0; i < 4; i++)
+	foreach_array_index(memory.server, i)
 		assert(poor_wl_map_insert_new(&map, 0, &a) == POOR_WL_SERVER_ID_START + i);
 	errno = 0;
 	assert(poor_wl_map_insert_new(&map, 0, &a) == 0);
@@ -164,9 +164,9 @@ TEST(map_reserve_new)
 
 	map_init(&map, POOR_WL_MAP_SERVER_SIDE, &memory);
 	assert(poor_wl_map_reserve_new(&map, POOR_WL_SERVER_ID_START) == -1 && errno == EINVAL);
-	for (uint32_t i = 0; i < 8; i++)
+	foreach_array_index(memory.client, i)
 		assert(poor_wl_map_reserve_new(&map, i) == 0);
-	assert(poor_wl_map_reserve_new(&map, 8) == -1 && errno == ENOSPC);
+	assert(poor_wl_map_reserve_new(&map, ARRAY_SIZE(memory.client)) == -1 && errno == ENOSPC);
 }
 
 static enum poor_wl_iterator_result never_run(void *, void *, uint32_t)

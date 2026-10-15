@@ -34,7 +34,6 @@
 
 TEST(message_version)
 {
-	unsigned int i;
 	const struct {
 		const struct poor_wl_message *message;
 		int expected_version;
@@ -48,10 +47,8 @@ TEST(message_version)
 		{ &poor_wl_surface_interface.methods[POOR_WL_SURFACE_SET_BUFFER_SCALE], 3 },
 	};
 
-	for (i = 0; i < ARRAY_SIZE(messages); ++i) {
-		assert(poor_wl_message_get_since(messages[i].message) ==
-		       messages[i].expected_version);
-	}
+	foreach_array_const_ref(messages, m)
+		assert(poor_wl_message_get_since(m->message) == m->expected_version);
 }
 
 TEST(message_count_fds)
@@ -66,7 +63,7 @@ TEST(message_count_fds)
 		{ { "versioned", "2hh?s", nullptr }, 2 },
 	};
 
-	for (unsigned i = 0; i < ARRAY_SIZE(messages); ++i)
-		assert(poor_wl_message_count_fds(&messages[i].message) == messages[i].expected_fd_count);
+	foreach_array_const_ref(messages, m)
+		assert(poor_wl_message_count_fds(&m->message) == m->expected_fd_count);
 	assert(poor_wl_message_count_fds(&poor_wl_keyboard_interface.events[POOR_WL_KEYBOARD_KEYMAP]) == 1);
 }

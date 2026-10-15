@@ -30,6 +30,7 @@
 #include "poor_wayland_version.h"
 
 #include <stdbool.h>
+#include <poor_stdio.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -125,7 +126,7 @@ is_dtd_valid(FILE *input, const char *filename)
 		abort();
 
 	buffer = xmlParserInputBufferCreateMem(wayland_dtd,
-					       sizeof(wayland_dtd),
+					       ARRAY_SIZE_BYTES(wayland_dtd),
 					       XML_CHAR_ENCODING_UTF8);
 	if (!buffer) {
 		fprintf(stderr, "Failed to init buffer for DTD.\n");
@@ -389,7 +390,7 @@ desc_dump(char *desc, const char *fmt, ...)
 	int col, i, j, k, startcol, newlines;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof buf, fmt, ap);
+	vsnprintf_array(buf, fmt, ap);
 	va_end(ap);
 
 	for (i = 0, col = 0; buf[i] != '*'; i++) {
@@ -1144,7 +1145,7 @@ character_data(void *data, const XML_Char *s, int len)
 {
 	struct parse_context *ctx = data;
 
-	if (ctx->character_data_length + len > sizeof (ctx->character_data)) {
+	if (ctx->character_data_length + len > ARRAY_SIZE(ctx->character_data)) {
 		fprintf(stderr, "too much character data");
 		exit(EXIT_FAILURE);
 	    }

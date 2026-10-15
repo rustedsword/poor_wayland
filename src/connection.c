@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <ffi.h>
+#include <poor_stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,16 +85,16 @@ static void ring_copy(const struct poor_wl_ring_buffer *b, void *data, uint32_t 
 	memcpy((char *)data + first, b->data, count - first);
 }
 
-static int ring_iov(const struct poor_wl_ring_buffer *b, uint32_t start, uint32_t len, struct iovec *iov)
+static int ring_iov(const struct poor_wl_ring_buffer *b, uint32_t start, uint32_t len, struct iovec (*iov)[2])
 {
 	uint32_t first = min_u32(b->size - ring_mask(b, start), len);
 
-	iov[0].iov_base = b->data + ring_mask(b, start);
-	iov[0].iov_len = first;
+	(*iov)[0].iov_base = b->data + ring_mask(b, start);
+	(*iov)[0].iov_len = first;
 	if (first == len)
 		return 1;
-	iov[1].iov_base = b->data;
-	iov[1].iov_len = len - first;
+	(*iov)[1].iov_base = b->data;
+	(*iov)[1].iov_len = len - first;
 	return 2;
 }
 
@@ -104,17 +105,17 @@ static uint32_t fds_used(const struct poor_wl_fd_ring *r)
 
 static uint32_t fds_free(const struct poor_wl_fd_ring *r)
 {
-	return POOR_WL_CONNECTION_FDS - fds_used(r);
+	return ARRAY_SIZE(r->fds) - fds_used(r);
 }
 
 static void fds_put(struct poor_wl_fd_ring *r, int fd)
 {
-	r->fds[r->head++ % POOR_WL_CONNECTION_FDS] = fd;
+	r->fds[r->head++ % ARRAY_SIZE(r->fds)] = fd;
 }
 
 static int fds_get(struct poor_wl_fd_ring *r)
 {
-	return r->fds[r->tail++ % POOR_WL_CONNECTION_FDS];
+	return r->fds[r->tail++ % ARRAY_SIZE(r->fds)];
 }
 
 static void fds_close(struct poor_wl_fd_ring *r, struct poor_loop *loop, uint32_t count)
@@ -154,9 +155,9 @@ void poor_wl_connection_prep_recv(struct poor_wl_connection *connection, struct 
 	msg->msg_name = nullptr;
 	msg->msg_namelen = 0;
 	msg->msg_iov = connection->in_iov;
-	msg->msg_iovlen = ring_iov(&connection->in, connection->in.head, ring_free(&connection->in), connection->in_iov);
+	msg->msg_iovlen = ring_iov(&connection->in, connection->in.head, ring_free(&connection->in), &connection->in_iov);
 	msg->msg_control = connection->in_cmsg;
-	msg->msg_controllen = sizeof(connection->in_cmsg);
+	msg->msg_controllen = ARRAY_SIZE_BYTES(connection->in_cmsg);
 	msg->msg_flags = 0;
 	io_uring_prep_recvmsg(sqe, fd, msg, MSG_CMSG_CLOEXEC);
 }
@@ -210,7 +211,7 @@ void poor_wl_connection_prep_send(struct poor_wl_connection *connection, struct 
 	msg->msg_name = nullptr;
 	msg->msg_namelen = 0;
 	msg->msg_iov = connection->out_iov;
-	msg->msg_iovlen = ring_iov(&connection->out, connection->out.tail, len, connection->out_iov);
+	msg->msg_iovlen = ring_iov(&connection->out, connection->out.tail, len, &connection->out_iov);
 	msg->msg_control = nullptr;
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
@@ -219,7 +220,7 @@ void poor_wl_connection_prep_send(struct poor_wl_connection *connection, struct 
 		cmsg->cmsg_type = SCM_RIGHTS;
 		cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
 		for (uint32_t i = 0; i < nfds; i++) {
-			int fd_out = connection->fds_out.fds[(connection->fds_out.tail + i) % POOR_WL_CONNECTION_FDS];
+			int fd_out = connection->fds_out.fds[(connection->fds_out.tail + i) % ARRAY_SIZE(connection->fds_out.fds)];
 
 			memcpy(CMSG_DATA(cmsg) + i * sizeof(int), &fd_out, sizeof(int));
 		}
@@ -256,7 +257,7 @@ uint32_t poor_wl_connection_pending_input(const struct poor_wl_connection *conne
 	return ring_used(&connection->in);
 }
 
-void poor_wl_connection_copy(const struct poor_wl_connection *connection, void *data, size_t size)
+void poor_wl_connection_copy_impl(const struct poor_wl_connection *connection, void *data, size_t size)
 {
 	ring_copy(&connection->in, data, size);
 }
@@ -424,12 +425,12 @@ err_null:
 }
 
 /* Returns the size of the message, or -1 if it doesn't fit 'buffer' */
-static int serialize_closure(const struct poor_wl_closure *closure, uint32_t *buffer, size_t buffer_count, uint32_t *nfds)
+static int serialize_closure(const struct poor_wl_closure *closure, size_t count, uint32_t (*buffer)[count], uint32_t *nfds)
 {
 	const struct poor_wl_message *message = closure->message;
 	const char *signature = message->signature;
 	struct argument_details arg;
-	uint32_t *p = buffer + 2, *end = buffer + buffer_count, size;
+	uint32_t *p = array_first_ref(buffer) + 2, *end = array_end_ref(buffer), size;
 
 	*nfds = 0;
 	for (int i = 0; i < closure->count; i++) {
@@ -484,9 +485,9 @@ static int serialize_closure(const struct poor_wl_closure *closure, uint32_t *bu
 			break;
 		}
 	}
-	size = (p - buffer) * sizeof(*p);
-	buffer[0] = closure->sender_id;
-	buffer[1] = size << 16 | (closure->opcode & 0x0000ffff);
+	size = array_ref_index(buffer, p) * sizeof(*p);
+	(*buffer)[0] = closure->sender_id;
+	(*buffer)[1] = size << 16 | (closure->opcode & 0x0000ffff);
 	return size;
 
 overflow:
@@ -514,7 +515,7 @@ int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_c
 	uint32_t buffer[POOR_WL_MAX_MESSAGE_SIZE / sizeof(uint32_t)], nfds;
 	const char *signature = closure->message->signature;
 	struct argument_details arg;
-	int size = serialize_closure(closure, buffer, ARRAY_SIZE(buffer), &nfds);
+	int size = serialize_closure(closure, ARRAY_SIZE(buffer), &buffer, &nfds);
 
 	if (size >= 0 && ((uint32_t)size > ring_free(&connection->out) || nfds > fds_free(&connection->fds_out))) {
 		poor_wl_log("no room for %s: %d bytes and %u fds queued\n", closure->message->name, ring_used(&connection->out),
@@ -546,7 +547,7 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 	struct argument_details arg;
 	char *s;
 
-	assert(size <= sizeof(data->words));
+	assert(size <= ARRAY_SIZE_BYTES(data->words));
 	if (size < 2 * sizeof(*p)) {
 		poor_wl_log("message too short, invalid header\n");
 		poor_wl_connection_consume(connection, size);
@@ -563,8 +564,10 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			closure->args[i].h = -1;
 	}
 
-	end = p + size / sizeof(*p);
-	poor_wl_connection_copy(connection, p, size);
+	auto words = arrview_first(size / sizeof(*p), data->words);
+
+	end = array_end_ref(words);
+	poor_wl_connection_copy(connection, words);
 	closure->sender_id = *p++;
 	closure->opcode = *p++ & 0x0000ffff;
 
@@ -864,10 +867,10 @@ struct print_buffer {
 	va_list ap;
 	int n;
 
-	if (b->len >= sizeof(b->data))
+	if (b->len >= ARRAY_SIZE(b->data))
 		return;
 	va_start(ap, fmt);
-	n = vsnprintf(b->data + b->len, sizeof(b->data) - b->len, fmt, ap);
+	n = vsnprintf_array(arrview_cfront(b->len, b->data), fmt, ap);
 	va_end(ap);
 	if (n > 0)
 		b->len += n;

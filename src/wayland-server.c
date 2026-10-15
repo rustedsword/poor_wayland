@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <poor_loop_uring_array.h>
+#include <poor_stdio.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -237,7 +239,7 @@ POOR_WL_EXPORT void poor_wl_resource_post_error_vargs(struct poor_wl_resource *r
 	struct poor_wl_client *client = resource->client;
 	char buffer[128];
 
-	vsnprintf(buffer, sizeof(buffer), msg, argp);
+	vsnprintf_array(buffer, msg, argp);
 	if (client->error || !client->display_resource)
 		return;
 	poor_wl_resource_post_event(client->display_resource, POOR_WL_DISPLAY_ERROR, resource, code, buffer);
@@ -289,8 +291,8 @@ static void client_dispatch(struct poor_wl_client *client)
 	uint32_t p[2], len, opcode, size;
 	int since;
 
-	while (!client->error && !client->destroyed && (len = poor_wl_connection_pending_input(connection)) >= sizeof(p)) {
-		poor_wl_connection_copy(connection, p, sizeof(p));
+	while (!client->error && !client->destroyed && (len = poor_wl_connection_pending_input(connection)) >= ARRAY_SIZE_BYTES(p)) {
+		poor_wl_connection_copy(connection, p);
 		opcode = p[1] & 0xffff;
 		size = p[1] >> 16;
 		if (size > POOR_WL_MAX_MESSAGE_SIZE) {
@@ -479,8 +481,8 @@ POOR_WL_EXPORT void poor_wl_client_init(struct poor_wl_client *client, struct po
 	poor_wl_list_insert(display->client_list.prev, &client->link);
 	poor_loop_group_acquire(&display->io);
 	poor_loop_group_acquire(&client->io);
-	io_uring_prep_cmd_sock(client_sqe(client, &client->cred_op), SOCKET_URING_OP_GETSOCKOPT, fd, SOL_SOCKET, SO_PEERCRED,
-			       &client->cred, sizeof(client->cred));
+	io_uring_prep_cmd_sock_array(client_sqe(client, &client->cred_op), SOCKET_URING_OP_GETSOCKOPT, fd, SOL_SOCKET, SO_PEERCRED,
+				     array_ptr(&client->cred));
 }
 
 POOR_WL_EXPORT void poor_wl_client_get_credentials(const struct poor_wl_client *client, pid_t *pid, uid_t *uid, gid_t *gid)
@@ -1066,16 +1068,16 @@ static int socket_set_name(struct poor_wl_socket *socket, const char *name)
 		}
 		separator = "/";
 	}
-	name_size = snprintf(socket->addr.sun_path, sizeof(socket->addr.sun_path), "%s%s%s", runtime_dir, separator, name) + 1;
+	name_size = snprintf_array(socket->addr.sun_path, "%s%s%s", runtime_dir, separator, name) + 1;
 	assert(name_size > 0);
-	if (name_size > (int)sizeof(socket->addr.sun_path)) {
+	if (name_size > (int)ARRAY_SIZE(socket->addr.sun_path)) {
 		poor_wl_log("error: socket path \"%s%s%s\" plus null terminator exceeds %zu bytes\n", runtime_dir, separator, name,
-		       sizeof(socket->addr.sun_path));
+		       ARRAY_SIZE(socket->addr.sun_path));
 		errno = ENAMETOOLONG;
 		return -1;
 	}
 	socket->display_name = socket->addr.sun_path + name_size - 1 - strlen(name);
-	snprintf(socket->lock_addr, sizeof(socket->lock_addr), "%s%s", socket->addr.sun_path, LOCK_SUFFIX);
+	snprintf_array(socket->lock_addr, "%s%s", socket->addr.sun_path, LOCK_SUFFIX);
 	return 0;
 }
 
@@ -1083,7 +1085,7 @@ static int socket_set_auto_name(struct poor_wl_socket *socket)
 {
 	char name[20];
 
-	snprintf(name, sizeof(name), "wayland-%d", socket->displayno);
+	snprintf_array(name, "wayland-%d", socket->displayno);
 	return socket_set_name(socket, name);
 }
 
@@ -1464,9 +1466,9 @@ POOR_WL_EXPORT void poor_wl_protocol_logger_destroy(struct poor_wl_protocol_logg
 	poor_wl_list_remove(&logger->link);
 }
 
-POOR_WL_EXPORT void poor_wl_display_set_shm_formats(struct poor_wl_display *display, const uint32_t *formats, size_t count)
+POOR_WL_EXPORT void poor_wl_display_set_shm_formats_impl(struct poor_wl_display *display, size_t count, const uint32_t (*formats)[count])
 {
-	display->shm_formats = formats;
+	display->shm_formats = *formats;
 	display->shm_formats_count = count;
 }
 

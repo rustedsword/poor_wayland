@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poor_stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,7 +107,7 @@ static void transfer(struct endpoint *from, struct endpoint *to)
 	for (; out->tail != out->head; out->tail++, in->head++)
 		in->data[in->head & (in->size - 1)] = out->data[out->tail & (out->size - 1)];
 	for (; fds_out->tail != fds_out->head; fds_out->tail++, fds_in->head++)
-		fds_in->fds[fds_in->head % POOR_WL_CONNECTION_FDS] = fds_out->fds[fds_out->tail % POOR_WL_CONNECTION_FDS];
+		fds_in->fds[fds_in->head % ARRAY_SIZE(fds_in->fds)] = fds_out->fds[fds_out->tail % ARRAY_SIZE(fds_out->fds)];
 }
 
 static int send_message(struct endpoint *e, struct poor_wl_object *sender, uint32_t opcode, union poor_wl_argument *args)
@@ -122,8 +123,8 @@ static int receive_message(struct endpoint *e, struct poor_wl_closure *closure, 
 {
 	uint32_t header[2];
 
-	assert(poor_wl_connection_pending_input(&e->connection) >= sizeof(header));
-	poor_wl_connection_copy(&e->connection, header, sizeof(header));
+	assert(poor_wl_connection_pending_input(&e->connection) >= ARRAY_SIZE_BYTES(header));
+	poor_wl_connection_copy(&e->connection, header);
 	assert((header[1] >> 16) <= poor_wl_connection_pending_input(&e->connection));
 	return poor_wl_connection_demarshal(&e->connection, &loop, header[1] >> 16, &e->map, &test_messages[header[1] & 0xffff],
 				       closure, data);
@@ -146,7 +147,7 @@ TEST(marshal_demarshal_all_types)
 	assert(!poor_wl_map_insert_at(&server.map, 0, 1, nullptr));
 	assert(!poor_wl_map_insert_at(&server.map, 0, 2, nullptr));
 	assert(!poor_wl_map_insert_at(&server.map, 0, 3, &sender));
-	assert(poor_wl_array_add(&array, sizeof(bytes)));
+	assert(poor_wl_array_add(&array, ARRAY_SIZE_BYTES(bytes)));
 	args[0].i = -1234;
 	args[1].u = 0xdeadbeef;
 	args[2].f = poor_wl_fixed_from_double(-2.5);
@@ -163,7 +164,7 @@ TEST(marshal_demarshal_all_types)
 	assert(closure.args[2].f == poor_wl_fixed_from_double(-2.5));
 	assert(!strcmp(closure.args[3].s, "a string"));
 	assert(closure.args[4].n == 3 && closure.args[5].n == 4);
-	assert(closure.args[6].a->size == sizeof(bytes) && !memcmp(closure.args[6].a->data, bytes, sizeof(bytes)));
+	assert(closure.args[6].a->size == ARRAY_SIZE_BYTES(bytes) && !memcmp(closure.args[6].a->data, bytes, ARRAY_SIZE_BYTES(bytes)));
 	assert(closure.args[7].h != STDERR_FILENO && fcntl(closure.args[7].h, F_GETFD) & FD_CLOEXEC);
 	assert(!fstat(closure.args[7].h, &a) && !fstat(STDERR_FILENO, &b) && a.st_ino == b.st_ino);
 	assert(!poor_wl_closure_lookup_objects(&closure, &server.map));
@@ -195,7 +196,7 @@ TEST(marshal_nullable)
 	loop_fini();
 }
 
-static void demarshal_fails(const uint32_t *words, size_t count, int fds)
+static void demarshal_fails_impl(size_t count, const uint32_t (*words)[count], int fds)
 {
 	struct endpoint server;
 	struct poor_wl_closure_data data;
@@ -205,14 +206,16 @@ static void demarshal_fails(const uint32_t *words, size_t count, int fds)
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
 	for (int i = 0; i < fds; i++)
 		server.connection.fds_in.fds[server.connection.fds_in.head++] = dup(STDERR_FILENO);
-	memcpy(server.in, words, count * sizeof(*words));
-	server.connection.in.head = count * sizeof(*words);
-	poor_wl_connection_copy(&server.connection, header, sizeof(header));
+	memcpy(server.in, *words, ARRAY_SIZE_BYTES(words));
+	server.connection.in.head = ARRAY_SIZE_BYTES(words);
+	poor_wl_connection_copy(&server.connection, header);
 	assert(poor_wl_connection_demarshal(&server.connection, &loop, header[1] >> 16, &server.map, &test_messages[header[1] & 0xffff],
 				       &closure, &data) == -1);
 	assert(errno == EINVAL);
 	poor_wl_connection_close_fds(&server.connection, &loop);
 }
+
+#define demarshal_fails(words, fds) demarshal_fails_impl(ARRAY_SIZE(words), &auto_arr(words), fds)
 
 TEST(demarshal_invalid_messages)
 {
@@ -230,18 +233,18 @@ TEST(demarshal_invalid_messages)
 	static const uint32_t too_many_args[] = { 3, 8 << 16 | 7 };
 
 	loop_init();
-	demarshal_fails(short_header, ARRAY_SIZE(short_header), 0);
-	demarshal_fails(short_string, ARRAY_SIZE(short_string), 0);
-	demarshal_fails(not_terminated, ARRAY_SIZE(not_terminated), 0);
-	demarshal_fails(embedded_nul, ARRAY_SIZE(embedded_nul), 0);
-	demarshal_fails(null_string, ARRAY_SIZE(null_string), 0);
-	demarshal_fails(null_new_id, ARRAY_SIZE(null_new_id), 0);
-	demarshal_fails(own_new_id, ARRAY_SIZE(own_new_id), 0);
-	demarshal_fails(missing_fd, ARRAY_SIZE(missing_fd), 2);
-	demarshal_fails(missing_object, ARRAY_SIZE(missing_object), 0);
-	demarshal_fails(null_object, ARRAY_SIZE(null_object), 0);
-	demarshal_fails(short_array, ARRAY_SIZE(short_array), 0);
-	demarshal_fails(too_many_args, ARRAY_SIZE(too_many_args), 0);
+	demarshal_fails(short_header, 0);
+	demarshal_fails(short_string, 0);
+	demarshal_fails(not_terminated, 0);
+	demarshal_fails(embedded_nul, 0);
+	demarshal_fails(null_string, 0);
+	demarshal_fails(null_new_id, 0);
+	demarshal_fails(own_new_id, 0);
+	demarshal_fails(missing_fd, 2);
+	demarshal_fails(missing_object, 0);
+	demarshal_fails(null_object, 0);
+	demarshal_fails(short_array, 0);
+	demarshal_fails(too_many_args, 0);
 	loop_fini();
 }
 
@@ -256,7 +259,7 @@ TEST(marshal_null_arguments)
 	assert(poor_wl_closure_marshal(&closure, &sender, 4, args, &test_messages[4]) == -1 && errno == EINVAL);
 	args[0].a = nullptr;
 	assert(poor_wl_closure_marshal(&closure, &sender, 6, args, &test_messages[6]) == -1 && errno == EINVAL);
-	for (unsigned i = 0; i < ARRAY_SIZE(args); i++)
+	foreach_array_index(args, i)
 		args[i].u = i;
 	assert(poor_wl_closure_marshal(&closure, &sender, 7, args, &test_messages[7]) == -1 && errno == EINVAL);
 }
@@ -312,8 +315,8 @@ TEST(message_larger_than_maximum)
 
 	loop_init();
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
-	memset(string, 'a', sizeof(string) - 1);
-	string[sizeof(string) - 1] = '\0';
+	memset_array(arrview_str(string), 'a');
+	*array_last_ref(string) = '\0';
 	args[0].s = string;
 	assert(send_message(&client, &sender, 1, args) == -1 && errno == E2BIG);
 	string[POOR_WL_MAX_MESSAGE_SIZE - 13] = '\0';
@@ -332,8 +335,8 @@ TEST(message_full_before_last_argument)
 
 	loop_init();
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
-	memset(string, 'a', sizeof(string) - 1);
-	string[sizeof(string) - 1] = '\0';
+	memset_array(arrview_str(string), 'a');
+	*array_last_ref(string) = '\0';
 	args[0].s = string;
 	args[1].u = 1;
 	assert(send_message(&client, &sender, 8, args) == -1 && errno == E2BIG);
@@ -368,20 +371,20 @@ TEST(out_buffer_full)
 	loop_init();
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
-	memset(string, 'b', sizeof(string) - 1);
-	string[sizeof(string) - 1] = '\0';
+	memset_array(arrview_str(string), 'b');
+	*array_last_ref(string) = '\0';
 	args[0].s = string;
 	while (!send_message(&client, &sender, 1, args))
 		sent++;
 	assert(errno == E2BIG && sent == 4);
-	for (int i = 0; i < 3; i++)
-		args[i].h = stderr_copy();
-	client.connection.fds_out.head += POOR_WL_CONNECTION_FDS - 2;
+	foreach_array_ref(args, arg)
+		arg->h = stderr_copy();
+	client.connection.fds_out.head += ARRAY_SIZE(client.connection.fds_out.fds) - 2;
 	client.connection.out.tail = client.connection.out.head;
 	assert(send_message(&client, &sender, 3, args) == -1 && errno == E2BIG);
 	client.connection.fds_out.tail = client.connection.fds_out.head;
-	for (int i = 0; i < 3; i++)
-		args[i].h = stderr_copy();
+	foreach_array_ref(args, arg)
+		arg->h = stderr_copy();
 	assert(!send_message(&client, &sender, 3, args));
 	transfer(&client, &server);
 	assert(!receive_message(&server, &closure, &data));
@@ -403,15 +406,15 @@ TEST(ring_wrap_around)
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
 	for (int i = 0; i < 100; i++) {
-		memset(string, 'a' + i % 26, sizeof(string) - 1);
-		string[sizeof(string) - 1 - i % 4] = '\0';
+		memset_array(arrview_str(string), 'a' + i % 26);
+		string[ARRAY_SIZE(string) - 1 - i % 4] = '\0';
 		args[0].s = string;
 		assert(!send_message(&client, &sender, 1, args));
 		transfer(&client, &server);
 		assert(!receive_message(&server, &closure, &data));
 		assert(!strcmp(closure.args[0].s, string));
 	}
-	assert(server.connection.in.tail > sizeof(server.in) * 4);
+	assert(server.connection.in.tail > ARRAY_SIZE_BYTES(server.in) * 4);
 	loop_fini();
 }
 
@@ -447,8 +450,8 @@ TEST(send_and_receive_fds)
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
 	for (int i = 0; i < 12; i++) {
-		for (int j = 0; j < 3; j++)
-			args[j].h = stderr_copy();
+		foreach_array_ref(args, arg)
+			arg->h = stderr_copy();
 		assert(!send_message(&client, &sender, 3, args));
 	}
 	while (poor_wl_connection_has_output(&client.connection)) {
@@ -472,8 +475,8 @@ TEST(send_and_receive_fds)
 		assert(!poor_wl_connection_recv_done(&server.connection, &loop, recv.res));
 		while (poor_wl_connection_pending_input(&server.connection) >= 8) {
 			assert(!receive_message(&server, &closure, &data));
-			for (int i = 0; i < 3; i++)
-				assert(closure.args[i].h > STDERR_FILENO && fcntl(closure.args[i].h, F_GETFD) & FD_CLOEXEC);
+			foreach_array_const_ref(arrview_first(3, closure.args), arg)
+				assert(arg->h > STDERR_FILENO && fcntl(arg->h, F_GETFD) & FD_CLOEXEC);
 			poor_wl_closure_close_fds(&closure, &loop);
 			received++;
 		}
@@ -487,7 +490,7 @@ static char log_buffer[8192];
 
 static void log_to_buffer(const char *fmt, va_list ap)
 {
-	vsnprintf(log_buffer, sizeof(log_buffer), fmt, ap);
+	vsnprintf_array(log_buffer, fmt, ap);
 }
 
 TEST(closure_print)

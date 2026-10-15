@@ -93,7 +93,8 @@ void poor_wl_connection_send_done(struct poor_wl_connection *connection, struct 
 void poor_wl_connection_close_fds(struct poor_wl_connection *connection, struct poor_loop *loop);
 void poor_wl_connection_close_fds_in(struct poor_wl_connection *connection, struct poor_loop *loop, int max);
 uint32_t poor_wl_connection_pending_input(const struct poor_wl_connection *connection);
-void poor_wl_connection_copy(const struct poor_wl_connection *connection, void *data, size_t size);
+void poor_wl_connection_copy_impl(const struct poor_wl_connection *connection, void *data, size_t size);
+#define poor_wl_connection_copy(connection, arrm) poor_wl_connection_copy_impl(connection, auto_arr(arrm), ARRAY_SIZE_BYTES(arrm))
 void poor_wl_connection_consume(struct poor_wl_connection *connection, size_t size);
 
 struct poor_wl_closure {

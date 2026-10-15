@@ -32,6 +32,7 @@
 #define POOR_WAYLAND_UTIL_H
 
 #include <math.h>
+#include <poor_array.h>
 #include <stddef.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -545,7 +546,7 @@ struct poor_wl_array {
 	void *data;
 };
 
-#define POOR_WL_ARRAY_INIT(storage) { .size = 0, .alloc = sizeof(storage), .data = (storage) }
+#define POOR_WL_ARRAY_INIT(storage) { .alloc = ARRAY_SIZE_BYTES(storage), .data = auto_arr(storage) }
 
 /**
  * Initializes an empty array that stores up to \p alloc bytes at \p data.
@@ -553,7 +554,14 @@ struct poor_wl_array {
  * \memberof poor_wl_array
  */
 void
-poor_wl_array_init(struct poor_wl_array *array, void *data, size_t alloc);
+poor_wl_array_init_impl(struct poor_wl_array *array, void *data, size_t alloc);
+
+/**
+ * Initializes an empty array in \p storage, an array or a pointer to one.
+ *
+ * \memberof poor_wl_array
+ */
+#define poor_wl_array_init(array, storage) poor_wl_array_init_impl(array, auto_arr(storage), ARRAY_SIZE_BYTES(storage))
 
 /**
  * Increases the size of the array by \p size bytes.

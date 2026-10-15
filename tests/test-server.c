@@ -128,11 +128,10 @@ static void global_flood(struct poor_wl_client *, struct poor_test_global_resour
 {
 	char payload[POOR_WL_MAX_MESSAGE_SIZE];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(payload);
-	char *p = poor_wl_array_add(&array, size);
 
-	assert(p);
-	for (uint32_t i = 0; i < size; i++)
-		p[i] = (char)i;
+	foreach_array_index(payload, i)
+		payload[i] = (char)i;
+	assert(poor_wl_array_add(&array, size));
 	for (uint32_t i = 0; i < count; i++)
 		poor_test_global_send_data(resource, &array);
 }
@@ -258,9 +257,12 @@ static void client_start(int fd, bool small)
 	struct test_client *c = nullptr;
 	struct poor_wl_connection_memory memory;
 
-	for (unsigned i = 0; i < MAX_CLIENTS && !c; i++)
-		if (!server.clients[i].used)
-			c = &server.clients[i];
+	foreach_array_ref(server.clients, client) {
+		if (!client->used) {
+			c = client;
+			break;
+		}
+	}
 	assert(c);
 	c->used = true;
 	memory = POOR_WL_CONNECTION_MEMORY(c->in, c->out, c->objects, c->server_objects);
@@ -403,8 +405,8 @@ void test_server_listen_fd(int fd)
 
 bool test_server_sending(void)
 {
-	for (unsigned i = 0; i < MAX_CLIENTS; i++)
-		if (server.clients[i].used && server.clients[i].client.send_op.pending)
+	foreach_array_const_ref(server.clients, c)
+		if (c->used && c->client.send_op.pending)
 			return true;
 	return false;
 }

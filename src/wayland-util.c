@@ -74,7 +74,7 @@ POOR_WL_EXPORT void poor_wl_list_insert_list(struct poor_wl_list *list, struct p
 	list->next = other->next;
 }
 
-POOR_WL_EXPORT void poor_wl_array_init(struct poor_wl_array *array, void *data, size_t alloc)
+POOR_WL_EXPORT void poor_wl_array_init_impl(struct poor_wl_array *array, void *data, size_t alloc)
 {
 	array->size = 0;
 	array->alloc = alloc;

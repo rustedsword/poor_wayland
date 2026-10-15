@@ -50,6 +50,7 @@ if get_option('libraries')
 	liburing_dep = dependency('liburing', version: '>=2.7', include_type: 'system')
 	ffi_dep = dependency('libffi')
 endif
+poor_base_dep = dependency('poor_base', fallback: 'poor_loop')
 
 configure_file(
 	output: 'config.h',

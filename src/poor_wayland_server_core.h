@@ -367,7 +367,7 @@ struct poor_wl_socket {
 	bool auto_name;
 	bool closing;
 	bool cleaned;
-	char lock_addr[sizeof(((struct sockaddr_un *)nullptr)->sun_path) + 5];
+	char lock_addr[ARRAY_SIZE(((struct sockaddr_un *)nullptr)->sun_path) + 5];
 };
 
 struct poor_wl_protocol_logger {
@@ -761,10 +761,12 @@ poor_wl_shm_mapping_unref(struct poor_wl_shm_mapping *mapping);
 void
 poor_wl_display_init_shm(struct poor_wl_display *display, struct poor_wl_global *global);
 
-/* Advertise 'formats' besides ARGB8888 and XRGB8888. The caller keeps them valid. */
+/* Advertise 'formats', an array or a pointer to one, besides ARGB8888 and XRGB8888. The caller keeps them valid. */
 void
-poor_wl_display_set_shm_formats(struct poor_wl_display *display,
-			   const uint32_t *formats, size_t count);
+poor_wl_display_set_shm_formats_impl(struct poor_wl_display *display,
+				size_t count, const uint32_t (*formats)[count]);
+#define poor_wl_display_set_shm_formats(display, formats) \
+	poor_wl_display_set_shm_formats_impl(display, ARRAY_SIZE(formats), &auto_arr(formats))
 
 void
 poor_wl_log_set_handler_server(poor_wl_log_func_t handler);

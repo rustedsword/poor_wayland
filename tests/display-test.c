@@ -5,11 +5,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poor_loop_fd.h>
+#include <poor_mman.h>
+#include <poor_stdio.h>
+#include <poor_unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -64,15 +66,15 @@ static void log_handler(const char *fmt, va_list ap)
 	char line[8192];
 	size_t len;
 
-	vsnprintf(line, sizeof(line), fmt, ap);
+	vsnprintf_array(line, fmt, ap);
 	if (strstr(line, " -> "))
 		log_requests++;
 	else if (strstr(line, "] test_global#"))
 		log_events++;
 	fprintf(stderr, "client: %s", line);
 	len = strlen(line);
-	if (log_len + len < sizeof(log_text)) {
-		memcpy(log_text + log_len, line, len + 1);
+	if (log_len + len < ARRAY_SIZE(log_text)) {
+		copy_array(arrview_cfront(log_len, log_text), arrview_first(len + 1, line));
 		log_len += len;
 	}
 }
@@ -313,7 +315,7 @@ TEST(echo_all_argument_types)
 	client_connect_fd(&c, &loop, test_server_connect());
 	client_bind_global(&c, 2);
 	poor_test_global_add_listener(&c.global, &global_listener, &c);
-	assert(poor_wl_array_add(&array, 5));
+	assert(poor_wl_array_add(&array, ARRAY_SIZE(array_data) - 1));
 	assert(!pipe2(fds, O_CLOEXEC));
 	poor_test_global_echo(&c.global, -42, 0xdeadbeef, poor_wl_fixed_from_double(1.5), "hello", nullptr, &c.global, &array,
 			 fds[0]);
@@ -598,7 +600,8 @@ TEST(client_buffer_overflow_fails_display)
 	test_server_start(&loop);
 	client_connect_fd(&c, &loop, test_server_connect());
 	client_bind_global(&c, 2);
-	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	memset_array(array_data, 0);
+	assert(poor_wl_array_add(&array, ARRAY_SIZE_BYTES(array_data)));
 	for (int i = 0; i < 5; i++)
 		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_until(&loop, c.error_called);
@@ -619,7 +622,8 @@ TEST(message_too_large_fails_display)
 	test_server_start(&loop);
 	client_connect_fd(&c, &loop, test_server_connect());
 	client_bind_global(&c, 2);
-	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	memset_array(array_data, 0);
+	assert(poor_wl_array_add(&array, ARRAY_SIZE_BYTES(array_data)));
 	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_until(&loop, c.error_called);
 	assert(c.error == E2BIG);
@@ -678,7 +682,7 @@ static bool path_exists(const char *name, const char *suffix)
 {
 	char path[256];
 
-	snprintf(path, sizeof(path), "%s/%s%s", getenv("XDG_RUNTIME_DIR"), name, suffix);
+	snprintf_array(path, "%s/%s%s", getenv("XDG_RUNTIME_DIR"), name, suffix);
 	return !access(path, F_OK);
 }
 
@@ -710,7 +714,7 @@ static int hold_lock(const char *name)
 	char path[256];
 	int fd;
 
-	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	snprintf_array(path, "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
 	fd = open(path, O_CREAT | O_CLOEXEC | O_RDWR, 0600);
 	assert(fd >= 0 && !flock(fd, LOCK_EX | LOCK_NB));
 	return fd;
@@ -720,7 +724,7 @@ static void release_lock(struct poor_loop *loop, const char *name, int fd)
 {
 	char path[256];
 
-	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	snprintf_array(path, "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
 	assert(!unlink(path));
 	poor_loop_close_fd_or_submit(loop, fd, 0);
 }
@@ -852,7 +856,7 @@ TEST(shm_buffer)
 	constexpr uint32_t pixel = 0x11223344;
 	struct poor_loop loop;
 	struct client c;
-	uint32_t *data;
+	uint32_t (*pixels)[1024];
 	int fd;
 
 	loop_init(&loop);
@@ -861,11 +865,10 @@ TEST(shm_buffer)
 	client_bind_global(&c, 2);
 	poor_wl_registry_bind(&c.registry, c.shm_name, &poor_wl_shm_interface, 1, &c.shm);
 	fd = memfd_create("shm-test", MFD_CLOEXEC);
-	assert(fd >= 0 && !ftruncate(fd, 4096));
-	data = mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	assert(data != MAP_FAILED);
-	data[0] = pixel;
-	poor_wl_shm_create_pool(&c.shm, &c.pool, fd, 4096);
+	assert(fd >= 0 && !ftruncate(fd, ARRAY_SIZE_BYTES(pixels)));
+	assert(mmap_array(pixels, nullptr, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0) != MAP_FAILED);
+	(*pixels)[0] = pixel;
+	poor_wl_shm_create_pool(&c.shm, &c.pool, fd, ARRAY_SIZE_BYTES(pixels));
 	poor_wl_shm_pool_create_buffer(&c.pool, &c.buffer, 0, 16, 16, 64, POOR_WL_SHM_FORMAT_XRGB8888);
 	poor_test_global_read_buffer(&c.global, &c.buffer);
 	client_roundtrip(&c);
@@ -873,7 +876,7 @@ TEST(shm_buffer)
 	poor_wl_buffer_destroy(&c.buffer);
 	poor_wl_shm_pool_destroy(&c.pool);
 	client_roundtrip(&c);
-	munmap(data, 4096);
+	munmap_array(pixels);
 	client_disconnect(&c);
 	server_stop(&loop);
 	loop_fini(&loop);
@@ -1032,8 +1035,8 @@ TEST(socket_invalid_names)
 	struct poor_wl_connection_memory memory = client_memory(&c);
 
 	loop_init(&loop);
-	memset(name, 'a', sizeof(name) - 1);
-	name[sizeof(name) - 1] = '\0';
+	memset_array(arrview_str(name), 'a');
+	*array_last_ref(name) = '\0';
 	assert(poor_wl_display_connect(&c.display, &loop, &memory, name, client_error, client_done) == -1 && errno == ENAMETOOLONG);
 	unsetenv("XDG_RUNTIME_DIR");
 	assert(poor_wl_display_connect(&c.display, &loop, &memory, "wayland-0", client_error, client_done) == -1 && errno == ENOENT);
@@ -1047,7 +1050,7 @@ TEST(socket_absolute_path)
 	char path[256];
 	struct client c;
 
-	snprintf(path, sizeof(path), "%s/absolute-socket", getenv("XDG_RUNTIME_DIR"));
+	snprintf_array(path, "%s/absolute-socket", getenv("XDG_RUNTIME_DIR"));
 	loop_init(&loop);
 	test_server_start(&loop);
 	test_server_listen(path);
@@ -1069,7 +1072,7 @@ TEST(socket_adopted_fd)
 	struct client c;
 	int fd;
 
-	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/adopted", getenv("XDG_RUNTIME_DIR"));
+	snprintf_array(addr.sun_path, "%s/adopted", getenv("XDG_RUNTIME_DIR"));
 	fd = socket(AF_LOCAL, SOCK_STREAM | SOCK_CLOEXEC, 0);
 	assert(fd >= 0 && !bind(fd, (struct sockaddr *)&addr, sizeof(addr)) && !listen(fd, 1));
 	loop_init(&loop);
@@ -1094,7 +1097,7 @@ TEST(wayland_socket_environment)
 
 	loop_init(&loop);
 	test_server_start(&loop);
-	snprintf(fd_string, sizeof(fd_string), "%d", test_server_connect());
+	snprintf_array(fd_string, "%d", test_server_connect());
 	setenv("WAYLAND_SOCKET", fd_string, 1);
 	client_init(&c, &loop);
 	assert(!poor_wl_display_connect(&c.display, &loop, &memory, "wayland-ignored", client_error, client_done));
@@ -1139,10 +1142,12 @@ TEST(proxy_dispatcher)
 	loop_fini(&loop);
 }
 
-static void write_words(int fd, const uint32_t *words, size_t count)
+static void write_words_impl(int fd, size_t count, const uint32_t (*words)[count])
 {
-	assert(write(fd, words, count * sizeof(*words)) == (ssize_t)(count * sizeof(*words)));
+	assert(write_array(fd, words) == (ssize_t)ARRAY_SIZE_BYTES(words));
 }
+
+#define write_words(fd, words) write_words_impl(fd, ARRAY_SIZE(words), &auto_arr(words))
 
 /* The client never reads, so the server's send waits for room until the destruction cancels it */
 TEST(destroy_client_with_blocked_send)
@@ -1158,7 +1163,7 @@ TEST(destroy_client_with_blocked_send)
 	loop_init(&loop);
 	test_server_start(&loop);
 	fd = test_server_connect_sndbuf(4096);
-	write_words(fd, requests, ARRAY_SIZE(requests));
+	write_words(fd, requests);
 	run_for(&loop, 100'000'000);
 	assert(!test_server.clients_done && test_server_sending());
 	test_server_destroy_clients();
@@ -1181,7 +1186,8 @@ TEST(disconnect_with_blocked_send)
 	assert(!socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds));
 	assert(!setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)));
 	client_connect_fd(&c, &loop, fds[0]);
-	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	memset_array(array_data, 0);
+	assert(poor_wl_array_add(&array, ARRAY_SIZE_BYTES(array_data)));
 	poor_wl_registry_bind(&c.registry, 1, &poor_test_global_interface, 1, &c.global);
 	for (int i = 0; i < 3; i++)
 		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
@@ -1382,8 +1388,8 @@ TEST(connect_with_environment)
 	assert(c.error == ENOENT);
 	client_disconnect(&c);
 	name[0] = '/';
-	memset(name + 1, 'a', sizeof(name) - 2);
-	name[sizeof(name) - 1] = '\0';
+	memset_array(arrview_shrink(1, 1, name), 'a');
+	*array_last_ref(name) = '\0';
 	assert(poor_wl_display_connect(&c.display, &loop, &memory, name, client_error, client_done) == -1 && errno == ENAMETOOLONG);
 	server_stop(&loop);
 	loop_fini(&loop);
@@ -1476,33 +1482,37 @@ static void write_error(int fd, uint32_t object, uint32_t code, const char *mess
 	uint32_t words[32];
 
 	assert(count <= ARRAY_SIZE(words));
+	auto event = arrview_first(count, words);
 	words[0] = 1;
-	words[1] = count * sizeof(*words) << 16 | DISPLAY_ERROR;
+	words[1] = ARRAY_SIZE_BYTES(event) << 16 | DISPLAY_ERROR;
 	words[2] = object;
 	words[3] = code;
 	words[4] = size;
-	words[count - 1] = 0;
+	*array_last_ref(event) = 0;
 	memcpy(words + 5, message, size);
-	write_words(fd, words, count);
+	write_words(fd, event);
 }
 
-static void write_words_with_fds(int fd, const uint32_t *words, size_t count, unsigned nfds)
+static void write_words_with_fds_impl(int fd, size_t count, const uint32_t (*words)[count], unsigned nfds)
 {
-	alignas(struct cmsghdr) char control[CMSG_SPACE(32 * sizeof(int))];
-	struct iovec iov = { (void *)words, count * sizeof(*words) };
-	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1, .msg_control = control, .msg_controllen = CMSG_SPACE(nfds * sizeof(int)) };
-	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
 	int fds[32];
+	alignas(struct cmsghdr) char control[CMSG_SPACE(ARRAY_SIZE_BYTES(fds))];
 
 	assert(nfds <= ARRAY_SIZE(fds));
-	for (unsigned i = 0; i < nfds; i++)
-		fds[i] = STDERR_FILENO;
+	auto sent = arrview_first(nfds, fds);
+	struct iovec iov = { (void *)*words, ARRAY_SIZE_BYTES(words) };
+	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1, .msg_control = control, .msg_controllen = CMSG_SPACE(ARRAY_SIZE_BYTES(sent)) };
+	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+
+	fill_array(sent, STDERR_FILENO);
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
-	cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
-	memcpy(CMSG_DATA(cmsg), fds, nfds * sizeof(int));
+	cmsg->cmsg_len = CMSG_LEN(ARRAY_SIZE_BYTES(sent));
+	memcpy(CMSG_DATA(cmsg), sent, ARRAY_SIZE_BYTES(sent));
 	assert(sendmsg(fd, &msg, 0) == (ssize_t)iov.iov_len);
 }
+
+#define write_words_with_fds(fd, words, nfds) write_words_with_fds_impl(fd, ARRAY_SIZE(words), &auto_arr(words), nfds)
 
 /* Events of unknown objects and of destroyed ones are dropped, the debug log tells about them */
 TEST(discarded_events)
@@ -1525,14 +1535,14 @@ TEST(discarded_events)
 	fd = connect_raw(&c, &loop);
 	poor_wl_registry_bind(&c.registry, 1, &poor_test_global_interface, 1, &c.global);
 	poor_test_global_destroy(&c.global);
-	write_words(fd, dropped, ARRAY_SIZE(dropped));
+	write_words(fd, dropped);
 	run_until(&loop, logged("received delete_id for unknown id (77)"));
 	assert(logged("discarded [unknown]#9.[event 0](0 fd, 8 byte)"));
 	assert(logged("discarded [zombie]#3.[event 2](0 fd, 12 byte)"));
-	write_words(fd, delete_id, 2);
+	write_words(fd, arrview_first(2, delete_id));
 	run_for(&loop, 20'000'000);
-	write_words(fd, delete_id + 2, 1);
-	write_words(fd, no_such_event, ARRAY_SIZE(no_such_event));
+	write_words(fd, arrview_cfront(2, delete_id));
+	write_words(fd, no_such_event);
 	run_until(&loop, c.error_called);
 	assert(c.error == EPROTO && logged("interface 'wl_display' has no event 5"));
 	client_disconnect(&c);
@@ -1553,7 +1563,7 @@ TEST(error_events)
 	int fds[5];
 
 	loop_init(&loop);
-	for (unsigned i = 0; i < ARRAY_SIZE(codes); i++) {
+	foreach_array_index(codes, i) {
 		fds[i] = connect_raw(&c[i], &loop);
 		write_error(fds[i], 1, codes[i], "error");
 		run_until(&loop, c[i].error_called);
@@ -1567,7 +1577,7 @@ TEST(error_events)
 	run_until(&loop, c[4].error_called);
 	assert(c[4].error == EPROTO && poor_wl_display_get_protocol_error(&c[4].display, &interface, &id) == 5);
 	assert(!interface && !id && logged("[destroyed object]: error 5: destroyed"));
-	for (unsigned i = 0; i < ARRAY_SIZE(c); i++) {
+	foreach_array_index(c, i) {
 		client_disconnect(&c[i]);
 		poor_loop_close_fd_or_submit(&loop, fds[i], 0);
 	}
@@ -1585,8 +1595,8 @@ TEST(malformed_events)
 	loop_init(&loop);
 	fds[0] = connect_raw(&a, &loop);
 	fds[1] = connect_raw(&b, &loop);
-	write_words(fds[0], too_large, ARRAY_SIZE(too_large));
-	write_words(fds[1], missing_argument, ARRAY_SIZE(missing_argument));
+	write_words(fds[0], too_large);
+	write_words(fds[1], missing_argument);
 	run_until(&loop, a.error_called && b.error_called);
 	assert(a.error == E2BIG && b.error == EINVAL);
 	client_disconnect(&a);
@@ -1607,9 +1617,9 @@ TEST(server_sends_too_many_fds)
 	loop_init(&loop);
 	fds[0] = connect_raw(&a, &loop);
 	fds[1] = connect_raw(&b, &loop);
-	write_words_with_fds(fds[0], delete_id, ARRAY_SIZE(delete_id), POOR_WL_CONNECTION_MAX_FDS + 1);
+	write_words_with_fds(fds[0], delete_id, POOR_WL_CONNECTION_MAX_FDS + 1);
 	for (unsigned i = 0; i < POOR_WL_CONNECTION_FDS / POOR_WL_CONNECTION_MAX_FDS + 1; i++)
-		write_words_with_fds(fds[1], delete_id, ARRAY_SIZE(delete_id), POOR_WL_CONNECTION_MAX_FDS);
+		write_words_with_fds(fds[1], delete_id, POOR_WL_CONNECTION_MAX_FDS);
 	run_until(&loop, a.error_called && b.error_called);
 	assert(a.error == EOVERFLOW && b.error == EOVERFLOW);
 	client_disconnect(&a);
