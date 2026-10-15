@@ -148,7 +148,9 @@ tests = {
 		],
 		'deps': [ poor_loop_dep ],
 	},
-	'enum-validator-test': {},
+	'enum-validator-test': {
+		'deps': [ poor_loop_dep ],
+	},
 }
 
 # Tests that run io_uring run with each ring setup
