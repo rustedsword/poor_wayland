@@ -45,6 +45,8 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
   protocol on the wire keeps its names.
 
 It needs Linux 6.11 or newer, liburing 2.7 or newer and a C23 compiler.
+An installed poor_loop, which must be the latest one, is used if there is
+one, otherwise the submodule: `--force-fallback-for=poor_loop` forces it.
 wayland-cursor and wayland-egl are not built.
 
 [examples/simple-shm.c](examples/simple-shm.c) is a small client, built with

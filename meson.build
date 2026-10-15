@@ -44,9 +44,9 @@ if get_option('libraries')
 	if host_machine.system() != 'linux'
 		error('Wayland libraries run on io_uring, which needs Linux')
 	endif
-	# The subproject, not an installed poor_loop, so the headers match the library. First, so its bundled liburing
-	# and poor_base are used if they aren't installed.
-	poor_loop_dep = subproject('poor_loop').get_variable('poor_loop_dep')
+	# An installed poor_loop is taken for the latest one. First, so that without it the liburing and poor_base
+	# bundled with the submodule are used if they aren't installed either.
+	poor_loop_dep = dependency('poor_loop', fallback: 'poor_loop')
 	liburing_dep = dependency('liburing', version: '>=2.7', include_type: 'system')
 	ffi_dep = dependency('libffi')
 endif
