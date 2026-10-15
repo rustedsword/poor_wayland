@@ -128,13 +128,9 @@ is_dtd_valid(FILE *input, const char *filename)
 		abort();
 	}
 
+	/* The parser reports what is wrong with XML that libxml can't read */
 	doc = xmlCtxtReadFd(ctx, fd, filename, NULL, 0);
-	if (!doc) {
-		fprintf(stderr, "Failed to read XML\n");
-		abort();
-	}
-
-	rc = xmlValidateDtd(dtdctx, doc, dtd);
+	rc = doc && xmlValidateDtd(dtdctx, doc, dtd);
 	xmlFreeDoc(doc);
 	xmlFreeParserCtxt(ctx);
 	xmlFreeDtd(dtd);
@@ -1413,7 +1409,7 @@ emit_stubs(struct poor_wl_list *message_list, struct interface *interface)
 				printf(", const struct poor_wl_interface *interface"
 				       ", uint32_t version");
 			printf(", ");
-			if (a->type == NEW_ID && a->interface_name == NULL)
+			if ((a->type == NEW_ID || a->type == OBJECT) && a->interface_name == NULL)
 				printf("void *");
 			else if (a->type == NEW_ID)
 				printf("struct %s *", a->interface_name);

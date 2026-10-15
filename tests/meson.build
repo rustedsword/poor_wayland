@@ -129,6 +129,14 @@ tests = {
 		'deps': [ wayland_client_dep, wayland_server_dep ],
 		'runtime_deps': [ exec_fd_leak_checker ],
 	},
+	'server-test': {
+		'extra_sources': [
+			wayland_server_protocol_h,
+			tests_server_protocol_h,
+			tests_protocol_c,
+		],
+		'deps': [ wayland_server_dep ],
+	},
 	'headers-test': {
 		'extra_sources': [
 			wayland_client_protocol_h,
@@ -144,7 +152,7 @@ tests = {
 }
 
 # Tests that run io_uring run with each ring setup
-ring_tests = [ 'connection-test', 'display-test' ]
+ring_tests = [ 'connection-test', 'display-test', 'server-test' ]
 
 foreach test_name, test_extras : tests
 	test_extra_sources = test_extras.get('extra_sources', [])

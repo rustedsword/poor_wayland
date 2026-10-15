@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -53,12 +54,18 @@ static const struct poor_wl_interface *test_types[] = {
 	nullptr, nullptr, nullptr, nullptr, &test_interface, &test_interface, nullptr, nullptr,
 };
 
+static const struct poor_wl_interface *many_types[POOR_WL_CLOSURE_MAX_ARGS + 1];
+
 static const struct poor_wl_message test_messages[] = {
 	{ "all", "iufs?onah", test_types },
 	{ "string", "s", test_types },
 	{ "nullable", "?s?o", test_types + 3 },
 	{ "fds", "hhh", test_types },
 	{ "new_id", "n", test_types + 5 },
+	{ "object", "o", test_types + 4 },
+	{ "array", "a", test_types },
+	{ "many", "uuuuuuuuuuuuuuuuuuuuu", many_types },
+	{ "string_and_uint", "su", test_types },
 };
 
 static const struct poor_wl_interface test_interface = {
@@ -217,6 +224,10 @@ TEST(demarshal_invalid_messages)
 	static const uint32_t null_new_id[] = { 3, 12 << 16 | 4, 0 };
 	static const uint32_t own_new_id[] = { 3, 12 << 16 | 4, POOR_WL_SERVER_ID_START };
 	static const uint32_t missing_fd[] = { 3, 8 << 16 | 3 };
+	static const uint32_t missing_object[] = { 3, 8 << 16 | 5 };
+	static const uint32_t null_object[] = { 3, 12 << 16 | 5, 0 };
+	static const uint32_t short_array[] = { 3, 12 << 16 | 6, 100 };
+	static const uint32_t too_many_args[] = { 3, 8 << 16 | 7 };
 
 	loop_init();
 	demarshal_fails(short_header, ARRAY_SIZE(short_header), 0);
@@ -227,7 +238,27 @@ TEST(demarshal_invalid_messages)
 	demarshal_fails(null_new_id, ARRAY_SIZE(null_new_id), 0);
 	demarshal_fails(own_new_id, ARRAY_SIZE(own_new_id), 0);
 	demarshal_fails(missing_fd, ARRAY_SIZE(missing_fd), 2);
+	demarshal_fails(missing_object, ARRAY_SIZE(missing_object), 0);
+	demarshal_fails(null_object, ARRAY_SIZE(null_object), 0);
+	demarshal_fails(short_array, ARRAY_SIZE(short_array), 0);
+	demarshal_fails(too_many_args, ARRAY_SIZE(too_many_args), 0);
 	loop_fini();
+}
+
+TEST(marshal_null_arguments)
+{
+	struct poor_wl_object sender = { &test_interface, nullptr, 3 };
+	union poor_wl_argument args[POOR_WL_CLOSURE_MAX_ARGS + 1];
+	struct poor_wl_closure closure;
+
+	args[0].o = nullptr;
+	assert(poor_wl_closure_marshal(&closure, &sender, 5, args, &test_messages[5]) == -1 && errno == EINVAL);
+	assert(poor_wl_closure_marshal(&closure, &sender, 4, args, &test_messages[4]) == -1 && errno == EINVAL);
+	args[0].a = nullptr;
+	assert(poor_wl_closure_marshal(&closure, &sender, 6, args, &test_messages[6]) == -1 && errno == EINVAL);
+	for (unsigned i = 0; i < ARRAY_SIZE(args); i++)
+		args[i].u = i;
+	assert(poor_wl_closure_marshal(&closure, &sender, 7, args, &test_messages[7]) == -1 && errno == EINVAL);
 }
 
 TEST(lookup_unknown_object)
@@ -288,6 +319,42 @@ TEST(message_larger_than_maximum)
 	string[POOR_WL_MAX_MESSAGE_SIZE - 13] = '\0';
 	assert(!send_message(&client, &sender, 1, args));
 	assert(client.connection.out.head == POOR_WL_MAX_MESSAGE_SIZE);
+	loop_fini();
+}
+
+/* The string fills the message, the uint after it doesn't fit */
+TEST(message_full_before_last_argument)
+{
+	struct poor_wl_object sender = { &test_interface, nullptr, 3 };
+	char string[POOR_WL_MAX_MESSAGE_SIZE - 12];
+	struct endpoint client;
+	union poor_wl_argument args[2];
+
+	loop_init();
+	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
+	memset(string, 'a', sizeof(string) - 1);
+	string[sizeof(string) - 1] = '\0';
+	args[0].s = string;
+	args[1].u = 1;
+	assert(send_message(&client, &sender, 8, args) == -1 && errno == E2BIG);
+	assert(!poor_wl_connection_has_output(&client.connection));
+	loop_fini();
+}
+
+/* The copies of the fds before the one that can't be copied are closed */
+TEST(send_invalid_fd)
+{
+	struct poor_wl_object sender = { &test_interface, nullptr, 3 };
+	struct endpoint client;
+	union poor_wl_argument args[3];
+
+	loop_init();
+	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
+	args[0].h = args[1].h = STDERR_FILENO;
+	args[2].h = -1;
+	assert(send_message(&client, &sender, 3, args) == -1 && errno == EBADF);
+	assert(client.connection.fds_out.head == client.connection.fds_out.tail);
+	assert(!poor_wl_connection_has_output(&client.connection));
 	loop_fini();
 }
 
@@ -443,4 +510,51 @@ TEST(closure_print)
 	poor_wl_closure_print(&closure, &sender, true, false, nullptr, false);
 	poor_wl_log_handler = nullptr;
 	assert(strstr(log_buffer, " -> test#3.all(-5, 7, 1.25000000, \"str\", nil, new id test#4, array[3], fd 2)\n"));
+}
+
+TEST(env_tokens)
+{
+	assert(poor_wl_check_env_token("client", "client"));
+	assert(poor_wl_check_env_token(",,server,,client", "client"));
+	assert(poor_wl_check_env_token("server,client,", "server"));
+	assert(!poor_wl_check_env_token("server,clients", "client"));
+	assert(!poor_wl_check_env_token("cli,server", "client"));
+	assert(!poor_wl_check_env_token(",,,", "client"));
+	assert(!poor_wl_check_env_token(nullptr, "client"));
+}
+
+static uint32_t no_id(const union poor_wl_argument *)
+{
+	return 0;
+}
+
+TEST(closure_print_details)
+{
+	struct poor_wl_object sender = { &test_interface, nullptr, 3 }, new_object = { &test_interface, nullptr, 4 };
+	struct poor_wl_closure closure;
+	char bytes[1];
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(bytes);
+	union poor_wl_argument args[8];
+
+	setenv("WAYLAND_DEBUG", "thread_id", 1);
+	args[0].s = nullptr;
+	args[1].o = &sender;
+	assert(!poor_wl_closure_marshal(&closure, &sender, 2, args, &test_messages[2]));
+	poor_wl_log_handler = log_to_buffer;
+	poor_wl_closure_print(&closure, &sender, false, true, nullptr, false);
+	assert(strstr(log_buffer, "TID#") && strstr(log_buffer, "discarded test#3.nullable(nil, test#3)\n"));
+	poor_wl_closure_print(&closure, &sender, false, false, nullptr, true);
+	assert(strstr(log_buffer, "\033["));
+	args[0].i = 0;
+	args[1].u = 0;
+	args[2].f = poor_wl_fixed_from_double(-0.5);
+	args[3].s = "s";
+	args[4].o = nullptr;
+	args[5].o = &new_object;
+	args[6].a = &array;
+	args[7].h = 1;
+	assert(!poor_wl_closure_marshal(&closure, &sender, 0, args, &test_messages[0]));
+	poor_wl_closure_print(&closure, &sender, false, false, no_id, false);
+	poor_wl_log_handler = nullptr;
+	assert(strstr(log_buffer, "test#3.all(0, 0, -0.50000000, \"s\", nil, new id test#nil, array[0], fd 1)\n"));
 }

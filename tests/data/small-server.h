@@ -16,6 +16,12 @@ struct poor_wl_resource;
 
 /**
  * @page page_poor_small_test The poor_small_test protocol
+ * a protocol for the scanner tests
+ *
+ * @section page_desc_poor_small_test Description
+ *
+ * It has every kind of argument.
+ *
  * @section page_ifaces_poor_small_test Interfaces
  * - @subpage page_iface_poor_intf_A - the thing A
  * @section page_copyright_poor_small_test Copyright
@@ -217,6 +223,21 @@ struct poor_intf_A_interface {
 	 */
 	void (*destroy)(struct poor_wl_client *client,
 			struct poor_intf_A_resource *resource);
+	/**
+	 * @param interface name of the objects interface
+	 * @param version version of the objects interface
+	 * @since 2
+	 */
+	void (*rq3)(struct poor_wl_client *client,
+		    struct poor_intf_A_resource *resource,
+		    const char *interface, uint32_t version, uint32_t untyped_new,
+		    struct poor_another_intf_resource *obj);
+	/**
+	 * @since 2
+	 */
+	void (*rq4)(struct poor_wl_client *client,
+		    struct poor_intf_A_resource *resource,
+		    struct poor_wl_resource *any);
 };
 
 /** @ingroup iface_poor_intf_A */
@@ -238,6 +259,7 @@ poor_intf_A_resource_set_implementation(struct poor_intf_A_resource *resource,
 
 #define POOR_INTF_A_HEY 0
 #define POOR_INTF_A_YO 1
+#define POOR_INTF_A_ANY_OBJECT 2
 
 /**
  * @ingroup iface_poor_intf_A
@@ -247,6 +269,10 @@ poor_intf_A_resource_set_implementation(struct poor_intf_A_resource *resource,
  * @ingroup iface_poor_intf_A
  */
 #define POOR_INTF_A_YO_SINCE_VERSION 2
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_ANY_OBJECT_SINCE_VERSION 3
 
 /**
  * @ingroup iface_poor_intf_A
@@ -260,6 +286,14 @@ poor_intf_A_resource_set_implementation(struct poor_intf_A_resource *resource,
  * @ingroup iface_poor_intf_A
  */
 #define POOR_INTF_A_DESTROY_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_RQ3_SINCE_VERSION 2
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_RQ4_SINCE_VERSION 2
 
 /**
  * @ingroup iface_poor_intf_A
@@ -281,6 +315,17 @@ static inline void
 poor_intf_A_send_yo(struct poor_intf_A_resource *resource_)
 {
 	poor_wl_resource_post_event(&resource_->resource, POOR_INTF_A_YO);
+}
+
+/**
+ * @ingroup iface_poor_intf_A
+ * Sends an any_object event to the client owning the resource.
+ * @param resource_ The client's resource
+ */
+static inline void
+poor_intf_A_send_any_object(struct poor_intf_A_resource *resource_, struct poor_wl_resource *any)
+{
+	poor_wl_resource_post_event(&resource_->resource, POOR_INTF_A_ANY_OBJECT, any);
 }
 
 #ifdef  __cplusplus

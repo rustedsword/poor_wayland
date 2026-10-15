@@ -44,22 +44,29 @@ static const struct poor_wl_interface *poor_small_test_types[] = {
 	NULL,
 	NULL,
 	&poor_another_intf_interface,
+	NULL,
+	NULL,
+	NULL,
+	&poor_another_intf_interface,
 };
 
 static const struct poor_wl_message poor_intf_A_requests[] = {
 	{ "rq1", "sun", poor_small_test_types + 0 },
 	{ "rq2", "nsiufho", poor_small_test_types + 3 },
 	{ "destroy", "", poor_small_test_types + 0 },
+	{ "rq3", "2suno", poor_small_test_types + 10 },
+	{ "rq4", "2?o", poor_small_test_types + 0 },
 };
 
 static const struct poor_wl_message poor_intf_A_events[] = {
 	{ "hey", "", poor_small_test_types + 0 },
 	{ "yo", "2", poor_small_test_types + 0 },
+	{ "any_object", "3o", poor_small_test_types + 0 },
 };
 
 POOR_WL_EXPORT const struct poor_wl_interface poor_intf_A_interface = {
 	"intf_A", 3,
-	3, poor_intf_A_requests,
-	2, poor_intf_A_events,
+	5, poor_intf_A_requests,
+	3, poor_intf_A_events,
 };
 

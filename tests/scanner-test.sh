@@ -50,6 +50,29 @@ verify_error() {
 	grep -q "<stdin>:$3: error:" "$TEST_OUTPUT_DIR/$2" && echo "$1 PASS" || fail "$1 line number check"
 }
 
+# The protocol comes on stdin and goes to a file first: the scanner rewinds its input
+check_scanner() {
+	echo
+	echo "Checking that the scanner $2 exits with $1 and prints: $3"
+
+	cat > "$TEST_OUTPUT_DIR/check.xml" || hard_fail "$3"
+	"$WAYLAND_SCANNER" $2 < "$TEST_OUTPUT_DIR/check.xml" >/dev/null 2>"$TEST_OUTPUT_DIR/check.log"
+	[ $? -eq "$1" ] || fail "$3 exit status"
+	grep -qF -- "$3" "$TEST_OUTPUT_DIR/check.log" && echo "$3 PASS" || fail "$3 output"
+}
+
+check_command() {
+	expected_status=$1
+	expected_output=$2
+	shift 2
+	echo
+	echo "Checking that the scanner $* exits with $expected_status and prints: $expected_output"
+
+	"$WAYLAND_SCANNER" "$@" </dev/null >"$TEST_OUTPUT_DIR/command.log" 2>&1
+	[ $? -eq "$expected_status" ] || fail "$* exit status"
+	grep -qF -- "$expected_output" "$TEST_OUTPUT_DIR/command.log" && echo "$* PASS" || fail "$* output"
+}
+
 generate_and_compare "code" "example.xml" "example-code.c"
 generate_and_compare "client-header" "example.xml" "example-client.h"
 generate_and_compare "server-header" "example.xml" "example-server.h"
@@ -79,5 +102,294 @@ verify_error "bad-identifier-event.xml" "bad-identifier-event.log" 6
 verify_error "bad-identifier-interface.xml" "bad-identifier-interface.log" 3
 verify_error "bad-identifier-protocol.xml" "bad-identifier-protocol.log" 2
 verify_error "bad-identifier-request.xml" "bad-identifier-request.log" 6
+
+check_scanner 1 server-header "<stdin>:1: error: no protocol name given" <<'XML'
+<protocol>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: no interface name given" <<'XML'
+<protocol name="p">
+  <interface version="1"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: no interface version given" <<'XML'
+<protocol name="p">
+  <interface name="i"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: wrong version (1x)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1x"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: wrong version (99999999999)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="99999999999"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: frozen interface must have version 1" <<'XML'
+<protocol name="p">
+  <interface name="i" version="2" frozen="true"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:2: error: invalid value (yes) frozen attribute" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1" frozen="yes"/>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: description without summary" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <description>text</description>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: no request name given" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: destroy request should be destructor type" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="destroy"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: invalid integer (x)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r" since="x"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: since (2) larger than version (1)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r" since="2"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: invalid integer (x)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <event name="e" deprecated-since="x"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: deprecated-since (2) larger than version (1)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <event name="e" deprecated-since="2"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: deprecated-since version (2) smaller or equal to since version (2)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="2">
+    <request name="r" since="2" deprecated-since="2"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: no argument name given" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r">
+      <arg type="int"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: unknown type (float)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r">
+      <arg name="a" type="float"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: interface attribute not allowed for type int" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r">
+      <arg name="a" type="int" interface="i"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: invalid value for allow-null attribute (yes)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r">
+      <arg name="a" type="string" allow-null="yes"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: allow-null is only valid for objects, strings, and arrays" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <request name="r">
+      <arg name="a" type="int" allow-null="true"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: no enum name given" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <enum>
+      <entry name="a" value="0"/>
+    </enum>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: no entry name given" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <enum name="e">
+      <entry value="0"/>
+    </enum>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:4: error: deprecated-since version (2) smaller or equal to since version (2)" <<'XML'
+<protocol name="p">
+  <interface name="i" version="2">
+    <enum name="e">
+      <entry name="a" value="0" since="2" deprecated-since="2"/>
+    </enum>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:3: error: enumeration e was empty" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <enum name="e">
+    </enum>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:7: error: bitfield-style enum must only be referenced by uint" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <enum name="e" bitfield="true">
+      <entry name="a" value="1"/>
+    </enum>
+    <request name="r">
+      <arg name="a" type="int" enum="e"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 1 server-header "<stdin>:7: error: enumeration-style argument has wrong type" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1">
+    <enum name="e">
+      <entry name="a" value="1"/>
+    </enum>
+    <request name="r">
+      <arg name="a" type="string" enum="e"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+check_scanner 0 server-header "<stdin>:4: warning: since version not increasing" <<'XML'
+<protocol name="p">
+  <interface name="i" version="2">
+    <request name="a" since="2"/>
+    <request name="b"/>
+  </interface>
+</protocol>
+XML
+
+check_scanner 0 server-header "<stdin>:5: warning: since version not increasing" <<'XML'
+<protocol name="p">
+  <interface name="i" version="2">
+    <enum name="e">
+      <entry name="a" value="0" since="2"/>
+      <entry name="b" value="1"/>
+    </enum>
+  </interface>
+</protocol>
+XML
+
+check_scanner 0 client-header "<stdin>:3: warning: request 'poor_i::r' has more than one new_id arg, not emitting stub" <<'XML'
+<protocol name="p">
+  <interface name="i" version="1" frozen="true">
+    <request name="r">
+      <arg name="a" type="new_id" interface="i"/>
+      <arg name="b" type="new_id" interface="i"/>
+      <arg name="c" type="uint" enum="missing"/>
+    </request>
+  </interface>
+</protocol>
+XML
+
+long=$(printf "%9000s" "" | tr " " a)
+check_scanner 1 server-header "too much character data" <<XML
+<protocol name="p">
+  <description summary="long">$long</description>
+</protocol>
+XML
+
+check_scanner 0 server-header "XML failed validation against built-in DTD" <<'XML'
+<protocol name="p" color="red">
+</protocol>
+XML
+
+check_scanner 1 "--strict server-header" "XML failed validation against built-in DTD" <<'XML'
+<protocol name="p" color="red">
+</protocol>
+XML
+
+check_scanner 1 server-header "Error parsing XML at line 2" <<'XML'
+<protocol name="p">
+</protocl>
+XML
+
+check_command 0 "usage:" --help
+check_command 0 "usage:" help
+check_command 0 "poor_wayland_scanner " --version
+check_command 1 "usage:"
+check_command 1 "usage:" --bogus server-header
+check_command 1 "usage:" bogus-mode
+check_command 1 "Could not open input file" client-header "$TEST_DATA_DIR/missing.xml" "$TEST_OUTPUT_DIR/missing.h"
+check_command 1 "Could not open output file" client-header "$TEST_DATA_DIR/small.xml" "$TEST_OUTPUT_DIR/missing/small.h"
+
+echo
+echo "Testing generation from and to files"
+"$WAYLAND_SCANNER" client-header "$TEST_DATA_DIR/small.xml" "$TEST_OUTPUT_DIR/small-client-file.h" || hard_fail "files"
+"$SED" -i -e 's/Generated by poor_wayland_scanner [0-9.]*/SCANNER TEST/' "$TEST_OUTPUT_DIR/small-client-file.h" || hard_fail "files"
+diff -q "$TEST_DATA_DIR/small-client.h" "$TEST_OUTPUT_DIR/small-client-file.h" && echo "files PASS" || fail "files"
 
 exit $RETCODE

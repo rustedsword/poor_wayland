@@ -13,6 +13,12 @@ extern "C" {
 
 /**
  * @page page_poor_small_test The poor_small_test protocol
+ * a protocol for the scanner tests
+ *
+ * @section page_desc_poor_small_test Description
+ *
+ * It has every kind of argument.
+ *
  * @section page_ifaces_poor_small_test Interfaces
  * - @subpage page_iface_poor_intf_A - the thing A
  * @section page_copyright_poor_small_test Copyright
@@ -152,6 +158,12 @@ struct poor_intf_A_listener {
 	 */
 	void (*yo)(void *data,
 		   struct poor_intf_A *poor_intf_A);
+	/**
+	 * @since 3
+	 */
+	void (*any_object)(void *data,
+			   struct poor_intf_A *poor_intf_A,
+			   void *any);
 };
 
 /**
@@ -168,6 +180,8 @@ poor_intf_A_add_listener(struct poor_intf_A *poor_intf_A,
 #define POOR_INTF_A_RQ1 0
 #define POOR_INTF_A_RQ2 1
 #define POOR_INTF_A_DESTROY 2
+#define POOR_INTF_A_RQ3 3
+#define POOR_INTF_A_RQ4 4
 
 /**
  * @ingroup iface_poor_intf_A
@@ -177,6 +191,10 @@ poor_intf_A_add_listener(struct poor_intf_A *poor_intf_A,
  * @ingroup iface_poor_intf_A
  */
 #define POOR_INTF_A_YO_SINCE_VERSION 2
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_ANY_OBJECT_SINCE_VERSION 3
 
 /**
  * @ingroup iface_poor_intf_A
@@ -190,6 +208,14 @@ poor_intf_A_add_listener(struct poor_intf_A *poor_intf_A,
  * @ingroup iface_poor_intf_A
  */
 #define POOR_INTF_A_DESTROY_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_RQ3_SINCE_VERSION 2
+/**
+ * @ingroup iface_poor_intf_A
+ */
+#define POOR_INTF_A_RQ4_SINCE_VERSION 2
 
 /** @ingroup iface_poor_intf_A */
 static inline void
@@ -239,6 +265,26 @@ poor_intf_A_destroy(struct poor_intf_A *poor_intf_A)
 {
 	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_intf_A,
 			 POOR_INTF_A_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_intf_A), POOR_WL_MARSHAL_FLAG_DESTROY);
+}
+
+/**
+ * @ingroup iface_poor_intf_A
+ */
+static inline void *
+poor_intf_A_rq3(struct poor_intf_A *poor_intf_A, const struct poor_wl_interface *interface, uint32_t version, void *untyped_new, struct poor_another_intf *obj)
+{
+	return (void *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_intf_A,
+			 POOR_INTF_A_RQ3, interface, version, 0, interface->name, version, untyped_new, obj);
+}
+
+/**
+ * @ingroup iface_poor_intf_A
+ */
+static inline void
+poor_intf_A_rq4(struct poor_intf_A *poor_intf_A, void *any)
+{
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_intf_A,
+			 POOR_INTF_A_RQ4, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_intf_A), 0, any);
 }
 
 #ifdef  __cplusplus

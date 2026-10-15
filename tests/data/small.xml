@@ -26,6 +26,10 @@
     SOFTWARE.
   </copyright>
 
+  <description summary="a protocol for the scanner tests">
+    It has every kind of argument.
+  </description>
+
   <interface name="intf_A" version="3">
     <description summary="the thing A">
       A useless example trying to tickle the scanner.
@@ -47,9 +51,22 @@
 
     <request name="destroy" type="destructor"/>
 
+    <request name="rq3" since="2">
+      <arg name="untyped_new" type="new_id"/>
+      <arg name="obj" type="object" interface="another_intf"/>
+    </request>
+
+    <request name="rq4" since="2">
+      <arg name="any" type="object" allow-null="true"/>
+    </request>
+
     <event name="hey"/>
 
     <event name="yo" since="2" deprecated-since="3"/>
+
+    <event name="any_object" since="3">
+      <arg name="any" type="object"/>
+    </event>
 
     <enum name="foo">
 	<entry name="first" value="0" summary="this is the first"/>

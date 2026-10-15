@@ -204,3 +204,18 @@ TEST(map_iter_skips_empty_entries)
 	poor_wl_map_for_each(&map, count, &n);
 	assert(n == 2);
 }
+
+/* The ids that the peer allocates are not removed */
+TEST(map_remove_of_peer_id)
+{
+	struct map_memory memory;
+	struct poor_wl_map map;
+	uint32_t a;
+
+	map_init(&map, POOR_WL_MAP_CLIENT_SIDE, &memory);
+	assert(!poor_wl_map_insert_at(&map, 1, POOR_WL_SERVER_ID_START, &a));
+	poor_wl_map_remove(&map, POOR_WL_SERVER_ID_START);
+	assert(poor_wl_map_lookup(&map, POOR_WL_SERVER_ID_START) == &a);
+	assert(poor_wl_map_lookup_flags(&map, POOR_WL_SERVER_ID_START) == 1);
+	assert(!poor_wl_map_lookup_flags(&map, POOR_WL_SERVER_ID_START + 1));
+}

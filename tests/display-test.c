@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -55,10 +56,13 @@ static void watchdog_fire(struct poor_loop *, struct poor_loop_timer *)
 static struct poor_loop_timer watchdog = POOR_LOOP_TIMER_INIT(watchdog_fire);
 
 static unsigned log_requests, log_events;
+static char log_text[65536];
+static size_t log_len;
 
 static void log_handler(const char *fmt, va_list ap)
 {
 	char line[8192];
+	size_t len;
 
 	vsnprintf(line, sizeof(line), fmt, ap);
 	if (strstr(line, " -> "))
@@ -66,6 +70,16 @@ static void log_handler(const char *fmt, va_list ap)
 	else if (strstr(line, "] test_global#"))
 		log_events++;
 	fprintf(stderr, "client: %s", line);
+	len = strlen(line);
+	if (log_len + len < sizeof(log_text)) {
+		memcpy(log_text + log_len, line, len + 1);
+		log_len += len;
+	}
+}
+
+static bool logged(const char *text)
+{
+	return strstr(log_text, text);
 }
 
 static void loop_init(struct poor_loop *loop)
@@ -1177,5 +1191,457 @@ TEST(disconnect_with_blocked_send)
 	assert(c.display.send_op.pending && !c.error_called);
 	client_disconnect(&c);
 	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	loop_fini(&loop);
+}
+
+TEST(proxy_accessors)
+{
+	static const char *const tag = "tag";
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	poor_test_global_add_listener(&c.global, &global_listener, &c);
+	assert(poor_wl_proxy_get_listener(&c.global.proxy) == &global_listener);
+	assert(poor_wl_proxy_add_dispatcher(&c.global.proxy, dispatcher, &c, nullptr) == -1);
+	assert(poor_test_global_get_user_data(&c.global) == &c);
+	poor_test_global_set_user_data(&c.global, &loop);
+	assert(poor_test_global_get_user_data(&c.global) == &loop);
+	assert(!poor_wl_proxy_get_tag(&c.global.proxy));
+	poor_wl_proxy_set_tag(&c.global.proxy, &tag);
+	assert(poor_wl_proxy_get_tag(&c.global.proxy) == &tag);
+	assert(!strcmp(poor_wl_proxy_get_class(&c.global.proxy), "test_global"));
+	assert(poor_wl_proxy_get_interface(&c.global.proxy) == &poor_test_global_interface);
+	assert(poor_wl_proxy_get_display(&c.global.proxy) == &c.display);
+	assert(!poor_wl_proxy_get_version(&c.display.proxy));
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* After an error requests go nowhere, but new objects still get their memory initialized */
+TEST(requests_after_error)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	poor_test_global_post_error(&c.global, 7);
+	run_until(&loop, c.error_called);
+	assert(poor_wl_display_flush(&c.display) == -1 && errno == EPROTO);
+	assert(poor_test_global_create_child(&c.global, &c.child) == &c.child);
+	assert(poor_test_child_get_version(&c.child) == 2);
+	poor_test_global_flood(&c.global, 1, 1);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(invalid_request_arguments)
+{
+	char array_data[1];
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(array_data);
+	struct poor_loop loop;
+	struct client a, b;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&a, &loop, test_server_connect());
+	client_connect_fd(&b, &loop, test_server_connect());
+	client_bind_global(&a, 2);
+	client_bind_global(&b, 2);
+	poor_test_global_echo(&a.global, 0, 0, 0, nullptr, nullptr, nullptr, &array, STDERR_FILENO);
+	poor_test_global_echo(&b.global, 0, 0, 0, "", nullptr, nullptr, &array, -1);
+	run_until(&loop, a.error_called && b.error_called);
+	assert(a.error == EINVAL && logged("Error marshalling request for test_global.echo"));
+	assert(b.error == EBADF && logged("Error sending request for test_global.echo"));
+	client_disconnect(&a);
+	client_disconnect(&b);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* Ids 1 to 3 go to the display, the registry and the global */
+TEST(client_runs_out_of_ids)
+{
+	struct poor_wl_connection_memory memory;
+	struct poor_test_child children[4];
+	struct poor_loop loop;
+	unsigned count = 0;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_init(&c, &loop);
+	memory = client_memory(&c);
+	memory.client_objects_size = 4;
+	poor_wl_display_connect_to_fd(&c.display, &loop, &memory, test_server_connect(), client_error, client_done);
+	client_get_registry(&c);
+	client_bind_global(&c, 2);
+	while (count < ARRAY_SIZE(children) && poor_test_global_create_child(&c.global, &children[count]))
+		count++;
+	assert(!count && !c.error_called);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static struct poor_test_child spawned[2];
+static unsigned spawned_count;
+
+static struct poor_wl_proxy *new_spawned(struct poor_wl_display *, struct poor_wl_proxy *, const struct poor_wl_interface *)
+{
+	return &spawned[spawned_count++].proxy;
+}
+
+/* The client maps one id of the server only, the second new object is not even created */
+TEST(server_created_objects_run_out)
+{
+	struct poor_wl_connection_memory memory;
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_init(&c, &loop);
+	memory = client_memory(&c);
+	memory.server_objects_size = 1;
+	poor_wl_display_connect_to_fd(&c.display, &loop, &memory, test_server_connect(), client_error, client_done);
+	poor_wl_display_set_new_proxy(&c.display, new_spawned);
+	client_get_registry(&c);
+	client_bind_global(&c, 2);
+	poor_test_global_spawn_child(&c.global);
+	poor_test_global_spawn_child(&c.global);
+	run_until(&loop, c.error_called);
+	assert(c.error == ENOSPC && spawned_count == 1);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* The server deletes the id of the registry before the client destroys its proxy */
+TEST(proxy_destroyed_after_its_id_was_deleted)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_roundtrip(&c);
+	poor_wl_registry_bind(&c.registry, c.fixes_name, &poor_wl_fixes_interface, 1, &c.fixes);
+	poor_wl_fixes_destroy_registry(&c.fixes, &c.registry);
+	client_roundtrip(&c);
+	poor_wl_registry_destroy(&c.registry);
+	client_roundtrip(&c);
+	assert(!c.error_called);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(debug_output_of_new_objects)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	setenv("WAYLAND_DEBUG", "1", 1);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	poor_wl_display_set_new_proxy(&c.display, new_proxy);
+	client_bind_global(&c, 2);
+	poor_test_global_add_listener(&c.global, &global_listener, &c);
+	poor_test_global_spawn_child(&c.global);
+	run_until(&loop, c.events == 1);
+	assert(logged("test_global#3.child_spawned(new id test_child#4278190080)"));
+	poor_test_child_destroy(&c.spawned);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(connect_with_environment)
+{
+	char name[200];
+	struct poor_loop loop;
+	struct client c;
+	struct poor_wl_connection_memory memory = client_memory(&c);
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen("wayland-env");
+	run_until(&loop, test_server.socket_ready);
+	setenv("WAYLAND_DISPLAY", "wayland-env", 1);
+	connect_by_name(&c, &loop, nullptr);
+	client_roundtrip(&c);
+	assert(c.synced);
+	client_disconnect(&c);
+	unsetenv("WAYLAND_DISPLAY");
+	connect_by_name(&c, &loop, nullptr);
+	run_until(&loop, c.error_called);
+	assert(c.error == ENOENT);
+	client_disconnect(&c);
+	name[0] = '/';
+	memset(name + 1, 'a', sizeof(name) - 2);
+	name[sizeof(name) - 1] = '\0';
+	assert(poor_wl_display_connect(&c.display, &loop, &memory, name, client_error, client_done) == -1 && errno == ENAMETOOLONG);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(invalid_wayland_socket)
+{
+	struct poor_loop loop;
+	struct client c;
+	struct poor_wl_connection_memory memory = client_memory(&c);
+
+	loop_init(&loop);
+	setenv("WAYLAND_SOCKET", "3x", 1);
+	assert(poor_wl_display_connect(&c.display, &loop, &memory, nullptr, client_error, client_done) == -1 && errno == EINVAL);
+	setenv("WAYLAND_SOCKET", "999", 1);
+	assert(poor_wl_display_connect(&c.display, &loop, &memory, nullptr, client_error, client_done) == -1 && errno == EBADF);
+	unsetenv("WAYLAND_SOCKET");
+	loop_fini(&loop);
+}
+
+TEST(disconnect_while_connecting)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	connect_by_name(&c, &loop, "wayland-nobody");
+	client_disconnect(&c);
+	assert(!c.error_called);
+	loop_fini(&loop);
+}
+
+/* The fd limit leaves none for the socket */
+TEST(connect_without_fds)
+{
+	struct rlimit limit, low;
+	struct poor_loop loop;
+	struct client c;
+	int fd = 0;
+
+	loop_init(&loop);
+	assert(!getrlimit(RLIMIT_NOFILE, &limit));
+	while (fcntl(fd, F_GETFD) >= 0)
+		fd++;
+	low = limit;
+	low.rlim_cur = fd;
+	assert(!setrlimit(RLIMIT_NOFILE, &low));
+	connect_by_name(&c, &loop, "wayland-nobody");
+	run_until(&loop, c.error_called);
+	assert(!setrlimit(RLIMIT_NOFILE, &limit));
+	assert(c.error == EMFILE);
+	client_disconnect(&c);
+	loop_fini(&loop);
+}
+
+TEST(connection_is_not_a_socket)
+{
+	struct poor_loop loop;
+	struct client c;
+	int fds[2];
+
+	loop_init(&loop);
+	assert(!pipe2(fds, O_CLOEXEC));
+	client_connect_fd(&c, &loop, fds[0]);
+	run_until(&loop, c.error_called);
+	assert(c.error == ENOTSOCK);
+	client_disconnect(&c);
+	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	loop_fini(&loop);
+}
+
+/* The client gets events that the test writes to the returned fd */
+static int connect_raw(struct client *c, struct poor_loop *loop)
+{
+	int fds[2];
+
+	assert(!socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds));
+	client_connect_fd(c, loop, fds[0]);
+	return fds[1];
+}
+
+enum {
+	DISPLAY_ERROR = 0,
+	DISPLAY_DELETE_ID = 1,
+};
+
+static void write_error(int fd, uint32_t object, uint32_t code, const char *message)
+{
+	size_t size = strlen(message) + 1, count = 5 + (size + 3) / 4;
+	uint32_t words[32];
+
+	assert(count <= ARRAY_SIZE(words));
+	words[0] = 1;
+	words[1] = count * sizeof(*words) << 16 | DISPLAY_ERROR;
+	words[2] = object;
+	words[3] = code;
+	words[4] = size;
+	words[count - 1] = 0;
+	memcpy(words + 5, message, size);
+	write_words(fd, words, count);
+}
+
+static void write_words_with_fds(int fd, const uint32_t *words, size_t count, unsigned nfds)
+{
+	alignas(struct cmsghdr) char control[CMSG_SPACE(32 * sizeof(int))];
+	struct iovec iov = { (void *)words, count * sizeof(*words) };
+	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1, .msg_control = control, .msg_controllen = CMSG_SPACE(nfds * sizeof(int)) };
+	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+	int fds[32];
+
+	assert(nfds <= ARRAY_SIZE(fds));
+	for (unsigned i = 0; i < nfds; i++)
+		fds[i] = STDERR_FILENO;
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
+	memcpy(CMSG_DATA(cmsg), fds, nfds * sizeof(int));
+	assert(sendmsg(fd, &msg, 0) == (ssize_t)iov.iov_len);
+}
+
+/* Events of unknown objects and of destroyed ones are dropped, the debug log tells about them */
+TEST(discarded_events)
+{
+	static const uint32_t dropped[] = {
+		9, 8 << 16 | 0,
+		3, 12 << 16 | 2, 0,
+		1, 12 << 16 | DISPLAY_DELETE_ID, 77,
+	};
+	static const uint32_t delete_id[] = { 1, 12 << 16 | DISPLAY_DELETE_ID, 3 };
+	static const uint32_t no_such_event[] = { 1, 8 << 16 | 5 };
+	struct poor_loop loop;
+	struct client c;
+	int fd;
+
+	setenv("WAYLAND_DEBUG", "client", 1);
+	setenv("FORCE_COLOR", "1", 1);
+	setenv("NO_COLOR", "1", 1);
+	loop_init(&loop);
+	fd = connect_raw(&c, &loop);
+	poor_wl_registry_bind(&c.registry, 1, &poor_test_global_interface, 1, &c.global);
+	poor_test_global_destroy(&c.global);
+	write_words(fd, dropped, ARRAY_SIZE(dropped));
+	run_until(&loop, logged("received delete_id for unknown id (77)"));
+	assert(logged("discarded [unknown]#9.[event 0](0 fd, 8 byte)"));
+	assert(logged("discarded [zombie]#3.[event 2](0 fd, 12 byte)"));
+	write_words(fd, delete_id, 2);
+	run_for(&loop, 20'000'000);
+	write_words(fd, delete_id + 2, 1);
+	write_words(fd, no_such_event, ARRAY_SIZE(no_such_event));
+	run_until(&loop, c.error_called);
+	assert(c.error == EPROTO && logged("interface 'wl_display' has no event 5"));
+	client_disconnect(&c);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	loop_fini(&loop);
+}
+
+/* The code of an error of the display tells what failed, an error of another object is a protocol error */
+TEST(error_events)
+{
+	static const uint32_t codes[] = { POOR_WL_DISPLAY_ERROR_INVALID_OBJECT, POOR_WL_DISPLAY_ERROR_NO_MEMORY,
+					  POOR_WL_DISPLAY_ERROR_IMPLEMENTATION, 99 };
+	static const int errors[] = { EINVAL, ENOMEM, EPROTO, EFAULT };
+	const struct poor_wl_interface *interface;
+	struct poor_loop loop;
+	struct client c[5];
+	uint32_t id;
+	int fds[5];
+
+	loop_init(&loop);
+	for (unsigned i = 0; i < ARRAY_SIZE(codes); i++) {
+		fds[i] = connect_raw(&c[i], &loop);
+		write_error(fds[i], 1, codes[i], "error");
+		run_until(&loop, c[i].error_called);
+		assert(c[i].error == errors[i] && poor_wl_display_get_protocol_error(&c[i].display, &interface, &id) == codes[i]);
+		assert(interface == &poor_wl_display_interface && id == 1);
+	}
+	fds[4] = connect_raw(&c[4], &loop);
+	poor_wl_registry_bind(&c[4].registry, 1, &poor_test_global_interface, 1, &c[4].global);
+	poor_test_global_destroy(&c[4].global);
+	write_error(fds[4], 3, 5, "destroyed");
+	run_until(&loop, c[4].error_called);
+	assert(c[4].error == EPROTO && poor_wl_display_get_protocol_error(&c[4].display, &interface, &id) == 5);
+	assert(!interface && !id && logged("[destroyed object]: error 5: destroyed"));
+	for (unsigned i = 0; i < ARRAY_SIZE(c); i++) {
+		client_disconnect(&c[i]);
+		poor_loop_close_fd_or_submit(&loop, fds[i], 0);
+	}
+	loop_fini(&loop);
+}
+
+TEST(malformed_events)
+{
+	static const uint32_t too_large[] = { 1, (POOR_WL_MAX_MESSAGE_SIZE + 4) << 16 | DISPLAY_ERROR };
+	static const uint32_t missing_argument[] = { 1, 8 << 16 | DISPLAY_DELETE_ID };
+	struct poor_loop loop;
+	struct client a, b;
+	int fds[2];
+
+	loop_init(&loop);
+	fds[0] = connect_raw(&a, &loop);
+	fds[1] = connect_raw(&b, &loop);
+	write_words(fds[0], too_large, ARRAY_SIZE(too_large));
+	write_words(fds[1], missing_argument, ARRAY_SIZE(missing_argument));
+	run_until(&loop, a.error_called && b.error_called);
+	assert(a.error == E2BIG && b.error == EINVAL);
+	client_disconnect(&a);
+	client_disconnect(&b);
+	poor_loop_close_fd_or_submit(&loop, fds[0], 0);
+	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	loop_fini(&loop);
+}
+
+/* More fds than one recvmsg() takes fail the display, and so do sends that fill the queue */
+TEST(server_sends_too_many_fds)
+{
+	static const uint32_t delete_id[] = { 1, 12 << 16 | DISPLAY_DELETE_ID, 77 };
+	struct poor_loop loop;
+	struct client a, b;
+	int fds[2];
+
+	loop_init(&loop);
+	fds[0] = connect_raw(&a, &loop);
+	fds[1] = connect_raw(&b, &loop);
+	write_words_with_fds(fds[0], delete_id, ARRAY_SIZE(delete_id), POOR_WL_CONNECTION_MAX_FDS + 1);
+	for (unsigned i = 0; i < POOR_WL_CONNECTION_FDS / POOR_WL_CONNECTION_MAX_FDS + 1; i++)
+		write_words_with_fds(fds[1], delete_id, ARRAY_SIZE(delete_id), POOR_WL_CONNECTION_MAX_FDS);
+	run_until(&loop, a.error_called && b.error_called);
+	assert(a.error == EOVERFLOW && b.error == EOVERFLOW);
+	client_disconnect(&a);
+	client_disconnect(&b);
+	poor_loop_close_fd_or_submit(&loop, fds[0], 0);
+	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	loop_fini(&loop);
+}
+
+/* A server that stops reading fails the sends, but the error that it sent is what the client gets */
+TEST(server_stops_reading)
+{
+	struct poor_loop loop;
+	struct client c;
+	int fd;
+
+	loop_init(&loop);
+	fd = connect_raw(&c, &loop);
+	assert(!shutdown(fd, SHUT_RD));
+	run_until(&loop, c.display.hangup);
+	assert(!c.error_called);
+	write_error(fd, 1, POOR_WL_DISPLAY_ERROR_IMPLEMENTATION, "bye");
+	run_until(&loop, c.error_called);
+	assert(c.error == EPROTO);
+	client_disconnect(&c);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
 	loop_fini(&loop);
 }
