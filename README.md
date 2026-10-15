@@ -25,6 +25,8 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
   Messages are sent when the loop iteration that queued them ends, events and
   requests are dispatched as soon as they arrive. Connecting, listening and
   destroying finish later, in callbacks.
+- The connection takes the fds of requests and events, and closes them once
+  they are sent, instead of duplicating them.
 - The libraries don't allocate. Displays, clients, sockets, globals,
   resources and proxies are structures of the caller, and so are the
   connection buffers and object maps. Objects created for the peer, like

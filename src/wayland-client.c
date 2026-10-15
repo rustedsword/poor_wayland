@@ -212,8 +212,8 @@ POOR_WL_EXPORT struct poor_wl_proxy *poor_wl_proxy_marshal_flags(struct poor_wl_
 
 /*
  * Queue a request. For a new_id argument the argument is the memory of the new proxy, which is returned initialized
- * with 'interface' and 'version', or NULL if the client has too many objects. POOR_WL_MARSHAL_FLAG_DESTROY destroys
- * 'proxy' afterwards.
+ * with 'interface' and 'version', or NULL if the client has too many objects. The connection takes the fds, which it
+ * closes once they are sent or if the request fails. POOR_WL_MARSHAL_FLAG_DESTROY destroys 'proxy' afterwards.
  */
 POOR_WL_EXPORT struct poor_wl_proxy *poor_wl_proxy_marshal_array_flags(struct poor_wl_proxy *proxy, uint32_t opcode,
 							const struct poor_wl_interface *interface, uint32_t version, uint32_t flags,
@@ -227,14 +227,14 @@ POOR_WL_EXPORT struct poor_wl_proxy *poor_wl_proxy_marshal_array_flags(struct po
 	if (interface) {
 		new_proxy = create_outgoing_proxy(proxy, message, args, interface, version);
 		if (!new_proxy)
-			goto out;
+			goto unsent;
 	}
 	if (display->last_error)
-		goto out;
+		goto unsent;
 	if (poor_wl_closure_marshal(&closure, &proxy->object, opcode, args, message) < 0) {
 		poor_wl_log("Error marshalling request for %s.%s: %s\n", proxy->object.interface->name, message->name, strerror(errno));
 		display_fatal_error(display, errno);
-		goto out;
+		goto unsent;
 	}
 	if (debug_client)
 		poor_wl_closure_print(&closure, &proxy->object, true, false, nullptr, debug_color);
@@ -244,6 +244,9 @@ POOR_WL_EXPORT struct poor_wl_proxy *poor_wl_proxy_marshal_array_flags(struct po
 		goto out;
 	}
 	display_schedule(display);
+	goto out;
+unsent:
+	poor_wl_message_close_fds(message, args, display->loop);
 out:
 	if (flags & POOR_WL_MARSHAL_FLAG_DESTROY)
 		poor_wl_proxy_destroy(proxy);

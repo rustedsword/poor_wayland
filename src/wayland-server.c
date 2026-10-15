@@ -175,10 +175,13 @@ static void handle_array(struct poor_wl_resource *resource, uint32_t opcode, uni
 	struct poor_wl_object *object = &resource->object;
 	struct poor_wl_closure closure;
 
-	if (client->error || client->destroyed)
+	if (client->error || client->destroyed) {
+		poor_wl_message_close_fds(&object->interface->events[opcode], args, client->display->loop);
 		return;
+	}
 	if (!verify_objects(resource, opcode, args) ||
 	    poor_wl_closure_marshal(&closure, object, opcode, args, &object->interface->events[opcode]) < 0) {
+		poor_wl_message_close_fds(&object->interface->events[opcode], args, client->display->loop);
 		client_fail(client);
 		return;
 	}

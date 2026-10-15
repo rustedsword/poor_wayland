@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -190,4 +191,13 @@ test_disable_coredumps(void)
 #if defined(HAVE_PRCTL) && defined(PR_SET_DUMPABLE)
 	prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
 #endif
+}
+
+int
+stderr_copy(void)
+{
+	int fd = fcntl(STDERR_FILENO, F_DUPFD_CLOEXEC, 0);
+
+	assert(fd >= 0);
+	return fd;
 }

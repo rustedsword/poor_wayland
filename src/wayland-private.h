@@ -124,6 +124,7 @@ void poor_wl_argument_from_va_list(const char *signature, union poor_wl_argument
 int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_object *sender, uint32_t opcode, const union poor_wl_argument *args,
 		       const struct poor_wl_message *message);
 int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_connection *connection, struct poor_loop *loop);
+void poor_wl_message_close_fds(const struct poor_wl_message *message, const union poor_wl_argument *args, struct poor_loop *loop);
 int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct poor_loop *loop, uint32_t size, struct poor_wl_map *objects,
 			    const struct poor_wl_message *message, struct poor_wl_closure *closure, struct poor_wl_closure_data *data);
 bool poor_wl_object_is_zombie(struct poor_wl_map *map, uint32_t id);

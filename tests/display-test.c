@@ -317,7 +317,6 @@ TEST(echo_all_argument_types)
 	assert(!pipe2(fds, O_CLOEXEC));
 	poor_test_global_echo(&c.global, -42, 0xdeadbeef, poor_wl_fixed_from_double(1.5), "hello", nullptr, &c.global, &array,
 			 fds[0]);
-	poor_loop_close_fd_or_submit(&loop, fds[0], 0);
 	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
 	run_until(&loop, c.echoed);
 	client_disconnect(&c);
@@ -601,7 +600,7 @@ TEST(client_buffer_overflow_fails_display)
 	client_bind_global(&c, 2);
 	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
 	for (int i = 0; i < 5; i++)
-		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_until(&loop, c.error_called);
 	assert(c.error == E2BIG);
 	client_disconnect(&c);
@@ -621,7 +620,7 @@ TEST(message_too_large_fails_display)
 	client_connect_fd(&c, &loop, test_server_connect());
 	client_bind_global(&c, 2);
 	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
-	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_until(&loop, c.error_called);
 	assert(c.error == E2BIG);
 	client_disconnect(&c);
@@ -867,7 +866,6 @@ TEST(shm_buffer)
 	assert(data != MAP_FAILED);
 	data[0] = pixel;
 	poor_wl_shm_create_pool(&c.shm, &c.pool, fd, 4096);
-	poor_loop_close_fd_or_submit(&loop, fd, 0);
 	poor_wl_shm_pool_create_buffer(&c.pool, &c.buffer, 0, 16, 16, 64, POOR_WL_SHM_FORMAT_XRGB8888);
 	poor_test_global_read_buffer(&c.global, &c.buffer);
 	client_roundtrip(&c);
@@ -1016,8 +1014,8 @@ TEST(disconnect_in_event_listener)
 	client_connect_fd(&c, &loop, test_server_connect());
 	client_bind_global(&c, 2);
 	poor_test_global_add_listener(&c.global, &disconnecting_listener, &c);
-	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
-	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
+	poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_until(&loop, c.done);
 	assert(c.echoed && !c.error_called);
 	run_until(&loop, test_server.clients_done == 1);
@@ -1186,7 +1184,7 @@ TEST(disconnect_with_blocked_send)
 	memset(poor_wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
 	poor_wl_registry_bind(&c.registry, 1, &poor_test_global_interface, 1, &c.global);
 	for (int i = 0; i < 3; i++)
-		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+		poor_test_global_echo(&c.global, 0, 0, 0, "", nullptr, nullptr, &array, stderr_copy());
 	run_for(&loop, 100'000'000);
 	assert(c.display.send_op.pending && !c.error_called);
 	client_disconnect(&c);
@@ -1248,21 +1246,16 @@ TEST(invalid_request_arguments)
 	char array_data[1];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(array_data);
 	struct poor_loop loop;
-	struct client a, b;
+	struct client a;
 
 	loop_init(&loop);
 	test_server_start(&loop);
 	client_connect_fd(&a, &loop, test_server_connect());
-	client_connect_fd(&b, &loop, test_server_connect());
 	client_bind_global(&a, 2);
-	client_bind_global(&b, 2);
-	poor_test_global_echo(&a.global, 0, 0, 0, nullptr, nullptr, nullptr, &array, STDERR_FILENO);
-	poor_test_global_echo(&b.global, 0, 0, 0, "", nullptr, nullptr, &array, -1);
-	run_until(&loop, a.error_called && b.error_called);
+	poor_test_global_echo(&a.global, 0, 0, 0, nullptr, nullptr, nullptr, &array, stderr_copy());
+	run_until(&loop, a.error_called);
 	assert(a.error == EINVAL && logged("Error marshalling request for test_global.echo"));
-	assert(b.error == EBADF && logged("Error sending request for test_global.echo"));
 	client_disconnect(&a);
-	client_disconnect(&b);
 	server_stop(&loop);
 	loop_fini(&loop);
 }

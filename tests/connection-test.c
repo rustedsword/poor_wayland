@@ -154,7 +154,7 @@ TEST(marshal_demarshal_all_types)
 	args[4].o = &sender;
 	args[5].o = &new_object;
 	args[6].a = &array;
-	args[7].h = STDERR_FILENO;
+	args[7].h = stderr_copy();
 	assert(!send_message(&client, &sender, 0, args));
 	transfer(&client, &server);
 	assert(!receive_message(&server, &closure, &data));
@@ -341,8 +341,7 @@ TEST(message_full_before_last_argument)
 	loop_fini();
 }
 
-/* The copies of the fds before the one that can't be copied are closed */
-TEST(send_invalid_fd)
+FAIL_TEST(send_negative_fd)
 {
 	struct poor_wl_object sender = { &test_interface, nullptr, 3 };
 	struct endpoint client;
@@ -350,12 +349,10 @@ TEST(send_invalid_fd)
 
 	loop_init();
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
-	args[0].h = args[1].h = STDERR_FILENO;
+	args[0].h = stderr_copy();
+	args[1].h = stderr_copy();
 	args[2].h = -1;
-	assert(send_message(&client, &sender, 3, args) == -1 && errno == EBADF);
-	assert(client.connection.fds_out.head == client.connection.fds_out.tail);
-	assert(!poor_wl_connection_has_output(&client.connection));
-	loop_fini();
+	send_message(&client, &sender, 3, args);
 }
 
 TEST(out_buffer_full)
@@ -377,11 +374,14 @@ TEST(out_buffer_full)
 	while (!send_message(&client, &sender, 1, args))
 		sent++;
 	assert(errno == E2BIG && sent == 4);
-	args[0].h = args[1].h = args[2].h = STDERR_FILENO;
+	for (int i = 0; i < 3; i++)
+		args[i].h = stderr_copy();
 	client.connection.fds_out.head += POOR_WL_CONNECTION_FDS - 2;
 	client.connection.out.tail = client.connection.out.head;
 	assert(send_message(&client, &sender, 3, args) == -1 && errno == E2BIG);
 	client.connection.fds_out.tail = client.connection.fds_out.head;
+	for (int i = 0; i < 3; i++)
+		args[i].h = stderr_copy();
 	assert(!send_message(&client, &sender, 3, args));
 	transfer(&client, &server);
 	assert(!receive_message(&server, &closure, &data));
@@ -446,9 +446,11 @@ TEST(send_and_receive_fds)
 	assert(!socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, sockets));
 	endpoint_init(&client, POOR_WL_MAP_CLIENT_SIDE);
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
-	args[0].h = args[1].h = args[2].h = STDERR_FILENO;
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 12; i++) {
+		for (int j = 0; j < 3; j++)
+			args[j].h = stderr_copy();
 		assert(!send_message(&client, &sender, 3, args));
+	}
 	while (poor_wl_connection_has_output(&client.connection)) {
 		send.done = false;
 		poor_wl_connection_prep_send(&client.connection, poor_loop_get_sqe(&loop, &send.op), sockets[0], 0);

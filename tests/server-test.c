@@ -1193,9 +1193,10 @@ TEST(protocol_logger_destroy)
 TEST(debug_log)
 {
 	struct poor_test_global_resource global;
-	char bytes[4];
+	char bytes[4], line[128];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(bytes);
 	struct peer p;
+	int fd = stderr_copy();
 
 	setenv("WAYLAND_DEBUG", "thread_id,server", 1);
 	setenv("FORCE_COLOR", "1", 1);
@@ -1207,9 +1208,10 @@ TEST(debug_log)
 	assert(logged(" -> wl_display#1.delete_id(2)") && logged("TID#") && !logged("\033["));
 	assert(!poor_test_global_resource_init(&global, &p.client, 1, peer_new_id(&p)));
 	assert(poor_wl_array_add(&array, 3));
-	poor_test_global_send_echoed(&global, -1, 1, poor_wl_fixed_from_double(-1.5), "s", nullptr, &global, &array, STDERR_FILENO);
+	poor_test_global_send_echoed(&global, -1, 1, poor_wl_fixed_from_double(-1.5), "s", nullptr, &global, &array, fd);
 	peer_event(&p);
-	assert(logged(" -> test_global#3.echoed(-1, 1, -1.50000000, \"s\", nil, test_global#3, array[3], fd 2)"));
+	snprintf(line, sizeof(line), " -> test_global#3.echoed(-1, 1, -1.50000000, \"s\", nil, test_global#3, array[3], fd %d)", fd);
+	assert(logged(line));
 	peer_close(&p);
 	server_stop();
 }

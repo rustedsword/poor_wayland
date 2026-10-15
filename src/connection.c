@@ -30,7 +30,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <ffi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -496,36 +495,43 @@ overflow:
 	return -1;
 }
 
-/* The connection keeps duplicates of the fds until they are sent */
+/* The fds of a message that isn't sent are closed, since the connection took them */
+void poor_wl_message_close_fds(const struct poor_wl_message *message, const union poor_wl_argument *args, struct poor_loop *loop)
+{
+	const char *signature = message->signature;
+	struct argument_details arg;
+
+	for (int i = 0, count = arg_count_for_signature(message->signature); i < count; i++) {
+		signature = get_next_argument(signature, &arg);
+		if (arg.type == POOR_WL_ARG_FD)
+			poor_loop_close_fd_or_submit(loop, args[i].h, 0);
+	}
+}
+
+/* The connection takes the fds of the message, which it closes once they are sent or if it fails */
 int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_connection *connection, struct poor_loop *loop)
 {
-	uint32_t buffer[POOR_WL_MAX_MESSAGE_SIZE / sizeof(uint32_t)], nfds, head = connection->fds_out.head;
+	uint32_t buffer[POOR_WL_MAX_MESSAGE_SIZE / sizeof(uint32_t)], nfds;
 	const char *signature = closure->message->signature;
 	struct argument_details arg;
 	int size = serialize_closure(closure, buffer, ARRAY_SIZE(buffer), &nfds);
 
-	if (size < 0)
-		return -1;
-	if ((uint32_t)size > ring_free(&connection->out) || nfds > fds_free(&connection->fds_out)) {
+	if (size >= 0 && ((uint32_t)size > ring_free(&connection->out) || nfds > fds_free(&connection->fds_out))) {
 		poor_wl_log("no room for %s: %d bytes and %u fds queued\n", closure->message->name, ring_used(&connection->out),
 		       fds_used(&connection->fds_out));
 		errno = E2BIG;
+		size = -1;
+	}
+	if (size < 0) {
+		poor_wl_message_close_fds(closure->message, closure->args, loop);
 		return -1;
 	}
 	for (int i = 0; i < closure->count; i++) {
-		int fd;
-
 		signature = get_next_argument(signature, &arg);
-		if (arg.type != POOR_WL_ARG_FD)
-			continue;
-		fd = fcntl(closure->args[i].h, F_DUPFD_CLOEXEC, 0);
-		if (fd < 0) {
-			poor_wl_log("error marshalling arguments for %s: dup failed: %s\n", closure->message->name, strerror(errno));
-			while (connection->fds_out.head != head)
-				poor_loop_close_fd_or_submit(loop, connection->fds_out.fds[--connection->fds_out.head % POOR_WL_CONNECTION_FDS], 0);
-			return -1;
+		if (arg.type == POOR_WL_ARG_FD) {
+			assert(closure->args[i].h >= 0);
+			fds_put(&connection->fds_out, closure->args[i].h);
 		}
-		fds_put(&connection->fds_out, fd);
 	}
 	ring_put(&connection->out, buffer, size);
 	return 0;

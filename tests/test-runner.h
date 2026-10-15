@@ -60,6 +60,10 @@ struct test {
 int
 count_open_fds(void);
 
+/* A copy of stderr, for fd arguments, which the connection takes */
+int
+stderr_copy(void);
+
 void
 exec_fd_leak_check(int nr_expected_fds); /* never returns */
 

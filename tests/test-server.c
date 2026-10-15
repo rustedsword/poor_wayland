@@ -65,7 +65,6 @@ static void child_ping(struct poor_wl_client *, struct poor_test_child_resource 
 
 	assert(!pipe2(fds, O_CLOEXEC));
 	poor_test_child_send_pong(resource, fds[0]);
-	poor_loop_close_fd_or_submit(server.loop, fds[0], 0);
 	poor_loop_close_fd_or_submit(server.loop, fds[1], 0);
 }
 
@@ -105,7 +104,6 @@ static void global_echo(struct poor_wl_client *, struct poor_test_global_resourc
 			struct poor_wl_array *a, int32_t fd)
 {
 	poor_test_global_send_echoed(resource, i, u, f, s, ns, o, a, fd);
-	poor_loop_close_fd_or_submit(server.loop, fd, 0);
 }
 
 static void global_create_child(struct poor_wl_client *client, struct poor_test_global_resource *resource, uint32_t id)

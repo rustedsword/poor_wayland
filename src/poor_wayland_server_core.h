@@ -602,7 +602,7 @@ poor_wl_client_get_user_data(struct poor_wl_client *client);
  * - type=fixed:	poor_wl_fixed_t
  * - type=string:	(const char *) to a nil-terminated string
  * - type=array:	(struct poor_wl_array *)
- * - type=fd:		int, that is an open file descriptor, the caller keeps it
+ * - type=fd:		int, an open file descriptor that the connection takes and closes once it is sent
  * - type=new_id:	(struct poor_wl_object *) or (struct poor_wl_resource *)
  * - type=object:	(struct poor_wl_object *) or (struct poor_wl_resource *)
  */
