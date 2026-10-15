@@ -2,8 +2,10 @@
 #define _GNU_SOURCE
 
 #include <assert.h>
+#include <dlfcn.h>
 #include <drm/drm_fourcc.h>
 #include <errno.h>
+#include <link.h>
 #include <poor_loop_fd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,10 +16,6 @@
 #include "test-runner.h"
 
 constexpr uint64_t TIMEOUT_NS = 5'000'000'000;
-
-/* Only there with LeakSanitizer */
-[[gnu::weak]] void __lsan_disable(void);
-[[gnu::weak]] void __lsan_enable(void);
 
 static void watchdog_fire(struct poor_loop *, struct poor_loop_timer *)
 {
@@ -61,6 +59,25 @@ static void gbm_done(struct poor_wl_gbm *)
 	gbm_done_called = true;
 }
 
+static const char *loaded[256];
+static unsigned loaded_count;
+
+static int collect_loaded(struct dl_phdr_info *info, size_t, void *)
+{
+	if (info->dlpi_name[0] && loaded_count < ARRAY_SIZE(loaded))
+		loaded[loaded_count++] = info->dlpi_name;
+	return 0;
+}
+
+/* Mesa's driver is unloaded with the last GBM device, and what its globals point to would look leaked */
+static void keep_loaded(void)
+{
+	loaded_count = 0;
+	dl_iterate_phdr(collect_loaded, nullptr);
+	for (unsigned i = 0; i < loaded_count; i++)
+		dlopen(loaded[i], RTLD_NOW | RTLD_NOLOAD | RTLD_NODELETE);
+}
+
 /* Without a GPU, as in CI, the devices are not there */
 TEST(gbm_device)
 {
@@ -74,15 +91,11 @@ TEST(gbm_device)
 	assert(poor_wl_gbm_open(&gbm, &loop, makedev(1, 3), gbm_ready, gbm_done) == -1 && errno == ENODEV);
 	for (unsigned i = 0; i < ARRAY_SIZE(devices); i++) {
 		gbm_ready_called = gbm_done_called = false;
-		/* Mesa's driver leaks while GBM loads it, and is unloaded before the leaks could be told apart */
-		if (__lsan_disable)
-			__lsan_disable();
 		assert(!poor_wl_gbm_open(&gbm, &loop, devices[i], gbm_ready, gbm_done));
 		run_until(&loop, gbm_ready_called);
-		if (__lsan_enable)
-			__lsan_enable();
 		assert(!gbm.device != !gbm.error);
 		if (gbm.device) {
+			keep_loaded();
 			buffer.width = buffer.height = 64;
 			assert(!poor_wl_gbm_allocator.allocate(&gbm, &buffer, DRM_FORMAT_XRGB8888, &implicit, 1, false));
 			assert(buffer.modifier == DRM_FORMAT_MOD_INVALID && buffer.plane_count >= 1 && buffer.planes[0].stride >= 64 * 4);
