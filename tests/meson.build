@@ -163,8 +163,7 @@ if build_swapchain
 				'swapchain-server.c',
 				wayland_client_protocol_h,
 				wayland_server_protocol_h,
-				linux_dmabuf_server_protocol_h,
-			],
+			] + swapchain_server_protocol_h,
 			'deps': [ wayland_client_dep, wayland_server_dep, wayland_swapchain_dep ],
 		},
 		'gbm-test': {

@@ -8,6 +8,7 @@
 #include <sys/types.h>
 
 #include "poor_linux_dmabuf_v1_client_protocol.h"
+#include "poor_linux_drm_syncobj_v1_client_protocol.h"
 #include "poor_wayland_client.h"
 
 #ifdef  __cplusplus
@@ -18,7 +19,7 @@ extern "C" {
  * libpoor_wayland_swapchain presents dmabufs on a surface. It follows the dmabuf feedback of the surface, gets
  * buffers from an allocator in the formats and modifiers that the compositor prefers, and tells when to render
  * the next frame. Rendering is up to the caller, e.g. with EGL on the GBM device that poor_wl_gbm opens for the
- * device of the feedback.
+ * device of the feedback. Renderers without implicit synchronization, like Vulkan, need explicit synchronization.
  */
 
 constexpr unsigned POOR_WL_SWAPCHAIN_BUFFERS = 3;
@@ -39,13 +40,16 @@ struct poor_wl_swapchain_plane {
 /* The allocator fills 'data', 'modifier', 'planes' and 'plane_count'. The swapchain closes the fds of the planes. */
 struct poor_wl_swapchain_buffer {
 	struct poor_wl_buffer buffer;
+	struct poor_wp_linux_drm_syncobj_timeline_v1 timeline;
 	struct poor_wl_swapchain *swapchain;
 	const struct poor_wl_swapchain_allocator *allocator;
 	void *allocator_data;
 	void *data;
 	uint64_t modifier;
+	uint64_t point;
 	struct poor_wl_swapchain_plane planes[POOR_WL_SWAPCHAIN_PLANES];
 	unsigned plane_count;
+	uint32_t syncobj;
 	int32_t width, height;
 	bool allocated, busy, stale;
 };
@@ -76,13 +80,21 @@ typedef void poor_wl_swapchain_frame_fn(struct poor_wl_swapchain *swapchain, str
 					uint32_t time);
 /* The swapchain can't go on, e.g. the compositor takes no buffers of the format */
 typedef void poor_wl_swapchain_error_fn(struct poor_wl_swapchain *swapchain, int error);
+typedef void poor_wl_swapchain_done_fn(struct poor_wl_swapchain *swapchain);
+
+poor_loop_group_declare(poor_wl_swapchain_io);
 
 struct poor_wl_swapchain {
+	poor_wl_swapchain_io io;
+	struct poor_loop_op release_op;
+	struct poor_loop_timer timer;
 	struct poor_loop *loop;
 	struct poor_zwp_linux_dmabuf_v1 *dmabuf;
+	struct poor_wp_linux_drm_syncobj_manager_v1 *syncobj_manager;
 	struct poor_wl_surface *surface;
 	struct poor_zwp_linux_dmabuf_feedback_v1 feedback;
 	struct poor_zwp_linux_buffer_params_v1 params;
+	struct poor_wp_linux_drm_syncobj_surface_v1 syncobj_surface;
 	struct poor_wl_callback frame;
 	struct poor_wl_swapchain_buffer buffers[POOR_WL_SWAPCHAIN_BUFFERS];
 	struct poor_wl_swapchain_buffer *rendering;
@@ -95,10 +107,13 @@ struct poor_wl_swapchain {
 	poor_wl_swapchain_device_fn *device_fn;
 	poor_wl_swapchain_frame_fn *frame_fn;
 	poor_wl_swapchain_error_fn *error_fn;
+	poor_wl_swapchain_done_fn *done_fn;
 	void *table;
 	size_t table_size;
+	uint64_t released;
 	dev_t main_device, device;
-	uint32_t format, time;
+	uint32_t format, time, import_syncobj;
+	int drm_fd, eventfd;
 	int32_t width, height;
 	bool has_main_device, has_device, frame_pending, frame_wanted, failed;
 };
@@ -113,6 +128,16 @@ poor_wl_swapchain_init(struct poor_wl_swapchain *swapchain, struct poor_loop *lo
 		       poor_wl_swapchain_device_fn *device, poor_wl_swapchain_frame_fn *frame,
 		       poor_wl_swapchain_error_fn *error);
 
+/*
+ * Synchronize explicitly through 'manager': the compositor waits for the fences of poor_wl_swapchain_present(), and
+ * a buffer comes back once the compositor signals that it is done with it. 'drm_fd' is a DRM device with timeline
+ * syncobjs, e.g. the render node of the allocator, that stays open until poor_wl_swapchain_destroy(). Call it before
+ * poor_wl_swapchain_set_allocator(). Returns 0 or a negative errno value.
+ */
+int
+poor_wl_swapchain_set_syncobj(struct poor_wl_swapchain *swapchain, struct poor_wp_linux_drm_syncobj_manager_v1 *manager,
+			      int drm_fd);
+
 /* The buffers of the previous allocator are freed as soon as the compositor releases them */
 void
 poor_wl_swapchain_set_allocator(struct poor_wl_swapchain *swapchain, const struct poor_wl_swapchain_allocator *allocator,
@@ -125,13 +150,17 @@ poor_wl_swapchain_resize(struct poor_wl_swapchain *swapchain, int32_t width, int
 void
 poor_wl_swapchain_request_frame(struct poor_wl_swapchain *swapchain);
 
-/* Attach, damage and commit the buffer that 'frame' got, with a frame callback */
+/*
+ * Attach, damage and commit the buffer that 'frame' got, with a frame callback. 'fence' is a sync_file that signals
+ * once the buffer is rendered, or -1 if it already is, and the swapchain closes it. Fences need explicit
+ * synchronization.
+ */
 void
-poor_wl_swapchain_present(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer);
+poor_wl_swapchain_present(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer, int fence);
 
-/* Free all buffers, before the device of the allocator goes away */
+/* Free all buffers, before the device of the allocator goes away. 'done' is called once the swapchain's memory can go. */
 void
-poor_wl_swapchain_destroy(struct poor_wl_swapchain *swapchain);
+poor_wl_swapchain_destroy(struct poor_wl_swapchain *swapchain, poor_wl_swapchain_done_fn *done);
 
 poor_loop_group_declare(poor_wl_gbm_io);
 

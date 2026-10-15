@@ -2,14 +2,17 @@
 #define _GNU_SOURCE
 
 #include <assert.h>
+#include <drm/drm.h>
 #include <poor_loop_fd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include "poor_linux_dmabuf_v1_server_protocol.h"
+#include "poor_linux_drm_syncobj_v1_server_protocol.h"
 #include "poor_wayland_server_display.h"
 #include "poor_wayland_server.h"
 #include "swapchain-server.h"
@@ -36,6 +39,8 @@ struct buffer {
 	uint64_t modifier;
 	unsigned planes;
 	dev_t sampling_device;
+	uint64_t release_point;
+	uint32_t release_syncobj;
 };
 
 struct frame {
@@ -46,8 +51,21 @@ struct frame {
 struct surface {
 	struct poor_wl_surface_resource resource;
 	struct buffer *pending, *current;
+	struct surface_sync *sync;
 	struct frame *frames[MAX_FRAMES];
 	unsigned frame_count;
+};
+
+struct timeline {
+	struct poor_wp_linux_drm_syncobj_timeline_v1_resource resource;
+	uint32_t syncobj;
+};
+
+struct surface_sync {
+	struct poor_wp_linux_drm_syncobj_surface_v1_resource resource;
+	struct surface *surface;
+	struct timeline *acquire, *release;
+	uint64_t acquire_point, release_point;
 };
 
 struct params {
@@ -68,7 +86,7 @@ struct swapchain_server_state swapchain_server;
 static struct {
 	struct poor_loop *loop;
 	struct poor_wl_display display;
-	struct poor_wl_global compositor, dmabuf;
+	struct poor_wl_global compositor, dmabuf, syncobj;
 	struct poor_wl_list feedbacks;
 	struct test_client clients[MAX_CLIENTS];
 } server;
@@ -86,6 +104,31 @@ static void server_free(struct poor_wl_display *, void *ptr)
 static void free_resource(struct poor_wl_resource *resource)
 {
 	free(resource);
+}
+
+static void syncobj_ioctl(unsigned long request, void *arg)
+{
+	assert(swapchain_server.syncobj_fd >= 0 && !ioctl(swapchain_server.syncobj_fd, request, arg));
+}
+
+static uint64_t syncobj_query(uint32_t syncobj)
+{
+	uint64_t point;
+	struct drm_syncobj_timeline_array query = {
+		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1, .flags = 0
+	};
+
+	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_QUERY, &query);
+	return point;
+}
+
+static void syncobj_signal(uint32_t syncobj, uint64_t point)
+{
+	struct drm_syncobj_timeline_array signal = {
+		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1, .flags = 0
+	};
+
+	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, &signal);
 }
 
 static void buffer_destroy_request(struct poor_wl_client *, struct poor_wl_buffer_resource *resource)
@@ -160,6 +203,22 @@ static void surface_frame(struct poor_wl_client *client, struct poor_wl_surface_
 	surface->frames[surface->frame_count++] = frame;
 }
 
+/* The rendering of the buffer is done by the commit, which the client waits for with explicit synchronization */
+static void surface_sync_commit(struct surface_sync *sync, struct buffer *buffer)
+{
+	assert(!buffer == !sync->acquire && !buffer == !sync->release);
+	if (!buffer)
+		return;
+	assert(sync->acquire != sync->release || sync->acquire_point < sync->release_point);
+	assert(syncobj_query(sync->acquire->syncobj) >= sync->acquire_point);
+	buffer->release_syncobj = sync->release->syncobj;
+	buffer->release_point = sync->release_point;
+	swapchain_server.acquires++;
+	swapchain_server.acquire_point = sync->acquire_point;
+	swapchain_server.release_point = sync->release_point;
+	sync->acquire = sync->release = nullptr;
+}
+
 /* The buffer is shown right away: the previous one is released and the frame callbacks are done */
 static void surface_commit(struct poor_wl_client *, struct poor_wl_surface_resource *resource)
 {
@@ -168,11 +227,16 @@ static void surface_commit(struct poor_wl_client *, struct poor_wl_surface_resou
 	unsigned count = surface->frame_count;
 
 	swapchain_server.commits++;
+	if (surface->sync)
+		surface_sync_commit(surface->sync, buffer);
 	if (buffer) {
 		surface->pending = nullptr;
 		buffer->pending_on = nullptr;
 		if (surface->current && surface->current != buffer) {
-			poor_wl_buffer_send_release(&surface->current->resource);
+			if (surface->sync)
+				syncobj_signal(surface->current->release_syncobj, surface->current->release_point);
+			else
+				poor_wl_buffer_send_release(&surface->current->resource);
 			surface->current->current_on = nullptr;
 		}
 		surface->current = buffer;
@@ -210,6 +274,8 @@ static void surface_destroy(struct poor_wl_resource *resource)
 		surface->pending->pending_on = nullptr;
 	if (surface->current)
 		surface->current->current_on = nullptr;
+	if (surface->sync)
+		surface->sync->surface = nullptr;
 	for (unsigned i = 0; i < surface->frame_count; i++)
 		surface->frames[i]->surface = nullptr;
 	free(surface);
@@ -227,6 +293,7 @@ static void compositor_create_surface(struct poor_wl_client *client, struct poor
 	}
 	poor_wl_surface_resource_set_implementation(&surface->resource, &surface_impl, nullptr, surface_destroy);
 	surface->pending = surface->current = nullptr;
+	surface->sync = nullptr;
 	surface->frame_count = 0;
 }
 
@@ -428,6 +495,128 @@ static void bind_dmabuf(struct poor_wl_client *client, void *, uint32_t version,
 	poor_zwp_linux_dmabuf_v1_resource_set_implementation(dmabuf, &dmabuf_impl, nullptr, free_resource);
 }
 
+static void timeline_destroy_request(struct poor_wl_client *, struct poor_wp_linux_drm_syncobj_timeline_v1_resource *resource)
+{
+	poor_wl_resource_destroy(&resource->resource);
+}
+
+static const struct poor_wp_linux_drm_syncobj_timeline_v1_interface timeline_impl = {
+	.destroy = timeline_destroy_request,
+};
+
+static void timeline_destroy(struct poor_wl_resource *resource)
+{
+	struct timeline *timeline = container_of(resource, struct timeline, resource.resource);
+	struct drm_syncobj_destroy destroy = { .handle = timeline->syncobj, .pad = 0 };
+
+	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_DESTROY, &destroy);
+	free(timeline);
+}
+
+static void surface_sync_destroy_request(struct poor_wl_client *, struct poor_wp_linux_drm_syncobj_surface_v1_resource *resource)
+{
+	poor_wl_resource_destroy(&resource->resource);
+}
+
+static void surface_sync_set_acquire_point(struct poor_wl_client *,
+					   struct poor_wp_linux_drm_syncobj_surface_v1_resource *resource,
+					   struct poor_wp_linux_drm_syncobj_timeline_v1_resource *timeline, uint32_t point_hi,
+					   uint32_t point_lo)
+{
+	struct surface_sync *sync = container_of(resource, struct surface_sync, resource);
+
+	sync->acquire = container_of(timeline, struct timeline, resource);
+	sync->acquire_point = (uint64_t)point_hi << 32 | point_lo;
+}
+
+static void surface_sync_set_release_point(struct poor_wl_client *,
+					   struct poor_wp_linux_drm_syncobj_surface_v1_resource *resource,
+					   struct poor_wp_linux_drm_syncobj_timeline_v1_resource *timeline, uint32_t point_hi,
+					   uint32_t point_lo)
+{
+	struct surface_sync *sync = container_of(resource, struct surface_sync, resource);
+
+	sync->release = container_of(timeline, struct timeline, resource);
+	sync->release_point = (uint64_t)point_hi << 32 | point_lo;
+}
+
+static const struct poor_wp_linux_drm_syncobj_surface_v1_interface surface_sync_impl = {
+	.destroy = surface_sync_destroy_request,
+	.set_acquire_point = surface_sync_set_acquire_point,
+	.set_release_point = surface_sync_set_release_point,
+};
+
+static void surface_sync_destroy(struct poor_wl_resource *resource)
+{
+	struct surface_sync *sync = container_of(resource, struct surface_sync, resource.resource);
+
+	if (sync->surface)
+		sync->surface->sync = nullptr;
+	free(sync);
+}
+
+static void syncobj_destroy_request(struct poor_wl_client *, struct poor_wp_linux_drm_syncobj_manager_v1_resource *resource)
+{
+	poor_wl_resource_destroy(&resource->resource);
+}
+
+static void syncobj_get_surface(struct poor_wl_client *client, struct poor_wp_linux_drm_syncobj_manager_v1_resource *,
+				uint32_t id, struct poor_wl_surface_resource *surface_resource)
+{
+	struct surface *surface = container_of(surface_resource, struct surface, resource);
+	struct surface_sync *sync = malloc(sizeof(*sync));
+
+	assert(sync && !surface->sync);
+	if (poor_wp_linux_drm_syncobj_surface_v1_resource_init(&sync->resource, client, 1, id) < 0) {
+		free(sync);
+		poor_wl_client_post_no_memory(client);
+		return;
+	}
+	poor_wp_linux_drm_syncobj_surface_v1_resource_set_implementation(&sync->resource, &surface_sync_impl, nullptr,
+									  surface_sync_destroy);
+	sync->surface = surface;
+	sync->acquire = sync->release = nullptr;
+	surface->sync = sync;
+}
+
+static void syncobj_import_timeline(struct poor_wl_client *client, struct poor_wp_linux_drm_syncobj_manager_v1_resource *,
+				    uint32_t id, int32_t fd)
+{
+	struct timeline *timeline = malloc(sizeof(*timeline));
+	struct drm_syncobj_handle import = { .handle = 0, .flags = 0, .fd = fd, .pad = 0, .point = 0 };
+
+	assert(timeline);
+	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &import);
+	poor_loop_close_fd_or_submit(server.loop, fd, 0);
+	if (poor_wp_linux_drm_syncobj_timeline_v1_resource_init(&timeline->resource, client, 1, id) < 0) {
+		free(timeline);
+		poor_wl_client_post_no_memory(client);
+		return;
+	}
+	poor_wp_linux_drm_syncobj_timeline_v1_resource_set_implementation(&timeline->resource, &timeline_impl, nullptr,
+									   timeline_destroy);
+	timeline->syncobj = import.handle;
+}
+
+static const struct poor_wp_linux_drm_syncobj_manager_v1_interface syncobj_impl = {
+	.destroy = syncobj_destroy_request,
+	.get_surface = syncobj_get_surface,
+	.import_timeline = syncobj_import_timeline,
+};
+
+static void bind_syncobj(struct poor_wl_client *client, void *, uint32_t version, uint32_t id)
+{
+	struct poor_wp_linux_drm_syncobj_manager_v1_resource *syncobj = malloc(sizeof(*syncobj));
+
+	assert(syncobj);
+	if (poor_wp_linux_drm_syncobj_manager_v1_resource_init(syncobj, client, version, id) < 0) {
+		free(syncobj);
+		poor_wl_client_post_no_memory(client);
+		return;
+	}
+	poor_wp_linux_drm_syncobj_manager_v1_resource_set_implementation(syncobj, &syncobj_impl, nullptr, free_resource);
+}
+
 static void client_done(struct poor_wl_client *client)
 {
 	container_of(client, struct test_client, client)->used = false;
@@ -464,6 +653,8 @@ void swapchain_server_start(struct poor_loop *loop)
 	poor_wl_global_init(&server.compositor, &server.display, &poor_wl_compositor_interface, 4, nullptr, bind_compositor);
 	poor_wl_global_init(&server.dmabuf, &server.display, &poor_zwp_linux_dmabuf_v1_interface, swapchain_server.dmabuf_version,
 			    nullptr, bind_dmabuf);
+	poor_wl_global_init(&server.syncobj, &server.display, &poor_wp_linux_drm_syncobj_manager_v1_interface, 1, nullptr,
+			    bind_syncobj);
 }
 
 void swapchain_server_send_feedback(void)

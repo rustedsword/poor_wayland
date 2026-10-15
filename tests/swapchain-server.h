@@ -8,7 +8,8 @@
 
 /*
  * A compositor for the swapchain tests: it shows buffers of wl_surfaces, releases the previous one and fires the
- * frame callbacks on each commit, and imports any dmabuf. The feedback is set before it starts.
+ * frame callbacks on each commit, and imports any dmabuf. The feedback is set before it starts. Explicit
+ * synchronization needs 'syncobj_fd', a DRM device with timeline syncobjs.
  */
 struct swapchain_server_tranche {
 	dev_t device;
@@ -34,6 +35,9 @@ struct swapchain_server_state {
 	uint64_t modifier;
 	unsigned planes;
 	dev_t sampling_device;
+	int syncobj_fd;
+	unsigned acquires;
+	uint64_t acquire_point, release_point;
 	bool display_done;
 };
 

@@ -54,7 +54,11 @@ formats and modifiers that the compositor prefers from an allocator, GBM on
 the GPU that the feedback names or one of the caller, and tells when to render
 the next frame. EGL and Vulkan can't take poor_wayland's objects for their
 Wayland platforms, since Mesa drives those with the system libwayland, so they
-render into the buffers of the swapchain instead.
+render into the buffers of the swapchain instead, with explicit synchronization
+through linux-drm-syncobj-v1 if the compositor has it.
+
+Vulkan apps should set `NODEVICE_SELECT=1`, or Mesa's device-select layer opens
+its own blocking connection with the system libwayland.
 
 [examples/simple-shm.c](examples/simple-shm.c) and
 [examples/simple-egl.c](examples/simple-egl.c), which draws with OpenGL ES

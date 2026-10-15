@@ -22,8 +22,9 @@
 
 /*
  * A window with an animated pattern, drawn with OpenGL ES on the GPU that the compositor names in its dmabuf
- * feedback and presented through the swapchain. It runs until its close button is pressed or until SIGINT or
- * SIGTERM. WAYLAND_DEBUG=client shows the protocol.
+ * feedback and presented through the swapchain, with explicit synchronization if the compositor and the driver
+ * have it. It runs until its close button is pressed or until SIGINT or SIGTERM. WAYLAND_DEBUG=client shows the
+ * protocol.
  */
 constexpr int32_t DEFAULT_WIDTH = 640;
 constexpr int32_t DEFAULT_HEIGHT = 480;
@@ -65,6 +66,7 @@ struct app {
 	struct poor_wl_callback sync;
 	struct poor_wl_compositor compositor;
 	struct poor_zwp_linux_dmabuf_v1 dmabuf;
+	struct poor_wp_linux_drm_syncobj_manager_v1 syncobj;
 	struct poor_xdg_wm_base wm_base;
 	struct poor_wl_surface surface;
 	struct poor_xdg_surface shell_surface;
@@ -77,6 +79,9 @@ struct app {
 	PFNEGLCREATEIMAGEKHRPROC create_image;
 	PFNEGLDESTROYIMAGEKHRPROC destroy_image;
 	PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC image_target_renderbuffer;
+	PFNEGLCREATESYNCKHRPROC create_sync;
+	PFNEGLDESTROYSYNCKHRPROC destroy_sync;
+	PFNEGLDUPNATIVEFENCEFDANDROIDPROC dup_fence;
 	GLuint program;
 	GLint time_location;
 	signal_file signals;
@@ -85,8 +90,8 @@ struct app {
 	sigset_t sigset;
 	int status;
 	int32_t width, height;
-	bool have_compositor, have_dmabuf, have_wm_base;
-	bool swapchain_started, gbm_open, gbm_closed, closing, signals_closed;
+	bool have_compositor, have_dmabuf, have_syncobj, have_wm_base, explicit_sync;
+	bool swapchain_started, swapchain_closed, gbm_open, gbm_closed, closing, signals_closed;
 	char in[16384];
 	char out[16384];
 	union poor_wl_map_entry objects[64];
@@ -100,6 +105,11 @@ static struct app *app_of_swapchain(struct poor_wl_swapchain *swapchain)
 	return container_of(swapchain, struct app, swapchain);
 }
 
+static void swapchain_done(struct poor_wl_swapchain *swapchain)
+{
+	app_of_swapchain(swapchain)->swapchain_closed = true;
+}
+
 /* The buffers go before the EGL objects that draw into them, and those before the GBM device */
 static void app_quit(struct app *app, int status)
 {
@@ -108,7 +118,7 @@ static void app_quit(struct app *app, int status)
 	app->closing = true;
 	app->status = status;
 	if (app->swapchain_started)
-		poor_wl_swapchain_destroy(&app->swapchain);
+		poor_wl_swapchain_destroy(&app->swapchain, swapchain_done);
 	if (app->egl_display != EGL_NO_DISPLAY) {
 		if (app->program)
 			glDeleteProgram(app->program);
@@ -248,12 +258,18 @@ static bool egl_init(struct app *app)
 	app->destroy_image = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
 	app->image_target_renderbuffer =
 		(PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC)eglGetProcAddress("glEGLImageTargetRenderbufferStorageOES");
+	if (strstr(eglQueryString(app->egl_display, EGL_EXTENSIONS), "EGL_ANDROID_native_fence_sync")) {
+		app->create_sync = (PFNEGLCREATESYNCKHRPROC)eglGetProcAddress("eglCreateSyncKHR");
+		app->destroy_sync = (PFNEGLDESTROYSYNCKHRPROC)eglGetProcAddress("eglDestroySyncKHR");
+		app->dup_fence = (PFNEGLDUPNATIVEFENCEFDANDROIDPROC)eglGetProcAddress("eglDupNativeFenceFDANDROID");
+	}
 	return app->create_image && app->destroy_image && app->image_target_renderbuffer && program_init(app);
 }
 
 static void gbm_ready(struct poor_wl_gbm *gbm)
 {
 	struct app *app = container_of(gbm, struct app, gbm);
+	int ret;
 
 	if (gbm->error) {
 		log_printf("simple-egl: can't open the GPU of the compositor: %s\n", strerror(gbm->error));
@@ -265,6 +281,13 @@ static void gbm_ready(struct poor_wl_gbm *gbm)
 		app_quit(app, 1);
 		return;
 	}
+	if (app->have_syncobj && app->create_sync && app->destroy_sync && app->dup_fence) {
+		ret = poor_wl_swapchain_set_syncobj(&app->swapchain, &app->syncobj, gbm->fd);
+		if (ret < 0)
+			log_printf("simple-egl: no explicit synchronization: %s\n", strerror(-ret));
+		app->explicit_sync = !ret;
+	}
+	log_printf("simple-egl: %s synchronization\n", app->explicit_sync ? "explicit" : "implicit");
 	poor_wl_swapchain_set_allocator(&app->swapchain, &allocator, app);
 }
 
@@ -290,15 +313,38 @@ static void swapchain_device(struct poor_wl_swapchain *swapchain, dev_t device)
 	app->gbm_open = true;
 }
 
+/* The fence of the drawing exists once it is flushed. Without one the drawing has to be done already. */
+static int draw_fence(struct app *app)
+{
+	static const EGLint attribs[] = { EGL_SYNC_NATIVE_FENCE_FD_ANDROID, EGL_NO_NATIVE_FENCE_FD_ANDROID, EGL_NONE };
+	EGLSyncKHR sync;
+	int fd = -1;
+
+	if (!app->explicit_sync) {
+		glFlush();
+		return -1;
+	}
+	sync = app->create_sync(app->egl_display, EGL_SYNC_NATIVE_FENCE_ANDROID, attribs);
+	glFlush();
+	if (sync != EGL_NO_SYNC_KHR) {
+		fd = app->dup_fence(app->egl_display, sync);
+		app->destroy_sync(app->egl_display, sync);
+	}
+	if (fd < 0)
+		glFinish();
+	return fd;
+}
+
 /* Each frame asks for the next one. The pattern repeats every 512 steps of time, which keeps floats small. */
 static void swapchain_frame(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer, uint32_t time)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, target_of(app_of_swapchain(swapchain), buffer)->framebuffer);
+	struct app *app = app_of_swapchain(swapchain);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, target_of(app, buffer)->framebuffer);
 	glViewport(0, 0, buffer->width, buffer->height);
-	glUniform1f(app_of_swapchain(swapchain)->time_location, time / 8 % 512);
+	glUniform1f(app->time_location, time / 8 % 512);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	glFlush();
-	poor_wl_swapchain_present(swapchain, buffer);
+	poor_wl_swapchain_present(swapchain, buffer, draw_fence(app));
 	poor_wl_swapchain_request_frame(swapchain);
 }
 
@@ -358,6 +404,9 @@ static void registry_global(void *data, struct poor_wl_registry *registry, uint3
 	} else if (!strcmp(interface, poor_zwp_linux_dmabuf_v1_interface.name) && !app->have_dmabuf && version >= 4) {
 		app->have_dmabuf = poor_wl_registry_bind(registry, name, &poor_zwp_linux_dmabuf_v1_interface,
 						     version < 6 ? version : 6, &app->dmabuf);
+	} else if (!strcmp(interface, poor_wp_linux_drm_syncobj_manager_v1_interface.name) && !app->have_syncobj) {
+		app->have_syncobj = poor_wl_registry_bind(registry, name, &poor_wp_linux_drm_syncobj_manager_v1_interface, 1,
+							  &app->syncobj);
 	} else if (!strcmp(interface, poor_xdg_wm_base_interface.name) && !app->have_wm_base) {
 		app->have_wm_base = poor_wl_registry_bind(registry, name, &poor_xdg_wm_base_interface, 1, &app->wm_base);
 		poor_xdg_wm_base_add_listener(&app->wm_base, &wm_base_listener, app);
@@ -443,12 +492,15 @@ POOR_LOOP_FD_DONE(signal_file, loop, file)
 	struct poor_wl_connection_memory memory = POOR_WL_CONNECTION_MEMORY(app->in, app->out, app->objects, app->server_objects);
 	int fd;
 
-	app->have_compositor = app->have_dmabuf = app->have_wm_base = false;
-	app->swapchain_started = app->gbm_open = app->closing = false;
+	app->have_compositor = app->have_dmabuf = app->have_syncobj = app->have_wm_base = app->explicit_sync = false;
+	app->swapchain_started = app->swapchain_closed = app->gbm_open = app->closing = false;
 	app->gbm_closed = false;
 	app->signals_closed = true;
 	app->egl_display = EGL_NO_DISPLAY;
 	app->egl_context = EGL_NO_CONTEXT;
+	app->create_sync = nullptr;
+	app->destroy_sync = nullptr;
+	app->dup_fence = nullptr;
 	app->program = 0;
 	app->status = 0;
 	app->width = DEFAULT_WIDTH;
@@ -485,7 +537,8 @@ static int app_finish(struct app *app)
 {
 	int ret = 0;
 
-	while (!ret && (!app->signals_closed || (app->gbm_open && !app->gbm_closed) || log_pending()))
+	while (!ret && (!app->signals_closed || (app->swapchain_started && !app->swapchain_closed) ||
+			(app->gbm_open && !app->gbm_closed) || log_pending()))
 		ret = poor_loop_run_once(&app->loop);
 	if (!ret)
 		ret = poor_loop_drain(&app->loop, poor_loop_now() + DRAIN_TIMEOUT_NS);

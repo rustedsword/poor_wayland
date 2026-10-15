@@ -2,11 +2,14 @@
 #define _GNU_SOURCE
 
 #include <assert.h>
+#include <drm/drm.h>
 #include <drm/drm_fourcc.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <poor_loop_fd.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
@@ -28,12 +31,13 @@ struct client {
 	struct poor_wl_callback callback;
 	struct poor_wl_compositor compositor;
 	struct poor_zwp_linux_dmabuf_v1 dmabuf;
+	struct poor_wp_linux_drm_syncobj_manager_v1 syncobj;
 	struct poor_wl_surface surface;
 	struct poor_wl_swapchain swapchain;
 	dev_t device;
 	unsigned devices, frames, max_frames, allocations, frees;
-	int swapchain_error;
-	bool synced, done, error_called, fail_scanout;
+	int swapchain_error, fence_fd;
+	bool synced, done, error_called, fail_scanout, have_syncobj, swapchain_done;
 	char in[16384];
 	char out[16384];
 	union poor_wl_map_entry objects[64];
@@ -85,6 +89,7 @@ static void server_config(uint32_t version)
 		swapchain_server.table[i].padding = 0;
 		swapchain_server.table[i].modifier = modifiers[i];
 	}
+	swapchain_server.syncobj_fd = -1;
 	swapchain_server.tranche_count = 2;
 	swapchain_server.tranches[0] = (struct swapchain_server_tranche){ makedev(226, 0), SCANOUT, 1, { 1 } };
 	swapchain_server.tranches[1] = (struct swapchain_server_tranche){ makedev(226, 128), version >= 6 ? SAMPLING : 0, 3, { 0, 2, 3 } };
@@ -141,13 +146,30 @@ static void swapchain_device(struct poor_wl_swapchain *swapchain, dev_t device)
 	c->devices++;
 }
 
+/* A sync_file of a signaled syncobj */
+static int signaled_fence(int drm_fd)
+{
+	struct drm_syncobj_create create = { .handle = 0, .flags = DRM_SYNCOBJ_CREATE_SIGNALED };
+	struct drm_syncobj_handle export;
+	struct drm_syncobj_destroy destroy;
+
+	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_CREATE, &create));
+	export = (struct drm_syncobj_handle){
+		.handle = create.handle, .flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE, .fd = -1, .pad = 0, .point = 0
+	};
+	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &export));
+	destroy = (struct drm_syncobj_destroy){ .handle = create.handle, .pad = 0 };
+	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_DESTROY, &destroy));
+	return export.fd;
+}
+
 static void swapchain_frame(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer, uint32_t)
 {
 	struct client *c = client_of(swapchain);
 
 	assert(buffer->width == swapchain->width && buffer->height == swapchain->height);
 	c->frames++;
-	poor_wl_swapchain_present(swapchain, buffer);
+	poor_wl_swapchain_present(swapchain, buffer, c->fence_fd >= 0 ? signaled_fence(c->fence_fd) : -1);
 	if (c->frames < c->max_frames)
 		poor_wl_swapchain_request_frame(swapchain);
 }
@@ -155,6 +177,11 @@ static void swapchain_frame(struct poor_wl_swapchain *swapchain, struct poor_wl_
 static void swapchain_error(struct poor_wl_swapchain *swapchain, int error)
 {
 	client_of(swapchain)->swapchain_error = error;
+}
+
+static void swapchain_done(struct poor_wl_swapchain *swapchain)
+{
+	client_of(swapchain)->swapchain_done = true;
 }
 
 static void registry_global(void *data, struct poor_wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
@@ -165,6 +192,9 @@ static void registry_global(void *data, struct poor_wl_registry *registry, uint3
 		poor_wl_registry_bind(registry, name, &poor_wl_compositor_interface, 4, &c->compositor);
 	else if (!strcmp(interface, poor_zwp_linux_dmabuf_v1_interface.name))
 		poor_wl_registry_bind(registry, name, &poor_zwp_linux_dmabuf_v1_interface, version, &c->dmabuf);
+	else if (!strcmp(interface, poor_wp_linux_drm_syncobj_manager_v1_interface.name))
+		c->have_syncobj = poor_wl_registry_bind(registry, name, &poor_wp_linux_drm_syncobj_manager_v1_interface, 1,
+							&c->syncobj);
 }
 
 static void registry_global_remove(void *, struct poor_wl_registry *, uint32_t)
@@ -213,7 +243,8 @@ static void client_start(struct client *c, struct poor_loop *loop, uint32_t form
 	c->loop = loop;
 	c->devices = c->frames = c->max_frames = c->allocations = c->frees = 0;
 	c->swapchain_error = 0;
-	c->synced = c->done = c->error_called = c->fail_scanout = false;
+	c->fence_fd = -1;
+	c->synced = c->done = c->error_called = c->fail_scanout = c->have_syncobj = c->swapchain_done = false;
 	poor_wl_display_connect_to_fd(&c->display, loop, &memory, swapchain_server_connect(), client_error, client_done);
 	poor_wl_display_get_registry(&c->display, &c->registry);
 	poor_wl_registry_add_listener(&c->registry, &registry_listener, c);
@@ -226,9 +257,10 @@ static void client_start(struct client *c, struct poor_loop *loop, uint32_t form
 
 static void client_stop(struct client *c)
 {
-	poor_wl_swapchain_destroy(&c->swapchain);
+	poor_wl_swapchain_destroy(&c->swapchain, swapchain_done);
 	poor_wl_surface_destroy(&c->surface);
 	client_roundtrip(c);
+	run_until(c->loop, c->swapchain_done);
 	assert(c->frees == c->allocations && swapchain_server.buffers_destroyed == swapchain_server.buffers_created);
 	poor_wl_display_disconnect(&c->display);
 	run_until(c->loop, c->done);
@@ -394,6 +426,86 @@ TEST(format_without_tranche)
 	swapchain_server_start(&loop);
 	client_start(&c, &loop, DRM_FORMAT_RGB565);
 	assert(c.swapchain_error == ENOTSUP && !c.devices);
+	client_stop(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static bool node_opened;
+static int node_fd;
+
+static void node_open_done(struct poor_loop *, struct poor_loop_op *, const struct io_uring_cqe *cqe)
+{
+	node_fd = cqe->res;
+	node_opened = true;
+}
+
+/* The first render node, if it has timeline syncobjs */
+static int syncobj_device_open(struct poor_loop *loop)
+{
+	struct drm_get_cap cap = { .capability = DRM_CAP_SYNCOBJ_TIMELINE, .value = 0 };
+	struct poor_loop_op op;
+	struct io_uring_sqe *sqe;
+
+	poor_loop_op_init(&op, node_open_done);
+	node_opened = false;
+	sqe = poor_loop_get_sqe_or_submit(loop, &op);
+	assert(sqe);
+	io_uring_prep_openat(sqe, AT_FDCWD, "/dev/dri/renderD128", O_RDWR | O_CLOEXEC, 0);
+	run_until(loop, node_opened);
+	if (node_fd >= 0 && (ioctl(node_fd, DRM_IOCTL_GET_CAP, &cap) < 0 || !cap.value)) {
+		poor_loop_close_fd_or_submit(loop, node_fd, 0);
+		return -1;
+	}
+	return node_fd;
+}
+
+/* The compositor sends no releases with explicit synchronization, so buffers come back through the release points */
+TEST(explicit_sync)
+{
+	struct poor_loop loop;
+	struct client c;
+	int fd;
+
+	loop_init(&loop);
+	fd = syncobj_device_open(&loop);
+	if (fd < 0) {
+		loop_fini(&loop);
+		return;
+	}
+	server_config(4);
+	swapchain_server.syncobj_fd = fd;
+	swapchain_server_start(&loop);
+	client_start(&c, &loop, DRM_FORMAT_XRGB8888);
+	assert(c.have_syncobj && !poor_wl_swapchain_set_syncobj(&c.swapchain, &c.syncobj, fd));
+	poor_wl_swapchain_set_allocator(&c.swapchain, &memfd_allocator, &c);
+	client_present(&c, 64, 32, 10);
+	assert(swapchain_server.acquires == 10 && swapchain_server.acquire_point % 2);
+	assert(swapchain_server.release_point == swapchain_server.acquire_point + 1);
+	c.fence_fd = fd;
+	client_present(&c, 64, 32, 10);
+	assert(swapchain_server.acquires == 20 && c.allocations <= POOR_WL_SWAPCHAIN_BUFFERS);
+	client_stop(&c);
+	server_stop(&loop);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	loop_fini(&loop);
+}
+
+TEST(explicit_sync_needs_drm_device)
+{
+	struct poor_loop loop;
+	struct client c;
+	int fd = memfd_create("swapchain-test", MFD_CLOEXEC);
+
+	assert(fd >= 0);
+	loop_init(&loop);
+	server_config(4);
+	swapchain_server_start(&loop);
+	client_start(&c, &loop, DRM_FORMAT_XRGB8888);
+	assert(c.have_syncobj && poor_wl_swapchain_set_syncobj(&c.swapchain, &c.syncobj, fd) == -ENOTTY);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	poor_wl_swapchain_set_allocator(&c.swapchain, &memfd_allocator, &c);
+	client_present(&c, 16, 16, 2);
 	client_stop(&c);
 	server_stop(&loop);
 	loop_fini(&loop);
