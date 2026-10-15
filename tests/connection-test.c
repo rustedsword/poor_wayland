@@ -204,8 +204,9 @@ static void demarshal_fails_impl(size_t count, const uint32_t (*words)[count], i
 	uint32_t header[2];
 
 	endpoint_init(&server, POOR_WL_MAP_SERVER_SIDE);
-	for (int i = 0; i < fds; i++)
-		server.connection.fds_in.fds[server.connection.fds_in.head++] = dup(STDERR_FILENO);
+	foreach_array_ref(arrview_first(fds, server.connection.fds_in.fds), fd)
+		*fd = dup(STDERR_FILENO);
+	server.connection.fds_in.head = fds;
 	memcpy(server.in, *words, ARRAY_SIZE_BYTES(words));
 	server.connection.in.head = ARRAY_SIZE_BYTES(words);
 	poor_wl_connection_copy(&server.connection, header);

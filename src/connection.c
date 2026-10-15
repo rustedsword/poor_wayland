@@ -170,18 +170,18 @@ int poor_wl_connection_recv_done(struct poor_wl_connection *connection, struct p
 
 	connection->in.head += res;
 	for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg; cmsg = CMSG_NXTHDR(msg, cmsg)) {
-		size_t n = (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int);
-		int fd;
+		int fds[POOR_WL_CONNECTION_MAX_FDS];
+		auto received = arrview_first((cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int), fds);
 
 		if (cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS)
 			continue;
-		for (size_t i = 0; i < n; i++) {
-			memcpy(&fd, CMSG_DATA(cmsg) + i * sizeof(fd), sizeof(fd));
+		memcpy(received, CMSG_DATA(cmsg), ARRAY_SIZE_BYTES(received));
+		foreach_array_const_ref(received, fd) {
 			if (overflow || !fds_free(&connection->fds_in)) {
 				overflow = true;
-				poor_loop_close_fd_or_submit(loop, fd, 0);
+				poor_loop_close_fd_or_submit(loop, *fd, 0);
 			} else {
-				fds_put(&connection->fds_in, fd);
+				fds_put(&connection->fds_in, *fd);
 			}
 		}
 	}
@@ -216,16 +216,17 @@ void poor_wl_connection_prep_send(struct poor_wl_connection *connection, struct 
 	msg->msg_controllen = 0;
 	msg->msg_flags = 0;
 	if (nfds) {
+		int fds[POOR_WL_CONNECTION_MAX_FDS];
+		auto sent = arrview_first(nfds, fds);
+
+		foreach_array_index(sent, i)
+			fds[i] = connection->fds_out.fds[(connection->fds_out.tail + i) % ARRAY_SIZE(connection->fds_out.fds)];
 		cmsg->cmsg_level = SOL_SOCKET;
 		cmsg->cmsg_type = SCM_RIGHTS;
-		cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
-		for (uint32_t i = 0; i < nfds; i++) {
-			int fd_out = connection->fds_out.fds[(connection->fds_out.tail + i) % ARRAY_SIZE(connection->fds_out.fds)];
-
-			memcpy(CMSG_DATA(cmsg) + i * sizeof(int), &fd_out, sizeof(int));
-		}
+		cmsg->cmsg_len = CMSG_LEN(ARRAY_SIZE_BYTES(sent));
+		memcpy(CMSG_DATA(cmsg), sent, ARRAY_SIZE_BYTES(sent));
 		msg->msg_control = cmsg;
-		msg->msg_controllen = CMSG_SPACE(nfds * sizeof(int));
+		msg->msg_controllen = CMSG_SPACE(ARRAY_SIZE_BYTES(sent));
 	}
 	connection->out_fds = nfds;
 	io_uring_prep_sendmsg(sqe, fd, msg, MSG_NOSIGNAL | flags);
@@ -330,7 +331,7 @@ void poor_wl_argument_from_va_list(const char *signature, union poor_wl_argument
 {
 	struct argument_details arg;
 
-	for (int i = 0; i < count; i++) {
+	foreach_array_index(array_ptr(args, count), i) {
 		signature = get_next_argument(signature, &arg);
 		switch (arg.type) {
 		case POOR_WL_ARG_INT:
@@ -373,17 +374,24 @@ static int closure_init(struct poor_wl_closure *closure, const struct poor_wl_me
 	return 0;
 }
 
-/* The fds stay with the caller, poor_wl_closure_send() sends copies */
+static int null_argument(const struct poor_wl_message *message, size_t i)
+{
+	poor_wl_log("error marshalling arguments for %s (signature %s): null value passed for arg %zu\n", message->name,
+	       message->signature, i);
+	errno = EINVAL;
+	return -1;
+}
+
+/* The fds stay with the caller until poor_wl_closure_send() takes them */
 int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_object *sender, uint32_t opcode, const union poor_wl_argument *args,
 		       const struct poor_wl_message *message)
 {
 	const char *signature = message->signature;
 	struct argument_details arg;
-	int i;
 
 	if (closure_init(closure, message) < 0)
 		return -1;
-	for (i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		closure->args[i] = args[i];
 		switch (arg.type) {
@@ -394,20 +402,20 @@ int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_obje
 			break;
 		case POOR_WL_ARG_STRING:
 			if (!arg.nullable && !args[i].s)
-				goto err_null;
+				return null_argument(message, i);
 			break;
 		case POOR_WL_ARG_OBJECT:
 			if (!arg.nullable && !args[i].o)
-				goto err_null;
+				return null_argument(message, i);
 			break;
 		case POOR_WL_ARG_NEW_ID:
 			if (!args[i].o)
-				goto err_null;
+				return null_argument(message, i);
 			closure->args[i].n = args[i].o->id;
 			break;
 		case POOR_WL_ARG_ARRAY:
 			if (!args[i].a)
-				goto err_null;
+				return null_argument(message, i);
 			break;
 		default:
 			poor_wl_abort("unhandled format code: '%c'\n", arg.type);
@@ -416,12 +424,6 @@ int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_obje
 	closure->sender_id = sender->id;
 	closure->opcode = opcode;
 	return 0;
-
-err_null:
-	poor_wl_log("error marshalling arguments for %s (signature %s): null value passed for arg %i\n", message->name,
-	       message->signature, i);
-	errno = EINVAL;
-	return -1;
 }
 
 /* Returns the size of the message, or -1 if it doesn't fit 'buffer' */
@@ -433,7 +435,7 @@ static int serialize_closure(const struct poor_wl_closure *closure, size_t count
 	uint32_t *p = array_first_ref(buffer) + 2, *end = array_end_ref(buffer), size;
 
 	*nfds = 0;
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD) {
 			(*nfds)++;
@@ -502,7 +504,7 @@ void poor_wl_message_close_fds(const struct poor_wl_message *message, const unio
 	const char *signature = message->signature;
 	struct argument_details arg;
 
-	for (int i = 0, count = arg_count_for_signature(message->signature); i < count; i++) {
+	foreach_array_index(array_ptr(args, arg_count_for_signature(message->signature)), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD)
 			poor_loop_close_fd_or_submit(loop, args[i].h, 0);
@@ -527,7 +529,7 @@ int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_c
 		poor_wl_message_close_fds(closure->message, closure->args, loop);
 		return -1;
 	}
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD) {
 			assert(closure->args[i].h >= 0);
@@ -558,7 +560,7 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 		poor_wl_connection_consume(connection, size);
 		return -1;
 	}
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD)
 			closure->args[i].h = -1;
@@ -572,7 +574,7 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 	closure->opcode = *p++ & 0x0000ffff;
 
 	signature = message->signature;
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type != POOR_WL_ARG_FD && p >= end) {
 			poor_wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
@@ -701,7 +703,7 @@ int poor_wl_closure_lookup_objects(struct poor_wl_closure *closure, struct poor_
 	struct poor_wl_object *object;
 	uint32_t id;
 
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type != POOR_WL_ARG_OBJECT)
 			continue;
@@ -731,7 +733,7 @@ static void convert_arguments_to_ffi(const char *signature, uint32_t flags, unio
 {
 	struct argument_details arg;
 
-	for (int i = 0; i < count; i++) {
+	foreach_array_index(array_ptr(args, count), i) {
 		signature = get_next_argument(signature, &arg);
 		switch (arg.type) {
 		case POOR_WL_ARG_INT:
@@ -783,7 +785,7 @@ static void closure_clear_fds(struct poor_wl_closure *closure)
 	const char *signature = closure->message->signature;
 	struct argument_details arg;
 
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD)
 			closure->args[i].h = -1;
@@ -822,7 +824,7 @@ void poor_wl_closure_close_fds(struct poor_wl_closure *closure, struct poor_loop
 	const char *signature = closure->message->signature;
 	struct argument_details arg;
 
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD && closure->args[i].h >= 0) {
 			poor_loop_close_fd_or_submit(loop, closure->args[i].h, 0);
@@ -902,7 +904,7 @@ void poor_wl_closure_print(const struct poor_wl_closure *closure, const struct p
 	      color ? POOR_WL_DEBUG_COLOR_RESET : "", send ? " -> " : "", color ? POOR_WL_DEBUG_COLOR_BLUE : "", target->interface->name,
 	      color ? POOR_WL_DEBUG_COLOR_MAGENTA : "", target->id, color ? POOR_WL_DEBUG_COLOR_CYAN : "", closure->message->name,
 	      color ? POOR_WL_DEBUG_COLOR_RESET : "");
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (i > 0)
 			buffer_print(&b, ", ");

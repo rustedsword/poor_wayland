@@ -134,9 +134,8 @@ static struct poor_wl_proxy *create_outgoing_proxy(struct poor_wl_proxy *factory
 {
 	const char *signature = message->signature;
 	struct argument_details arg;
-	int count = arg_count_for_signature(signature);
 
-	for (int i = 0; i < count; i++) {
+	foreach_array_index(array_ptr(args, arg_count_for_signature(signature)), i) {
 		struct poor_wl_proxy *proxy;
 
 		signature = get_next_argument(signature, &arg);
@@ -413,7 +412,7 @@ static int create_proxies(struct poor_wl_display *display, struct poor_wl_proxy 
 	const char *signature = closure->message->signature;
 	struct argument_details arg;
 
-	for (int i = 0; i < closure->count; i++) {
+	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		const struct poor_wl_interface *interface = closure->message->types[i];
 		struct poor_wl_proxy *proxy;
 

@@ -24,6 +24,8 @@ compiler_flags = [
 	'-Wstrict-prototypes',
 	'-Wmissing-prototypes',
 	'-fvisibility=hidden',
+	# Array views of no elements are variable length arrays of zero length
+	'-fno-sanitize=vla-bound',
 ]
 
 cc = meson.get_compiler('c')

@@ -169,8 +169,8 @@ static bool format_is_supported(struct poor_wl_client *client, uint32_t format)
 
 	if (format == POOR_WL_SHM_FORMAT_ARGB8888 || format == POOR_WL_SHM_FORMAT_XRGB8888)
 		return true;
-	for (size_t i = 0; i < display->shm_formats_count; i++)
-		if (display->shm_formats[i] == format)
+	foreach_array_const_ref(array_ptr(display->shm_formats, display->shm_formats_count), supported)
+		if (*supported == format)
 			return true;
 	return false;
 }
@@ -336,8 +336,8 @@ static void bind_shm(struct poor_wl_client *client, void *data, uint32_t version
 	poor_wl_shm_resource_set_implementation(resource, &shm_interface, data, destroy_shm);
 	poor_wl_shm_send_format(resource, POOR_WL_SHM_FORMAT_ARGB8888);
 	poor_wl_shm_send_format(resource, POOR_WL_SHM_FORMAT_XRGB8888);
-	for (size_t i = 0; i < display->shm_formats_count; i++)
-		poor_wl_shm_send_format(resource, display->shm_formats[i]);
+	foreach_array_const_ref(array_ptr(display->shm_formats, display->shm_formats_count), format)
+		poor_wl_shm_send_format(resource, *format);
 }
 
 POOR_WL_EXPORT void poor_wl_display_init_shm(struct poor_wl_display *display, struct poor_wl_global *global)

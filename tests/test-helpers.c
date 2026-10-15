@@ -194,6 +194,14 @@ test_disable_coredumps(void)
 #endif
 }
 
+void
+put_string_impl(size_t count, uint32_t (*words)[count], const char *s)
+{
+	(*words)[0] = strlen(s) + 1;
+	*array_last_ref(words) = 0;
+	memcpy(&(*words)[1], s, (*words)[0]);
+}
+
 int
 stderr_copy(void)
 {

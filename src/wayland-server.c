@@ -154,9 +154,8 @@ static bool verify_objects(struct poor_wl_resource *resource, uint32_t opcode, u
 	const char *signature = object->interface->events[opcode].signature;
 	struct argument_details arg;
 	struct poor_wl_resource *res;
-	int count = arg_count_for_signature(signature);
 
-	for (int i = 0; i < count; i++) {
+	foreach_array_index(array_ptr(args, arg_count_for_signature(signature)), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type != POOR_WL_ARG_NEW_ID && arg.type != POOR_WL_ARG_OBJECT)
 			continue;

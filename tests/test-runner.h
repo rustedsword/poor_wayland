@@ -29,6 +29,9 @@
 #error "Tests must not be built with NDEBUG defined, they rely on assert()."
 #endif
 
+#include <poor_array.h>
+#include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 
 struct test {
@@ -63,6 +66,13 @@ count_open_fds(void);
 /* A copy of stderr, for fd arguments, which the connection takes */
 int
 stderr_copy(void);
+
+/* A string argument is its size, then the string padded with zeros to whole words */
+#define STRING_WORDS(s) (1 + (strlen(s) + 4) / 4)
+
+void
+put_string_impl(size_t count, uint32_t (*words)[count], const char *s);
+#define put_string(words, s) put_string_impl(ARRAY_SIZE(words), &auto_arr(words), s)
 
 void
 exec_fd_leak_check(int nr_expected_fds); /* never returns */

@@ -289,10 +289,10 @@ static void global_child_spawned(void *data, struct poor_test_global *, struct p
 static void global_data(void *data, struct poor_test_global *, struct poor_wl_array *payload)
 {
 	struct client *c = data;
-	const char *p = payload->data;
+	auto bytes = array_ptr((const char *)payload->data, payload->size);
 
-	for (size_t i = 0; i < payload->size; i++)
-		assert(p[i] == (char)i);
+	foreach_array_index(bytes, i)
+		assert((*bytes)[i] == (char)i);
 	c->events++;
 }
 
@@ -1478,18 +1478,11 @@ enum {
 
 static void write_error(int fd, uint32_t object, uint32_t code, const char *message)
 {
-	size_t size = strlen(message) + 1, count = 5 + (size + 3) / 4;
-	uint32_t words[32];
+	uint32_t string[STRING_WORDS(message)];
 
-	assert(count <= ARRAY_SIZE(words));
-	auto event = arrview_first(count, words);
-	words[0] = 1;
-	words[1] = ARRAY_SIZE_BYTES(event) << 16 | DISPLAY_ERROR;
-	words[2] = object;
-	words[3] = code;
-	words[4] = size;
-	*array_last_ref(event) = 0;
-	memcpy(words + 5, message, size);
+	put_string(string, message);
+	make_merged_array(event, ((uint32_t[]){ 1, DISPLAY_ERROR, object, code }), string);
+	event[1] |= ARRAY_SIZE_BYTES(event) << 16;
 	write_words(fd, event);
 }
 

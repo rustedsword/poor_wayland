@@ -226,54 +226,32 @@ static uint32_t peer_new_id(struct peer *p)
 	return p->next_id++;
 }
 
-static void peer_send_fds(struct peer *p, uint32_t id, uint32_t opcode, const uint32_t *args, size_t count, const int *fds,
-			  size_t nfds)
+/* A message starts with the object and the opcode, the size of the message goes next to the opcode */
+static void peer_send_impl(struct peer *p, size_t count, uint32_t (*message)[count], size_t nfds, const int (*fds)[nfds])
 {
 	alignas(struct cmsghdr) char control[CMSG_SPACE(32 * sizeof(int))];
-	uint32_t words[64];
-
-	assert(count + 2 <= ARRAY_SIZE(words) && nfds <= 32);
-	auto message = arrview_first(count + 2, words);
 	struct iovec iov = array_iovec(message);
 	struct msghdr msg = { .msg_iov = &iov, .msg_iovlen = 1 };
 	struct cmsghdr *cmsg;
 
-	words[0] = id;
-	words[1] = ARRAY_SIZE_BYTES(message) << 16 | opcode;
-	if (count)
-		memcpy(words + 2, args, count * sizeof(*words));
+	assert(nfds <= 32);
+	(*message)[1] |= ARRAY_SIZE_BYTES(message) << 16;
 	if (nfds) {
 		msg.msg_control = control;
-		msg.msg_controllen = CMSG_SPACE(nfds * sizeof(int));
+		msg.msg_controllen = CMSG_SPACE(ARRAY_SIZE_BYTES(fds));
 		cmsg = CMSG_FIRSTHDR(&msg);
 		cmsg->cmsg_level = SOL_SOCKET;
 		cmsg->cmsg_type = SCM_RIGHTS;
-		cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
-		memcpy(CMSG_DATA(cmsg), fds, nfds * sizeof(int));
+		cmsg->cmsg_len = CMSG_LEN(ARRAY_SIZE_BYTES(fds));
+		memcpy(CMSG_DATA(cmsg), fds, ARRAY_SIZE_BYTES(fds));
 	}
 	assert(sendmsg(p->fd, &msg, 0) == (ssize_t)iov.iov_len);
 }
 
-static void peer_send(struct peer *p, uint32_t id, uint32_t opcode, const uint32_t *args, size_t count)
-{
-	peer_send_fds(p, id, opcode, args, count, nullptr, 0);
-}
-
-#define SEND(p, id, opcode, ...) \
-	do { \
-		const uint32_t args_[] = { __VA_ARGS__ }; \
-		peer_send(p, id, opcode, args_, ARRAY_SIZE(args_)); \
-	} while (0)
-
-static size_t put_string(uint32_t *words, size_t count, const char *s)
-{
-	size_t size = strlen(s) + 1, padded = (size + 3) / 4;
-
-	words[count++] = size;
-	words[count + padded - 1] = 0;
-	memcpy(words + count, s, size);
-	return count + padded;
-}
+#define peer_send(p, message) peer_send_impl(p, ARRAY_SIZE(message), &auto_arr(message), 0, nullptr)
+#define peer_send_fds(p, message, fds) peer_send_impl(p, ARRAY_SIZE(message), &auto_arr(message), ARRAY_SIZE(fds), &auto_arr(fds))
+#define SEND(p, ...) peer_send(p, ((uint32_t[]){ __VA_ARGS__ }))
+#define SEND_FDS(p, fds, ...) peer_send_fds(p, ((uint32_t[]){ __VA_ARGS__ }), fds)
 
 static const uint32_t *skip_string(const uint32_t *p)
 {
@@ -366,14 +344,11 @@ static uint32_t peer_get_registry(struct peer *p)
 
 static uint32_t peer_bind(struct peer *p, uint32_t registry, uint32_t name, const char *interface, uint32_t version)
 {
-	uint32_t words[32], id = peer_new_id(p);
-	size_t count = 0;
+	uint32_t string[STRING_WORDS(interface)], id = peer_new_id(p);
 
-	words[count++] = name;
-	count = put_string(words, count, interface);
-	words[count++] = version;
-	words[count++] = id;
-	peer_send(p, registry, REGISTRY_BIND, words, count);
+	put_string(string, interface);
+	make_merged_array(message, ((uint32_t[]){ registry, REGISTRY_BIND, name }), string, ((uint32_t[]){ version, id }));
+	peer_send(p, message);
 	return id;
 }
 
@@ -796,9 +771,9 @@ TEST(client_sends_too_many_fds)
 	server_start();
 	peer_connect(&a);
 	peer_connect(&b);
-	peer_send_fds(&a, 1, DISPLAY_SYNC, (uint32_t[]){ peer_new_id(&a) }, 1, fds, POOR_WL_CONNECTION_MAX_FDS + 1);
+	SEND_FDS(&a, arrview_first(POOR_WL_CONNECTION_MAX_FDS + 1, fds), 1, DISPLAY_SYNC, peer_new_id(&a));
 	for (unsigned i = 0; i < POOR_WL_CONNECTION_FDS / POOR_WL_CONNECTION_MAX_FDS + 1; i++)
-		peer_send_fds(&b, 1, DISPLAY_SYNC, (uint32_t[]){ peer_new_id(&b) }, 1, fds, POOR_WL_CONNECTION_MAX_FDS);
+		SEND_FDS(&b, arrview_first(POOR_WL_CONNECTION_MAX_FDS, fds), 1, DISPLAY_SYNC, peer_new_id(&b));
 	run_until(a.done && b.done);
 	assert(logged("failed to read client connection") && logged("too many file descriptors from client"));
 	peer_close(&a);
@@ -1071,9 +1046,9 @@ TEST(invalid_requests)
 	foreach_array_ref(p, peer)
 		peer_connect(peer);
 	assert(write_array(p[0].fd, too_large) == (ssize_t)ARRAY_SIZE_BYTES(too_large));
-	peer_send(&p[1], 7, 0, nullptr, 0);
-	peer_send(&p[2], 1, 5, nullptr, 0);
-	peer_send(&p[3], 1, DISPLAY_SYNC, nullptr, 0);
+	SEND(&p[1], 7, 0);
+	SEND(&p[2], 1, 5);
+	SEND(&p[3], 1, DISPLAY_SYNC);
 	assert(!poor_wl_fixes_resource_init(&fixes, &p[4].client, 1, peer_new_id(&p[4])));
 	SEND(&p[4], 2, FIXES_DESTROY_REGISTRY, 1);
 	e = expect_error(&p[0], 1, POOR_WL_DISPLAY_ERROR_INVALID_METHOD);
@@ -1116,7 +1091,7 @@ TEST(resource_dispatcher)
 	assert(!poor_test_child_resource_init(&child, &p.client, 1, peer_new_id(&p)));
 	poor_wl_resource_set_dispatcher(&child.resource, dispatch, &child_impl, &data, nullptr);
 	assert(poor_wl_resource_get_user_data(&child.resource) == &data);
-	peer_send(&p, 2, CHILD_PING, nullptr, 0);
+	SEND(&p, 2, CHILD_PING);
 	run_until(dispatched_opcode == CHILD_PING);
 	peer_close(&p);
 	server_stop();
@@ -1130,7 +1105,7 @@ FAIL_TEST(request_to_resource_without_implementation)
 	server_start();
 	peer_connect(&p);
 	assert(!poor_test_child_resource_init(&child, &p.client, 1, peer_new_id(&p)));
-	peer_send(&p, 2, CHILD_PING, nullptr, 0);
+	SEND(&p, 2, CHILD_PING);
 	run_until(p.done);
 }
 
@@ -1144,7 +1119,7 @@ FAIL_TEST(request_without_handler)
 	peer_connect(&p);
 	assert(!poor_test_child_resource_init(&child, &p.client, 1, peer_new_id(&p)));
 	poor_test_child_resource_set_implementation(&child, &partial, nullptr, nullptr);
-	peer_send(&p, 2, CHILD_PING, nullptr, 0);
+	SEND(&p, 2, CHILD_PING);
 	run_until(p.done);
 }
 
@@ -1498,7 +1473,7 @@ static uint32_t peer_create_pool(struct peer *p, uint32_t shm, int fd, int32_t s
 {
 	uint32_t id = peer_new_id(p);
 
-	peer_send_fds(p, shm, SHM_CREATE_POOL, (uint32_t[]){ id, (uint32_t)size }, 2, &fd, 1);
+	SEND_FDS(p, array_ptr(&fd), shm, SHM_CREATE_POOL, id, (uint32_t)size);
 	return id;
 }
 
@@ -1613,10 +1588,10 @@ TEST(shm_buffers)
 	assert(!poor_wl_buffer_resource_init(&other, &c.peer.client, 1, 0));
 	assert(!poor_wl_shm_buffer_get(&other));
 	poor_wl_resource_destroy(&other.resource);
-	peer_send(&c.peer, id, BUFFER_DESTROY, nullptr, 0);
-	peer_send(&c.peer, c.buffer, BUFFER_DESTROY, nullptr, 0);
-	peer_send(&c.peer, c.pool, SHM_POOL_DESTROY, nullptr, 0);
-	peer_send(&c.peer, c.shm, SHM_RELEASE, nullptr, 0);
+	SEND(&c.peer, id, BUFFER_DESTROY);
+	SEND(&c.peer, c.buffer, BUFFER_DESTROY);
+	SEND(&c.peer, c.pool, SHM_POOL_DESTROY);
+	SEND(&c.peer, c.shm, SHM_RELEASE);
 	peer_roundtrip(&c.peer);
 	assert(!poor_wl_client_get_object(&c.peer.client, c.pool) && !poor_wl_client_get_object(&c.peer.client, c.shm));
 	shm_client_fini(&c);
@@ -1681,8 +1656,8 @@ TEST(shm_references)
 	buffer = shm_client_init(&c, 4096);
 	assert(poor_wl_shm_buffer_ref(buffer) == buffer && poor_wl_shm_buffer_ref(buffer) == buffer);
 	mapping = poor_wl_shm_buffer_ref_mapping(buffer);
-	peer_send(&c.peer, c.buffer, BUFFER_DESTROY, nullptr, 0);
-	peer_send(&c.peer, c.pool, SHM_POOL_DESTROY, nullptr, 0);
+	SEND(&c.peer, c.buffer, BUFFER_DESTROY);
+	SEND(&c.peer, c.pool, SHM_POOL_DESTROY);
 	peer_roundtrip(&c.peer);
 	assert(!poor_wl_client_get_object(&c.peer.client, c.buffer));
 	poor_wl_shm_buffer_unref(buffer);
@@ -1714,7 +1689,7 @@ TEST(shm_truncated_pool)
 	}
 	assert(read_pixel(buffers[0]) == 0);
 	expect_error(&c[0].peer, c[0].buffer, POOR_WL_SHM_ERROR_INVALID_FD);
-	peer_send(&c[1].peer, c[1].buffer, BUFFER_DESTROY, nullptr, 0);
+	SEND(&c[1].peer, c[1].buffer, BUFFER_DESTROY);
 	peer_roundtrip(&c[1].peer);
 	assert(read_pixel(buffers[1]) == 0);
 	e = expect_error(&c[1].peer, 1, POOR_WL_DISPLAY_ERROR_IMPLEMENTATION);
