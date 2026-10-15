@@ -45,9 +45,9 @@ struct poor_wl_resource;
  * SOFTWARE.
  * </pre>
  */
-struct poor_another_intf;
-struct poor_intf_A;
-struct poor_intf_not_here;
+struct poor_another_intf_resource;
+struct poor_intf_A_resource;
+struct poor_intf_not_here_resource;
 
 #ifndef POOR_INTF_A_INTERFACE
 #define POOR_INTF_A_INTERFACE
@@ -184,6 +184,14 @@ poor_intf_A_bar_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_intf_A
+ * @struct poor_intf_A_resource
+ */
+struct poor_intf_A_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_intf_A
  * @struct poor_intf_A_interface
  */
 struct poor_intf_A_interface {
@@ -192,24 +200,41 @@ struct poor_intf_A_interface {
 	 * @param version version of the objects interface
 	 */
 	void (*rq1)(struct poor_wl_client *client,
-		    struct poor_wl_resource *resource,
+		    struct poor_intf_A_resource *resource,
 		    const char *interface, uint32_t version, uint32_t untyped_new);
 	/**
 	 */
 	void (*rq2)(struct poor_wl_client *client,
-		    struct poor_wl_resource *resource,
+		    struct poor_intf_A_resource *resource,
 		    uint32_t typed_new,
 		    const char *str,
 		    int32_t i,
 		    uint32_t u,
 		    poor_wl_fixed_t f,
 		    int32_t fd,
-		    struct poor_wl_resource *obj);
+		    struct poor_another_intf_resource *obj);
 	/**
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_intf_A_resource *resource);
 };
+
+/** @ingroup iface_poor_intf_A */
+static inline int
+poor_intf_A_resource_init(struct poor_intf_A_resource *resource,
+			  struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_intf_A_interface, version, id);
+}
+
+/** @ingroup iface_poor_intf_A */
+static inline void
+poor_intf_A_resource_set_implementation(struct poor_intf_A_resource *resource,
+					const struct poor_intf_A_interface *implementation, void *data,
+					poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_INTF_A_HEY 0
 #define POOR_INTF_A_YO 1
@@ -242,9 +267,9 @@ struct poor_intf_A_interface {
  * @param resource_ The client's resource
  */
 static inline void
-poor_intf_A_send_hey(struct poor_wl_resource *resource_)
+poor_intf_A_send_hey(struct poor_intf_A_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_INTF_A_HEY);
+	poor_wl_resource_post_event(&resource_->resource, POOR_INTF_A_HEY);
 }
 
 /**
@@ -253,9 +278,9 @@ poor_intf_A_send_hey(struct poor_wl_resource *resource_)
  * @param resource_ The client's resource
  */
 static inline void
-poor_intf_A_send_yo(struct poor_wl_resource *resource_)
+poor_intf_A_send_yo(struct poor_intf_A_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_INTF_A_YO);
+	poor_wl_resource_post_event(&resource_->resource, POOR_INTF_A_YO);
 }
 
 #ifdef  __cplusplus

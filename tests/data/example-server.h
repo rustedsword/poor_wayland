@@ -68,28 +68,28 @@ struct poor_wl_resource;
  * SOFTWARE.
  * </pre>
  */
-struct poor_wl_buffer;
-struct poor_wl_callback;
-struct poor_wl_compositor;
-struct poor_wl_data_device;
-struct poor_wl_data_device_manager;
-struct poor_wl_data_offer;
-struct poor_wl_data_source;
-struct poor_wl_display;
-struct poor_wl_keyboard;
-struct poor_wl_output;
-struct poor_wl_pointer;
-struct poor_wl_region;
-struct poor_wl_registry;
-struct poor_wl_seat;
-struct poor_wl_shell;
-struct poor_wl_shell_surface;
-struct poor_wl_shm;
-struct poor_wl_shm_pool;
-struct poor_wl_subcompositor;
-struct poor_wl_subsurface;
-struct poor_wl_surface;
-struct poor_wl_touch;
+struct poor_wl_buffer_resource;
+struct poor_wl_callback_resource;
+struct poor_wl_compositor_resource;
+struct poor_wl_data_device_resource;
+struct poor_wl_data_device_manager_resource;
+struct poor_wl_data_offer_resource;
+struct poor_wl_data_source_resource;
+struct poor_wl_display_resource;
+struct poor_wl_keyboard_resource;
+struct poor_wl_output_resource;
+struct poor_wl_pointer_resource;
+struct poor_wl_region_resource;
+struct poor_wl_registry_resource;
+struct poor_wl_seat_resource;
+struct poor_wl_shell_resource;
+struct poor_wl_shell_surface_resource;
+struct poor_wl_shm_resource;
+struct poor_wl_shm_pool_resource;
+struct poor_wl_subcompositor_resource;
+struct poor_wl_subsurface_resource;
+struct poor_wl_surface_resource;
+struct poor_wl_touch_resource;
 
 #ifndef POOR_WL_DISPLAY_INTERFACE
 #define POOR_WL_DISPLAY_INTERFACE
@@ -949,7 +949,7 @@ struct poor_wl_display_interface {
 	 * @param callback callback object for the sync request
 	 */
 	void (*sync)(struct poor_wl_client *client,
-		     struct poor_wl_resource *resource,
+		     struct poor_wl_display_resource *resource,
 		     uint32_t callback);
 	/**
 	 * get global registry object
@@ -960,7 +960,7 @@ struct poor_wl_display_interface {
 	 * @param registry global registry object
 	 */
 	void (*get_registry)(struct poor_wl_client *client,
-			     struct poor_wl_resource *resource,
+			     struct poor_wl_display_resource *resource,
 			     uint32_t registry);
 };
 
@@ -987,6 +987,14 @@ struct poor_wl_display_interface {
 
 /**
  * @ingroup iface_poor_wl_registry
+ * @struct poor_wl_registry_resource
+ */
+struct poor_wl_registry_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_registry
  * @struct poor_wl_registry_interface
  */
 struct poor_wl_registry_interface {
@@ -1001,10 +1009,27 @@ struct poor_wl_registry_interface {
 	 * @param id bounded object
 	 */
 	void (*bind)(struct poor_wl_client *client,
-		     struct poor_wl_resource *resource,
+		     struct poor_wl_registry_resource *resource,
 		     uint32_t name,
 		     const char *interface, uint32_t version, uint32_t id);
 };
+
+/** @ingroup iface_poor_wl_registry */
+static inline int
+poor_wl_registry_resource_init(struct poor_wl_registry_resource *resource,
+			       struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_registry_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_registry */
+static inline void
+poor_wl_registry_resource_set_implementation(struct poor_wl_registry_resource *resource,
+					     const struct poor_wl_registry_interface *implementation, void *data,
+					     poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_REGISTRY_GLOBAL 0
 #define POOR_WL_REGISTRY_GLOBAL_REMOVE 1
@@ -1032,9 +1057,9 @@ struct poor_wl_registry_interface {
  * @param version interface version
  */
 static inline void
-poor_wl_registry_send_global(struct poor_wl_resource *resource_, uint32_t name, const char *interface, uint32_t version)
+poor_wl_registry_send_global(struct poor_wl_registry_resource *resource_, uint32_t name, const char *interface, uint32_t version)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_REGISTRY_GLOBAL, name, interface, version);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_REGISTRY_GLOBAL, name, interface, version);
 }
 
 /**
@@ -1044,9 +1069,25 @@ poor_wl_registry_send_global(struct poor_wl_resource *resource_, uint32_t name, 
  * @param name numeric name of the global object
  */
 static inline void
-poor_wl_registry_send_global_remove(struct poor_wl_resource *resource_, uint32_t name)
+poor_wl_registry_send_global_remove(struct poor_wl_registry_resource *resource_, uint32_t name)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_REGISTRY_GLOBAL_REMOVE, name);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_REGISTRY_GLOBAL_REMOVE, name);
+}
+
+/**
+ * @ingroup iface_poor_wl_callback
+ * @struct poor_wl_callback_resource
+ */
+struct poor_wl_callback_resource {
+	struct poor_wl_resource resource;
+};
+
+/** @ingroup iface_poor_wl_callback */
+static inline int
+poor_wl_callback_resource_init(struct poor_wl_callback_resource *resource,
+			       struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_callback_interface, version, id);
 }
 
 #define POOR_WL_CALLBACK_DONE 0
@@ -1064,10 +1105,18 @@ poor_wl_registry_send_global_remove(struct poor_wl_resource *resource_, uint32_t
  * @param callback_data request-specific data for the callback
  */
 static inline void
-poor_wl_callback_send_done(struct poor_wl_resource *resource_, uint32_t callback_data)
+poor_wl_callback_send_done(struct poor_wl_callback_resource *resource_, uint32_t callback_data)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_CALLBACK_DONE, callback_data);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_CALLBACK_DONE, callback_data);
 }
+
+/**
+ * @ingroup iface_poor_wl_compositor
+ * @struct poor_wl_compositor_resource
+ */
+struct poor_wl_compositor_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_compositor
@@ -1081,7 +1130,7 @@ struct poor_wl_compositor_interface {
 	 * @param id the new surface
 	 */
 	void (*create_surface)(struct poor_wl_client *client,
-			       struct poor_wl_resource *resource,
+			       struct poor_wl_compositor_resource *resource,
 			       uint32_t id);
 	/**
 	 * create new region
@@ -1090,9 +1139,26 @@ struct poor_wl_compositor_interface {
 	 * @param id the new region
 	 */
 	void (*create_region)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
+			      struct poor_wl_compositor_resource *resource,
 			      uint32_t id);
 };
+
+/** @ingroup iface_poor_wl_compositor */
+static inline int
+poor_wl_compositor_resource_init(struct poor_wl_compositor_resource *resource,
+				 struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_compositor_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_compositor */
+static inline void
+poor_wl_compositor_resource_set_implementation(struct poor_wl_compositor_resource *resource,
+					       const struct poor_wl_compositor_interface *implementation, void *data,
+					       poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -1103,6 +1169,14 @@ struct poor_wl_compositor_interface {
  * @ingroup iface_poor_wl_compositor
  */
 #define POOR_WL_COMPOSITOR_CREATE_REGION_SINCE_VERSION 1
+
+/**
+ * @ingroup iface_poor_wl_shm_pool
+ * @struct poor_wl_shm_pool_resource
+ */
+struct poor_wl_shm_pool_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_shm_pool
@@ -1131,7 +1205,7 @@ struct poor_wl_shm_pool_interface {
 	 * @param format buffer pixel format
 	 */
 	void (*create_buffer)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
+			      struct poor_wl_shm_pool_resource *resource,
 			      uint32_t id,
 			      int32_t offset,
 			      int32_t width,
@@ -1147,7 +1221,7 @@ struct poor_wl_shm_pool_interface {
 	 * been created from this pool are gone.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_shm_pool_resource *resource);
 	/**
 	 * change the size of the pool mapping
 	 *
@@ -1158,9 +1232,26 @@ struct poor_wl_shm_pool_interface {
 	 * @param size new size of the pool, in bytes
 	 */
 	void (*resize)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource,
+		       struct poor_wl_shm_pool_resource *resource,
 		       int32_t size);
 };
+
+/** @ingroup iface_poor_wl_shm_pool */
+static inline int
+poor_wl_shm_pool_resource_init(struct poor_wl_shm_pool_resource *resource,
+			       struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_shm_pool_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_shm_pool */
+static inline void
+poor_wl_shm_pool_resource_set_implementation(struct poor_wl_shm_pool_resource *resource,
+					     const struct poor_wl_shm_pool_interface *implementation, void *data,
+					     poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -1612,6 +1703,14 @@ poor_wl_shm_format_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_shm
+ * @struct poor_wl_shm_resource
+ */
+struct poor_wl_shm_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_shm
  * @struct poor_wl_shm_interface
  */
 struct poor_wl_shm_interface {
@@ -1628,11 +1727,28 @@ struct poor_wl_shm_interface {
 	 * @param size pool size, in bytes
 	 */
 	void (*create_pool)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
+			    struct poor_wl_shm_resource *resource,
 			    uint32_t id,
 			    int32_t fd,
 			    int32_t size);
 };
+
+/** @ingroup iface_poor_wl_shm */
+static inline int
+poor_wl_shm_resource_init(struct poor_wl_shm_resource *resource,
+			  struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_shm_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_shm */
+static inline void
+poor_wl_shm_resource_set_implementation(struct poor_wl_shm_resource *resource,
+					const struct poor_wl_shm_interface *implementation, void *data,
+					poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_SHM_FORMAT 0
 
@@ -1653,10 +1769,18 @@ struct poor_wl_shm_interface {
  * @param format buffer pixel format
  */
 static inline void
-poor_wl_shm_send_format(struct poor_wl_resource *resource_, uint32_t format)
+poor_wl_shm_send_format(struct poor_wl_shm_resource *resource_, uint32_t format)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SHM_FORMAT, format);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SHM_FORMAT, format);
 }
+
+/**
+ * @ingroup iface_poor_wl_buffer
+ * @struct poor_wl_buffer_resource
+ */
+struct poor_wl_buffer_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_buffer
@@ -1672,8 +1796,25 @@ struct poor_wl_buffer_interface {
 	 * For possible side-effects to a surface, see wl_surface.attach.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_buffer_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_buffer */
+static inline int
+poor_wl_buffer_resource_init(struct poor_wl_buffer_resource *resource,
+			     struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_buffer_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_buffer */
+static inline void
+poor_wl_buffer_resource_set_implementation(struct poor_wl_buffer_resource *resource,
+					   const struct poor_wl_buffer_interface *implementation, void *data,
+					   poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_BUFFER_RELEASE 0
 
@@ -1693,9 +1834,9 @@ struct poor_wl_buffer_interface {
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_buffer_send_release(struct poor_wl_resource *resource_)
+poor_wl_buffer_send_release(struct poor_wl_buffer_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_BUFFER_RELEASE);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_BUFFER_RELEASE);
 }
 
 #ifndef POOR_WL_DATA_OFFER_ERROR_ENUM
@@ -1748,6 +1889,14 @@ poor_wl_data_offer_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_data_offer
+ * @struct poor_wl_data_offer_resource
+ */
+struct poor_wl_data_offer_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_offer
  * @struct poor_wl_data_offer_interface
  */
 struct poor_wl_data_offer_interface {
@@ -1772,7 +1921,7 @@ struct poor_wl_data_offer_interface {
 	 * @param mime_type mime type accepted by the client
 	 */
 	void (*accept)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource,
+		       struct poor_wl_data_offer_resource *resource,
 		       uint32_t serial,
 		       const char *mime_type);
 	/**
@@ -1797,7 +1946,7 @@ struct poor_wl_data_offer_interface {
 	 * @param fd file descriptor for data transfer
 	 */
 	void (*receive)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource,
+			struct poor_wl_data_offer_resource *resource,
 			const char *mime_type,
 			int32_t fd);
 	/**
@@ -1806,7 +1955,7 @@ struct poor_wl_data_offer_interface {
 	 * Destroy the data offer.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_data_offer_resource *resource);
 	/**
 	 * the offer will no longer be used
 	 *
@@ -1824,7 +1973,7 @@ struct poor_wl_data_offer_interface {
 	 * @since 3
 	 */
 	void (*finish)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource);
+		       struct poor_wl_data_offer_resource *resource);
 	/**
 	 * set the available/preferred drag-and-drop actions
 	 *
@@ -1865,10 +2014,27 @@ struct poor_wl_data_offer_interface {
 	 * @since 3
 	 */
 	void (*set_actions)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
+			    struct poor_wl_data_offer_resource *resource,
 			    uint32_t dnd_actions,
 			    uint32_t preferred_action);
 };
+
+/** @ingroup iface_poor_wl_data_offer */
+static inline int
+poor_wl_data_offer_resource_init(struct poor_wl_data_offer_resource *resource,
+				 struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_data_offer_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_data_offer */
+static inline void
+poor_wl_data_offer_resource_set_implementation(struct poor_wl_data_offer_resource *resource,
+					       const struct poor_wl_data_offer_interface *implementation, void *data,
+					       poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_DATA_OFFER_OFFER 0
 #define POOR_WL_DATA_OFFER_SOURCE_ACTIONS 1
@@ -1915,9 +2081,9 @@ struct poor_wl_data_offer_interface {
  * @param mime_type offered mime type
  */
 static inline void
-poor_wl_data_offer_send_offer(struct poor_wl_resource *resource_, const char *mime_type)
+poor_wl_data_offer_send_offer(struct poor_wl_data_offer_resource *resource_, const char *mime_type)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_OFFER, mime_type);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_OFFER_OFFER, mime_type);
 }
 
 /**
@@ -1927,9 +2093,9 @@ poor_wl_data_offer_send_offer(struct poor_wl_resource *resource_, const char *mi
  * @param source_actions actions offered by the data source
  */
 static inline void
-poor_wl_data_offer_send_source_actions(struct poor_wl_resource *resource_, uint32_t source_actions)
+poor_wl_data_offer_send_source_actions(struct poor_wl_data_offer_resource *resource_, uint32_t source_actions)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_SOURCE_ACTIONS, source_actions);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_OFFER_SOURCE_ACTIONS, source_actions);
 }
 
 /**
@@ -1939,9 +2105,9 @@ poor_wl_data_offer_send_source_actions(struct poor_wl_resource *resource_, uint3
  * @param dnd_action action selected by the compositor
  */
 static inline void
-poor_wl_data_offer_send_action(struct poor_wl_resource *resource_, uint32_t dnd_action)
+poor_wl_data_offer_send_action(struct poor_wl_data_offer_resource *resource_, uint32_t dnd_action)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_ACTION, dnd_action);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_OFFER_ACTION, dnd_action);
 }
 
 #ifndef POOR_WL_DATA_SOURCE_ERROR_ENUM
@@ -1982,6 +2148,14 @@ poor_wl_data_source_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_data_source
+ * @struct poor_wl_data_source_resource
+ */
+struct poor_wl_data_source_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_source
  * @struct poor_wl_data_source_interface
  */
 struct poor_wl_data_source_interface {
@@ -1994,7 +2168,7 @@ struct poor_wl_data_source_interface {
 	 * @param mime_type mime type offered by the data source
 	 */
 	void (*offer)(struct poor_wl_client *client,
-		      struct poor_wl_resource *resource,
+		      struct poor_wl_data_source_resource *resource,
 		      const char *mime_type);
 	/**
 	 * destroy the data source
@@ -2002,7 +2176,7 @@ struct poor_wl_data_source_interface {
 	 * Destroy the data source.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_data_source_resource *resource);
 	/**
 	 * set the available drag-and-drop actions
 	 *
@@ -2023,9 +2197,26 @@ struct poor_wl_data_source_interface {
 	 * @since 3
 	 */
 	void (*set_actions)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
+			    struct poor_wl_data_source_resource *resource,
 			    uint32_t dnd_actions);
 };
+
+/** @ingroup iface_poor_wl_data_source */
+static inline int
+poor_wl_data_source_resource_init(struct poor_wl_data_source_resource *resource,
+				  struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_data_source_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_data_source */
+static inline void
+poor_wl_data_source_resource_set_implementation(struct poor_wl_data_source_resource *resource,
+						const struct poor_wl_data_source_interface *implementation, void *data,
+						poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_DATA_SOURCE_TARGET 0
 #define POOR_WL_DATA_SOURCE_SEND 1
@@ -2079,9 +2270,9 @@ struct poor_wl_data_source_interface {
  * @param mime_type mime type accepted by the target
  */
 static inline void
-poor_wl_data_source_send_target(struct poor_wl_resource *resource_, const char *mime_type)
+poor_wl_data_source_send_target(struct poor_wl_data_source_resource *resource_, const char *mime_type)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_TARGET, mime_type);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_TARGET, mime_type);
 }
 
 /**
@@ -2092,9 +2283,9 @@ poor_wl_data_source_send_target(struct poor_wl_resource *resource_, const char *
  * @param fd file descriptor for the data
  */
 static inline void
-poor_wl_data_source_send_send(struct poor_wl_resource *resource_, const char *mime_type, int32_t fd)
+poor_wl_data_source_send_send(struct poor_wl_data_source_resource *resource_, const char *mime_type, int32_t fd)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_SEND, mime_type, fd);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_SEND, mime_type, fd);
 }
 
 /**
@@ -2103,9 +2294,9 @@ poor_wl_data_source_send_send(struct poor_wl_resource *resource_, const char *mi
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_data_source_send_cancelled(struct poor_wl_resource *resource_)
+poor_wl_data_source_send_cancelled(struct poor_wl_data_source_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_CANCELLED);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_CANCELLED);
 }
 
 /**
@@ -2114,9 +2305,9 @@ poor_wl_data_source_send_cancelled(struct poor_wl_resource *resource_)
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_data_source_send_dnd_drop_performed(struct poor_wl_resource *resource_)
+poor_wl_data_source_send_dnd_drop_performed(struct poor_wl_data_source_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED);
 }
 
 /**
@@ -2125,9 +2316,9 @@ poor_wl_data_source_send_dnd_drop_performed(struct poor_wl_resource *resource_)
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_data_source_send_dnd_finished(struct poor_wl_resource *resource_)
+poor_wl_data_source_send_dnd_finished(struct poor_wl_data_source_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_DND_FINISHED);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_DND_FINISHED);
 }
 
 /**
@@ -2137,9 +2328,9 @@ poor_wl_data_source_send_dnd_finished(struct poor_wl_resource *resource_)
  * @param dnd_action action selected by the compositor
  */
 static inline void
-poor_wl_data_source_send_action(struct poor_wl_resource *resource_, uint32_t dnd_action)
+poor_wl_data_source_send_action(struct poor_wl_data_source_resource *resource_, uint32_t dnd_action)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_ACTION, dnd_action);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_SOURCE_ACTION, dnd_action);
 }
 
 #ifndef POOR_WL_DATA_DEVICE_ERROR_ENUM
@@ -2171,6 +2362,14 @@ poor_wl_data_device_error_is_valid(uint32_t value, uint32_t version) {
 	}
 }
 #endif /* POOR_WL_DATA_DEVICE_ERROR_ENUM_IS_VALID */
+
+/**
+ * @ingroup iface_poor_wl_data_device
+ * @struct poor_wl_data_device_resource
+ */
+struct poor_wl_data_device_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_data_device
@@ -2213,10 +2412,10 @@ struct poor_wl_data_device_interface {
 	 * @param serial serial number of the implicit grab on the origin
 	 */
 	void (*start_drag)(struct poor_wl_client *client,
-			   struct poor_wl_resource *resource,
-			   struct poor_wl_resource *source,
-			   struct poor_wl_resource *origin,
-			   struct poor_wl_resource *icon,
+			   struct poor_wl_data_device_resource *resource,
+			   struct poor_wl_data_source_resource *source,
+			   struct poor_wl_surface_resource *origin,
+			   struct poor_wl_surface_resource *icon,
 			   uint32_t serial);
 	/**
 	 * copy data to the selection
@@ -2229,8 +2428,8 @@ struct poor_wl_data_device_interface {
 	 * @param serial serial number of the event that triggered this request
 	 */
 	void (*set_selection)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
-			      struct poor_wl_resource *source,
+			      struct poor_wl_data_device_resource *resource,
+			      struct poor_wl_data_source_resource *source,
 			      uint32_t serial);
 	/**
 	 * destroy data device
@@ -2239,8 +2438,25 @@ struct poor_wl_data_device_interface {
 	 * @since 2
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_data_device_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_data_device */
+static inline int
+poor_wl_data_device_resource_init(struct poor_wl_data_device_resource *resource,
+				  struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_data_device_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_data_device */
+static inline void
+poor_wl_data_device_resource_set_implementation(struct poor_wl_data_device_resource *resource,
+						const struct poor_wl_data_device_interface *implementation, void *data,
+						poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_DATA_DEVICE_DATA_OFFER 0
 #define POOR_WL_DATA_DEVICE_ENTER 1
@@ -2294,9 +2510,9 @@ struct poor_wl_data_device_interface {
  * @param id the new data_offer object
  */
 static inline void
-poor_wl_data_device_send_data_offer(struct poor_wl_resource *resource_, struct poor_wl_resource *id)
+poor_wl_data_device_send_data_offer(struct poor_wl_data_device_resource *resource_, struct poor_wl_data_offer_resource *id)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_DATA_OFFER, id);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_DATA_OFFER, id);
 }
 
 /**
@@ -2310,9 +2526,9 @@ poor_wl_data_device_send_data_offer(struct poor_wl_resource *resource_, struct p
  * @param id source data_offer object
  */
 static inline void
-poor_wl_data_device_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, poor_wl_fixed_t x, poor_wl_fixed_t y, struct poor_wl_resource *id)
+poor_wl_data_device_send_enter(struct poor_wl_data_device_resource *resource_, uint32_t serial, struct poor_wl_surface_resource *surface, poor_wl_fixed_t x, poor_wl_fixed_t y, struct poor_wl_data_offer_resource *id)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_ENTER, serial, surface, x, y, id);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_ENTER, serial, surface, x, y, id);
 }
 
 /**
@@ -2321,9 +2537,9 @@ poor_wl_data_device_send_enter(struct poor_wl_resource *resource_, uint32_t seri
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_data_device_send_leave(struct poor_wl_resource *resource_)
+poor_wl_data_device_send_leave(struct poor_wl_data_device_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_LEAVE);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_LEAVE);
 }
 
 /**
@@ -2335,9 +2551,9 @@ poor_wl_data_device_send_leave(struct poor_wl_resource *resource_)
  * @param y surface-local y coordinate
  */
 static inline void
-poor_wl_data_device_send_motion(struct poor_wl_resource *resource_, uint32_t time, poor_wl_fixed_t x, poor_wl_fixed_t y)
+poor_wl_data_device_send_motion(struct poor_wl_data_device_resource *resource_, uint32_t time, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_MOTION, time, x, y);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_MOTION, time, x, y);
 }
 
 /**
@@ -2346,9 +2562,9 @@ poor_wl_data_device_send_motion(struct poor_wl_resource *resource_, uint32_t tim
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_data_device_send_drop(struct poor_wl_resource *resource_)
+poor_wl_data_device_send_drop(struct poor_wl_data_device_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_DROP);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_DROP);
 }
 
 /**
@@ -2358,9 +2574,9 @@ poor_wl_data_device_send_drop(struct poor_wl_resource *resource_)
  * @param id selection data_offer object
  */
 static inline void
-poor_wl_data_device_send_selection(struct poor_wl_resource *resource_, struct poor_wl_resource *id)
+poor_wl_data_device_send_selection(struct poor_wl_data_device_resource *resource_, struct poor_wl_data_offer_resource *id)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_SELECTION, id);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_DATA_DEVICE_SELECTION, id);
 }
 
 #ifndef POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
@@ -2439,6 +2655,14 @@ poor_wl_data_device_manager_dnd_action_is_valid(uint32_t value, uint32_t version
 
 /**
  * @ingroup iface_poor_wl_data_device_manager
+ * @struct poor_wl_data_device_manager_resource
+ */
+struct poor_wl_data_device_manager_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_device_manager
  * @struct poor_wl_data_device_manager_interface
  */
 struct poor_wl_data_device_manager_interface {
@@ -2449,7 +2673,7 @@ struct poor_wl_data_device_manager_interface {
 	 * @param id data source to create
 	 */
 	void (*create_data_source)(struct poor_wl_client *client,
-				   struct poor_wl_resource *resource,
+				   struct poor_wl_data_device_manager_resource *resource,
 				   uint32_t id);
 	/**
 	 * create a new data device
@@ -2459,10 +2683,27 @@ struct poor_wl_data_device_manager_interface {
 	 * @param seat seat associated with the data device
 	 */
 	void (*get_data_device)(struct poor_wl_client *client,
-				struct poor_wl_resource *resource,
+				struct poor_wl_data_device_manager_resource *resource,
 				uint32_t id,
-				struct poor_wl_resource *seat);
+				struct poor_wl_seat_resource *seat);
 };
+
+/** @ingroup iface_poor_wl_data_device_manager */
+static inline int
+poor_wl_data_device_manager_resource_init(struct poor_wl_data_device_manager_resource *resource,
+					  struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_data_device_manager_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_data_device_manager */
+static inline void
+poor_wl_data_device_manager_resource_set_implementation(struct poor_wl_data_device_manager_resource *resource,
+							const struct poor_wl_data_device_manager_interface *implementation, void *data,
+							poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -2506,6 +2747,14 @@ poor_wl_shell_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_shell
+ * @struct poor_wl_shell_resource
+ */
+struct poor_wl_shell_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_shell
  * @struct poor_wl_shell_interface
  */
 struct poor_wl_shell_interface {
@@ -2521,10 +2770,27 @@ struct poor_wl_shell_interface {
 	 * @param surface surface to be given the shell surface role
 	 */
 	void (*get_shell_surface)(struct poor_wl_client *client,
-				  struct poor_wl_resource *resource,
+				  struct poor_wl_shell_resource *resource,
 				  uint32_t id,
-				  struct poor_wl_resource *surface);
+				  struct poor_wl_surface_resource *surface);
 };
+
+/** @ingroup iface_poor_wl_shell */
+static inline int
+poor_wl_shell_resource_init(struct poor_wl_shell_resource *resource,
+			    struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_shell_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_shell */
+static inline void
+poor_wl_shell_resource_set_implementation(struct poor_wl_shell_resource *resource,
+					  const struct poor_wl_shell_interface *implementation, void *data,
+					  poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -2710,6 +2976,14 @@ poor_wl_shell_surface_fullscreen_method_is_valid(uint32_t value, uint32_t versio
 
 /**
  * @ingroup iface_poor_wl_shell_surface
+ * @struct poor_wl_shell_surface_resource
+ */
+struct poor_wl_shell_surface_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_shell_surface
  * @struct poor_wl_shell_surface_interface
  */
 struct poor_wl_shell_surface_interface {
@@ -2721,7 +2995,7 @@ struct poor_wl_shell_surface_interface {
 	 * @param serial serial number of the ping event
 	 */
 	void (*pong)(struct poor_wl_client *client,
-		     struct poor_wl_resource *resource,
+		     struct poor_wl_shell_surface_resource *resource,
 		     uint32_t serial);
 	/**
 	 * start an interactive move
@@ -2735,8 +3009,8 @@ struct poor_wl_shell_surface_interface {
 	 * @param serial serial number of the implicit grab on the pointer
 	 */
 	void (*move)(struct poor_wl_client *client,
-		     struct poor_wl_resource *resource,
-		     struct poor_wl_resource *seat,
+		     struct poor_wl_shell_surface_resource *resource,
+		     struct poor_wl_seat_resource *seat,
 		     uint32_t serial);
 	/**
 	 * start an interactive resize
@@ -2751,8 +3025,8 @@ struct poor_wl_shell_surface_interface {
 	 * @param edges which edge or corner is being dragged
 	 */
 	void (*resize)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource,
-		       struct poor_wl_resource *seat,
+		       struct poor_wl_shell_surface_resource *resource,
+		       struct poor_wl_seat_resource *seat,
 		       uint32_t serial,
 		       uint32_t edges);
 	/**
@@ -2763,7 +3037,7 @@ struct poor_wl_shell_surface_interface {
 	 * A toplevel surface is not fullscreen, maximized or transient.
 	 */
 	void (*set_toplevel)(struct poor_wl_client *client,
-			     struct poor_wl_resource *resource);
+			     struct poor_wl_shell_surface_resource *resource);
 	/**
 	 * make the surface a transient surface
 	 *
@@ -2780,8 +3054,8 @@ struct poor_wl_shell_surface_interface {
 	 * @param flags transient surface behavior
 	 */
 	void (*set_transient)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
-			      struct poor_wl_resource *parent,
+			      struct poor_wl_shell_surface_resource *resource,
+			      struct poor_wl_surface_resource *parent,
 			      int32_t x,
 			      int32_t y,
 			      uint32_t flags);
@@ -2827,10 +3101,10 @@ struct poor_wl_shell_surface_interface {
 	 * @param output output on which the surface is to be fullscreen
 	 */
 	void (*set_fullscreen)(struct poor_wl_client *client,
-			       struct poor_wl_resource *resource,
+			       struct poor_wl_shell_surface_resource *resource,
 			       uint32_t method,
 			       uint32_t framerate,
-			       struct poor_wl_resource *output);
+			       struct poor_wl_output_resource *output);
 	/**
 	 * make the surface a popup surface
 	 *
@@ -2861,10 +3135,10 @@ struct poor_wl_shell_surface_interface {
 	 * @param flags transient surface behavior
 	 */
 	void (*set_popup)(struct poor_wl_client *client,
-			  struct poor_wl_resource *resource,
-			  struct poor_wl_resource *seat,
+			  struct poor_wl_shell_surface_resource *resource,
+			  struct poor_wl_seat_resource *seat,
 			  uint32_t serial,
-			  struct poor_wl_resource *parent,
+			  struct poor_wl_surface_resource *parent,
 			  int32_t x,
 			  int32_t y,
 			  uint32_t flags);
@@ -2892,8 +3166,8 @@ struct poor_wl_shell_surface_interface {
 	 * @param output output on which the surface is to be maximized
 	 */
 	void (*set_maximized)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
-			      struct poor_wl_resource *output);
+			      struct poor_wl_shell_surface_resource *resource,
+			      struct poor_wl_output_resource *output);
 	/**
 	 * set surface title
 	 *
@@ -2907,7 +3181,7 @@ struct poor_wl_shell_surface_interface {
 	 * @param title surface title
 	 */
 	void (*set_title)(struct poor_wl_client *client,
-			  struct poor_wl_resource *resource,
+			  struct poor_wl_shell_surface_resource *resource,
 			  const char *title);
 	/**
 	 * set surface class
@@ -2921,9 +3195,26 @@ struct poor_wl_shell_surface_interface {
 	 * @param class_ surface class
 	 */
 	void (*set_class)(struct poor_wl_client *client,
-			  struct poor_wl_resource *resource,
+			  struct poor_wl_shell_surface_resource *resource,
 			  const char *class_);
 };
+
+/** @ingroup iface_poor_wl_shell_surface */
+static inline int
+poor_wl_shell_surface_resource_init(struct poor_wl_shell_surface_resource *resource,
+				    struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_shell_surface_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_shell_surface */
+static inline void
+poor_wl_shell_surface_resource_set_implementation(struct poor_wl_shell_surface_resource *resource,
+						  const struct poor_wl_shell_surface_interface *implementation, void *data,
+						  poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_SHELL_SURFACE_PING 0
 #define POOR_WL_SHELL_SURFACE_CONFIGURE 1
@@ -2990,9 +3281,9 @@ struct poor_wl_shell_surface_interface {
  * @param serial serial number of the ping
  */
 static inline void
-poor_wl_shell_surface_send_ping(struct poor_wl_resource *resource_, uint32_t serial)
+poor_wl_shell_surface_send_ping(struct poor_wl_shell_surface_resource *resource_, uint32_t serial)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_PING, serial);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SHELL_SURFACE_PING, serial);
 }
 
 /**
@@ -3004,9 +3295,9 @@ poor_wl_shell_surface_send_ping(struct poor_wl_resource *resource_, uint32_t ser
  * @param height new height of the surface
  */
 static inline void
-poor_wl_shell_surface_send_configure(struct poor_wl_resource *resource_, uint32_t edges, int32_t width, int32_t height)
+poor_wl_shell_surface_send_configure(struct poor_wl_shell_surface_resource *resource_, uint32_t edges, int32_t width, int32_t height)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_CONFIGURE, edges, width, height);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SHELL_SURFACE_CONFIGURE, edges, width, height);
 }
 
 /**
@@ -3015,9 +3306,9 @@ poor_wl_shell_surface_send_configure(struct poor_wl_resource *resource_, uint32_
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_shell_surface_send_popup_done(struct poor_wl_resource *resource_)
+poor_wl_shell_surface_send_popup_done(struct poor_wl_shell_surface_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_POPUP_DONE);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SHELL_SURFACE_POPUP_DONE);
 }
 
 #ifndef POOR_WL_SURFACE_ERROR_ENUM
@@ -3064,6 +3355,14 @@ poor_wl_surface_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_surface
+ * @struct poor_wl_surface_resource
+ */
+struct poor_wl_surface_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_surface
  * @struct poor_wl_surface_interface
  */
 struct poor_wl_surface_interface {
@@ -3073,7 +3372,7 @@ struct poor_wl_surface_interface {
 	 * Deletes the surface and invalidates its object ID.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_surface_resource *resource);
 	/**
 	 * set the surface contents
 	 *
@@ -3122,8 +3421,8 @@ struct poor_wl_surface_interface {
 	 * @param y surface-local y coordinate
 	 */
 	void (*attach)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource,
-		       struct poor_wl_resource *buffer,
+		       struct poor_wl_surface_resource *resource,
+		       struct poor_wl_buffer_resource *buffer,
 		       int32_t x,
 		       int32_t y);
 	/**
@@ -3159,7 +3458,7 @@ struct poor_wl_surface_interface {
 	 * @param height height of damage rectangle
 	 */
 	void (*damage)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource,
+		       struct poor_wl_surface_resource *resource,
 		       int32_t x,
 		       int32_t y,
 		       int32_t width,
@@ -3204,7 +3503,7 @@ struct poor_wl_surface_interface {
 	 * @param callback callback object for the frame request
 	 */
 	void (*frame)(struct poor_wl_client *client,
-		      struct poor_wl_resource *resource,
+		      struct poor_wl_surface_resource *resource,
 		      uint32_t callback);
 	/**
 	 * set opaque region
@@ -3237,8 +3536,8 @@ struct poor_wl_surface_interface {
 	 * @param region opaque region of the surface
 	 */
 	void (*set_opaque_region)(struct poor_wl_client *client,
-				  struct poor_wl_resource *resource,
-				  struct poor_wl_resource *region);
+				  struct poor_wl_surface_resource *resource,
+				  struct poor_wl_region_resource *region);
 	/**
 	 * set input region
 	 *
@@ -3267,8 +3566,8 @@ struct poor_wl_surface_interface {
 	 * @param region input region of the surface
 	 */
 	void (*set_input_region)(struct poor_wl_client *client,
-				 struct poor_wl_resource *resource,
-				 struct poor_wl_resource *region);
+				 struct poor_wl_surface_resource *resource,
+				 struct poor_wl_region_resource *region);
 	/**
 	 * commit pending surface state
 	 *
@@ -3291,7 +3590,7 @@ struct poor_wl_surface_interface {
 	 * Other interfaces may add further double-buffered surface state.
 	 */
 	void (*commit)(struct poor_wl_client *client,
-		       struct poor_wl_resource *resource);
+		       struct poor_wl_surface_resource *resource);
 	/**
 	 * sets the buffer transformation
 	 *
@@ -3331,7 +3630,7 @@ struct poor_wl_surface_interface {
 	 * @since 2
 	 */
 	void (*set_buffer_transform)(struct poor_wl_client *client,
-				     struct poor_wl_resource *resource,
+				     struct poor_wl_surface_resource *resource,
 				     int32_t transform);
 	/**
 	 * sets the buffer scaling factor
@@ -3366,7 +3665,7 @@ struct poor_wl_surface_interface {
 	 * @since 3
 	 */
 	void (*set_buffer_scale)(struct poor_wl_client *client,
-				 struct poor_wl_resource *resource,
+				 struct poor_wl_surface_resource *resource,
 				 int32_t scale);
 	/**
 	 * mark part of the surface damaged using buffer coordinates
@@ -3412,12 +3711,29 @@ struct poor_wl_surface_interface {
 	 * @since 4
 	 */
 	void (*damage_buffer)(struct poor_wl_client *client,
-			      struct poor_wl_resource *resource,
+			      struct poor_wl_surface_resource *resource,
 			      int32_t x,
 			      int32_t y,
 			      int32_t width,
 			      int32_t height);
 };
+
+/** @ingroup iface_poor_wl_surface */
+static inline int
+poor_wl_surface_resource_init(struct poor_wl_surface_resource *resource,
+			      struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_surface_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_surface */
+static inline void
+poor_wl_surface_resource_set_implementation(struct poor_wl_surface_resource *resource,
+					    const struct poor_wl_surface_interface *implementation, void *data,
+					    poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_SURFACE_ENTER 0
 #define POOR_WL_SURFACE_LEAVE 1
@@ -3479,9 +3795,9 @@ struct poor_wl_surface_interface {
  * @param output output entered by the surface
  */
 static inline void
-poor_wl_surface_send_enter(struct poor_wl_resource *resource_, struct poor_wl_resource *output)
+poor_wl_surface_send_enter(struct poor_wl_surface_resource *resource_, struct poor_wl_output_resource *output)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SURFACE_ENTER, output);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SURFACE_ENTER, output);
 }
 
 /**
@@ -3491,9 +3807,9 @@ poor_wl_surface_send_enter(struct poor_wl_resource *resource_, struct poor_wl_re
  * @param output output left by the surface
  */
 static inline void
-poor_wl_surface_send_leave(struct poor_wl_resource *resource_, struct poor_wl_resource *output)
+poor_wl_surface_send_leave(struct poor_wl_surface_resource *resource_, struct poor_wl_output_resource *output)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SURFACE_LEAVE, output);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SURFACE_LEAVE, output);
 }
 
 #ifndef POOR_WL_SEAT_CAPABILITY_ENUM
@@ -3545,6 +3861,14 @@ poor_wl_seat_capability_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_seat
+ * @struct poor_wl_seat_resource
+ */
+struct poor_wl_seat_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_seat
  * @struct poor_wl_seat_interface
  */
 struct poor_wl_seat_interface {
@@ -3561,7 +3885,7 @@ struct poor_wl_seat_interface {
 	 * @param id seat pointer
 	 */
 	void (*get_pointer)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
+			    struct poor_wl_seat_resource *resource,
 			    uint32_t id);
 	/**
 	 * return keyboard object
@@ -3576,7 +3900,7 @@ struct poor_wl_seat_interface {
 	 * @param id seat keyboard
 	 */
 	void (*get_keyboard)(struct poor_wl_client *client,
-			     struct poor_wl_resource *resource,
+			     struct poor_wl_seat_resource *resource,
 			     uint32_t id);
 	/**
 	 * return touch object
@@ -3591,7 +3915,7 @@ struct poor_wl_seat_interface {
 	 * @param id seat touch interface
 	 */
 	void (*get_touch)(struct poor_wl_client *client,
-			  struct poor_wl_resource *resource,
+			  struct poor_wl_seat_resource *resource,
 			  uint32_t id);
 	/**
 	 * release the seat object
@@ -3601,8 +3925,25 @@ struct poor_wl_seat_interface {
 	 * @since 5
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_seat_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_seat */
+static inline int
+poor_wl_seat_resource_init(struct poor_wl_seat_resource *resource,
+			   struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_seat_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_seat */
+static inline void
+poor_wl_seat_resource_set_implementation(struct poor_wl_seat_resource *resource,
+					 const struct poor_wl_seat_interface *implementation, void *data,
+					 poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_SEAT_CAPABILITIES 0
 #define POOR_WL_SEAT_NAME 1
@@ -3640,9 +3981,9 @@ struct poor_wl_seat_interface {
  * @param capabilities capabilities of the seat
  */
 static inline void
-poor_wl_seat_send_capabilities(struct poor_wl_resource *resource_, uint32_t capabilities)
+poor_wl_seat_send_capabilities(struct poor_wl_seat_resource *resource_, uint32_t capabilities)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SEAT_CAPABILITIES, capabilities);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SEAT_CAPABILITIES, capabilities);
 }
 
 /**
@@ -3652,9 +3993,9 @@ poor_wl_seat_send_capabilities(struct poor_wl_resource *resource_, uint32_t capa
  * @param name seat identifier
  */
 static inline void
-poor_wl_seat_send_name(struct poor_wl_resource *resource_, const char *name)
+poor_wl_seat_send_name(struct poor_wl_seat_resource *resource_, const char *name)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_SEAT_NAME, name);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_SEAT_NAME, name);
 }
 
 #ifndef POOR_WL_POINTER_ERROR_ENUM
@@ -3848,6 +4189,14 @@ poor_wl_pointer_axis_source_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_pointer
+ * @struct poor_wl_pointer_resource
+ */
+struct poor_wl_pointer_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_pointer
  * @struct poor_wl_pointer_interface
  */
 struct poor_wl_pointer_interface {
@@ -3891,9 +4240,9 @@ struct poor_wl_pointer_interface {
 	 * @param hotspot_y surface-local y coordinate
 	 */
 	void (*set_cursor)(struct poor_wl_client *client,
-			   struct poor_wl_resource *resource,
+			   struct poor_wl_pointer_resource *resource,
 			   uint32_t serial,
-			   struct poor_wl_resource *surface,
+			   struct poor_wl_surface_resource *surface,
 			   int32_t hotspot_x,
 			   int32_t hotspot_y);
 	/**
@@ -3907,8 +4256,25 @@ struct poor_wl_pointer_interface {
 	 * @since 3
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_pointer_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_pointer */
+static inline int
+poor_wl_pointer_resource_init(struct poor_wl_pointer_resource *resource,
+			      struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_pointer_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_pointer */
+static inline void
+poor_wl_pointer_resource_set_implementation(struct poor_wl_pointer_resource *resource,
+					    const struct poor_wl_pointer_interface *implementation, void *data,
+					    poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_POINTER_ENTER 0
 #define POOR_WL_POINTER_LEAVE 1
@@ -3976,9 +4342,9 @@ struct poor_wl_pointer_interface {
  * @param surface_y surface-local y coordinate
  */
 static inline void
-poor_wl_pointer_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
+poor_wl_pointer_send_enter(struct poor_wl_pointer_resource *resource_, uint32_t serial, struct poor_wl_surface_resource *surface, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_ENTER, serial, surface, surface_x, surface_y);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_ENTER, serial, surface, surface_x, surface_y);
 }
 
 /**
@@ -3989,9 +4355,9 @@ poor_wl_pointer_send_enter(struct poor_wl_resource *resource_, uint32_t serial, 
  * @param surface surface left by the pointer
  */
 static inline void
-poor_wl_pointer_send_leave(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface)
+poor_wl_pointer_send_leave(struct poor_wl_pointer_resource *resource_, uint32_t serial, struct poor_wl_surface_resource *surface)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_LEAVE, serial, surface);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_LEAVE, serial, surface);
 }
 
 /**
@@ -4003,9 +4369,9 @@ poor_wl_pointer_send_leave(struct poor_wl_resource *resource_, uint32_t serial, 
  * @param surface_y surface-local y coordinate
  */
 static inline void
-poor_wl_pointer_send_motion(struct poor_wl_resource *resource_, uint32_t time, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
+poor_wl_pointer_send_motion(struct poor_wl_pointer_resource *resource_, uint32_t time, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_MOTION, time, surface_x, surface_y);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_MOTION, time, surface_x, surface_y);
 }
 
 /**
@@ -4018,9 +4384,9 @@ poor_wl_pointer_send_motion(struct poor_wl_resource *resource_, uint32_t time, p
  * @param state physical state of the button
  */
 static inline void
-poor_wl_pointer_send_button(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
+poor_wl_pointer_send_button(struct poor_wl_pointer_resource *resource_, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_BUTTON, serial, time, button, state);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_BUTTON, serial, time, button, state);
 }
 
 /**
@@ -4032,9 +4398,9 @@ poor_wl_pointer_send_button(struct poor_wl_resource *resource_, uint32_t serial,
  * @param value length of vector in surface-local coordinate space
  */
 static inline void
-poor_wl_pointer_send_axis(struct poor_wl_resource *resource_, uint32_t time, uint32_t axis, poor_wl_fixed_t value)
+poor_wl_pointer_send_axis(struct poor_wl_pointer_resource *resource_, uint32_t time, uint32_t axis, poor_wl_fixed_t value)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS, time, axis, value);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_AXIS, time, axis, value);
 }
 
 /**
@@ -4043,9 +4409,9 @@ poor_wl_pointer_send_axis(struct poor_wl_resource *resource_, uint32_t time, uin
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_pointer_send_frame(struct poor_wl_resource *resource_)
+poor_wl_pointer_send_frame(struct poor_wl_pointer_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_FRAME);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_FRAME);
 }
 
 /**
@@ -4055,9 +4421,9 @@ poor_wl_pointer_send_frame(struct poor_wl_resource *resource_)
  * @param axis_source source of the axis event
  */
 static inline void
-poor_wl_pointer_send_axis_source(struct poor_wl_resource *resource_, uint32_t axis_source)
+poor_wl_pointer_send_axis_source(struct poor_wl_pointer_resource *resource_, uint32_t axis_source)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_SOURCE, axis_source);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_AXIS_SOURCE, axis_source);
 }
 
 /**
@@ -4068,9 +4434,9 @@ poor_wl_pointer_send_axis_source(struct poor_wl_resource *resource_, uint32_t ax
  * @param axis the axis stopped with this event
  */
 static inline void
-poor_wl_pointer_send_axis_stop(struct poor_wl_resource *resource_, uint32_t time, uint32_t axis)
+poor_wl_pointer_send_axis_stop(struct poor_wl_pointer_resource *resource_, uint32_t time, uint32_t axis)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_STOP, time, axis);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_AXIS_STOP, time, axis);
 }
 
 /**
@@ -4081,9 +4447,9 @@ poor_wl_pointer_send_axis_stop(struct poor_wl_resource *resource_, uint32_t time
  * @param discrete number of steps
  */
 static inline void
-poor_wl_pointer_send_axis_discrete(struct poor_wl_resource *resource_, uint32_t axis, int32_t discrete)
+poor_wl_pointer_send_axis_discrete(struct poor_wl_pointer_resource *resource_, uint32_t axis, int32_t discrete)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_DISCRETE, axis, discrete);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_POINTER_AXIS_DISCRETE, axis, discrete);
 }
 
 #ifndef POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM
@@ -4173,6 +4539,14 @@ poor_wl_keyboard_key_state_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_keyboard
+ * @struct poor_wl_keyboard_resource
+ */
+struct poor_wl_keyboard_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_keyboard
  * @struct poor_wl_keyboard_interface
  */
 struct poor_wl_keyboard_interface {
@@ -4183,8 +4557,25 @@ struct poor_wl_keyboard_interface {
 	 * @since 3
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_keyboard_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_keyboard */
+static inline int
+poor_wl_keyboard_resource_init(struct poor_wl_keyboard_resource *resource,
+			       struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_keyboard_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_keyboard */
+static inline void
+poor_wl_keyboard_resource_set_implementation(struct poor_wl_keyboard_resource *resource,
+					     const struct poor_wl_keyboard_interface *implementation, void *data,
+					     poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_KEYBOARD_KEYMAP 0
 #define POOR_WL_KEYBOARD_ENTER 1
@@ -4232,9 +4623,9 @@ struct poor_wl_keyboard_interface {
  * @param size keymap size, in bytes
  */
 static inline void
-poor_wl_keyboard_send_keymap(struct poor_wl_resource *resource_, uint32_t format, int32_t fd, uint32_t size)
+poor_wl_keyboard_send_keymap(struct poor_wl_keyboard_resource *resource_, uint32_t format, int32_t fd, uint32_t size)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_KEYMAP, format, fd, size);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_KEYMAP, format, fd, size);
 }
 
 /**
@@ -4246,9 +4637,9 @@ poor_wl_keyboard_send_keymap(struct poor_wl_resource *resource_, uint32_t format
  * @param keys the currently pressed keys
  */
 static inline void
-poor_wl_keyboard_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, struct poor_wl_array *keys)
+poor_wl_keyboard_send_enter(struct poor_wl_keyboard_resource *resource_, uint32_t serial, struct poor_wl_surface_resource *surface, struct poor_wl_array *keys)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_ENTER, serial, surface, keys);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_ENTER, serial, surface, keys);
 }
 
 /**
@@ -4259,9 +4650,9 @@ poor_wl_keyboard_send_enter(struct poor_wl_resource *resource_, uint32_t serial,
  * @param surface surface that lost keyboard focus
  */
 static inline void
-poor_wl_keyboard_send_leave(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface)
+poor_wl_keyboard_send_leave(struct poor_wl_keyboard_resource *resource_, uint32_t serial, struct poor_wl_surface_resource *surface)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_LEAVE, serial, surface);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_LEAVE, serial, surface);
 }
 
 /**
@@ -4274,9 +4665,9 @@ poor_wl_keyboard_send_leave(struct poor_wl_resource *resource_, uint32_t serial,
  * @param state physical state of the key
  */
 static inline void
-poor_wl_keyboard_send_key(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
+poor_wl_keyboard_send_key(struct poor_wl_keyboard_resource *resource_, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_KEY, serial, time, key, state);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_KEY, serial, time, key, state);
 }
 
 /**
@@ -4290,9 +4681,9 @@ poor_wl_keyboard_send_key(struct poor_wl_resource *resource_, uint32_t serial, u
  * @param group keyboard layout
  */
 static inline void
-poor_wl_keyboard_send_modifiers(struct poor_wl_resource *resource_, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
+poor_wl_keyboard_send_modifiers(struct poor_wl_keyboard_resource *resource_, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_MODIFIERS, serial, mods_depressed, mods_latched, mods_locked, group);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_MODIFIERS, serial, mods_depressed, mods_latched, mods_locked, group);
 }
 
 /**
@@ -4303,10 +4694,18 @@ poor_wl_keyboard_send_modifiers(struct poor_wl_resource *resource_, uint32_t ser
  * @param delay delay in milliseconds since key down until repeating starts
  */
 static inline void
-poor_wl_keyboard_send_repeat_info(struct poor_wl_resource *resource_, int32_t rate, int32_t delay)
+poor_wl_keyboard_send_repeat_info(struct poor_wl_keyboard_resource *resource_, int32_t rate, int32_t delay)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_REPEAT_INFO, rate, delay);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_KEYBOARD_REPEAT_INFO, rate, delay);
 }
+
+/**
+ * @ingroup iface_poor_wl_touch
+ * @struct poor_wl_touch_resource
+ */
+struct poor_wl_touch_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_touch
@@ -4320,8 +4719,25 @@ struct poor_wl_touch_interface {
 	 * @since 3
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_touch_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_touch */
+static inline int
+poor_wl_touch_resource_init(struct poor_wl_touch_resource *resource,
+			    struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_touch_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_touch */
+static inline void
+poor_wl_touch_resource_set_implementation(struct poor_wl_touch_resource *resource,
+					  const struct poor_wl_touch_interface *implementation, void *data,
+					  poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_TOUCH_DOWN 0
 #define POOR_WL_TOUCH_UP 1
@@ -4377,9 +4793,9 @@ struct poor_wl_touch_interface {
  * @param y surface-local y coordinate
  */
 static inline void
-poor_wl_touch_send_down(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, struct poor_wl_resource *surface, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
+poor_wl_touch_send_down(struct poor_wl_touch_resource *resource_, uint32_t serial, uint32_t time, struct poor_wl_surface_resource *surface, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_DOWN, serial, time, surface, id, x, y);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_DOWN, serial, time, surface, id, x, y);
 }
 
 /**
@@ -4391,9 +4807,9 @@ poor_wl_touch_send_down(struct poor_wl_resource *resource_, uint32_t serial, uin
  * @param id the unique ID of this touch point
  */
 static inline void
-poor_wl_touch_send_up(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, int32_t id)
+poor_wl_touch_send_up(struct poor_wl_touch_resource *resource_, uint32_t serial, uint32_t time, int32_t id)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_UP, serial, time, id);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_UP, serial, time, id);
 }
 
 /**
@@ -4406,9 +4822,9 @@ poor_wl_touch_send_up(struct poor_wl_resource *resource_, uint32_t serial, uint3
  * @param y surface-local y coordinate
  */
 static inline void
-poor_wl_touch_send_motion(struct poor_wl_resource *resource_, uint32_t time, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
+poor_wl_touch_send_motion(struct poor_wl_touch_resource *resource_, uint32_t time, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_MOTION, time, id, x, y);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_MOTION, time, id, x, y);
 }
 
 /**
@@ -4417,9 +4833,9 @@ poor_wl_touch_send_motion(struct poor_wl_resource *resource_, uint32_t time, int
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_touch_send_frame(struct poor_wl_resource *resource_)
+poor_wl_touch_send_frame(struct poor_wl_touch_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_FRAME);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_FRAME);
 }
 
 /**
@@ -4428,9 +4844,9 @@ poor_wl_touch_send_frame(struct poor_wl_resource *resource_)
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_touch_send_cancel(struct poor_wl_resource *resource_)
+poor_wl_touch_send_cancel(struct poor_wl_touch_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_CANCEL);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_CANCEL);
 }
 
 /**
@@ -4442,9 +4858,9 @@ poor_wl_touch_send_cancel(struct poor_wl_resource *resource_)
  * @param minor length of the minor axis in surface-local coordinates
  */
 static inline void
-poor_wl_touch_send_shape(struct poor_wl_resource *resource_, int32_t id, poor_wl_fixed_t major, poor_wl_fixed_t minor)
+poor_wl_touch_send_shape(struct poor_wl_touch_resource *resource_, int32_t id, poor_wl_fixed_t major, poor_wl_fixed_t minor)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_SHAPE, id, major, minor);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_SHAPE, id, major, minor);
 }
 
 /**
@@ -4455,9 +4871,9 @@ poor_wl_touch_send_shape(struct poor_wl_resource *resource_, int32_t id, poor_wl
  * @param orientation angle between major axis and positive surface y-axis in degrees
  */
 static inline void
-poor_wl_touch_send_orientation(struct poor_wl_resource *resource_, int32_t id, poor_wl_fixed_t orientation)
+poor_wl_touch_send_orientation(struct poor_wl_touch_resource *resource_, int32_t id, poor_wl_fixed_t orientation)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_ORIENTATION, id, orientation);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_TOUCH_ORIENTATION, id, orientation);
 }
 
 #ifndef POOR_WL_OUTPUT_SUBPIXEL_ENUM
@@ -4658,6 +5074,14 @@ poor_wl_output_mode_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_output
+ * @struct poor_wl_output_resource
+ */
+struct poor_wl_output_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_output
  * @struct poor_wl_output_interface
  */
 struct poor_wl_output_interface {
@@ -4669,8 +5093,25 @@ struct poor_wl_output_interface {
 	 * @since 3
 	 */
 	void (*release)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_output_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_output */
+static inline int
+poor_wl_output_resource_init(struct poor_wl_output_resource *resource,
+			     struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_output_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_output */
+static inline void
+poor_wl_output_resource_set_implementation(struct poor_wl_output_resource *resource,
+					   const struct poor_wl_output_interface *implementation, void *data,
+					   poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 #define POOR_WL_OUTPUT_GEOMETRY 0
 #define POOR_WL_OUTPUT_MODE 1
@@ -4713,9 +5154,9 @@ struct poor_wl_output_interface {
  * @param transform transform that maps framebuffer to output
  */
 static inline void
-poor_wl_output_send_geometry(struct poor_wl_resource *resource_, int32_t x, int32_t y, int32_t physical_width, int32_t physical_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
+poor_wl_output_send_geometry(struct poor_wl_output_resource *resource_, int32_t x, int32_t y, int32_t physical_width, int32_t physical_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_GEOMETRY, x, y, physical_width, physical_height, subpixel, make, model, transform);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_OUTPUT_GEOMETRY, x, y, physical_width, physical_height, subpixel, make, model, transform);
 }
 
 /**
@@ -4728,9 +5169,9 @@ poor_wl_output_send_geometry(struct poor_wl_resource *resource_, int32_t x, int3
  * @param refresh vertical refresh rate in mHz
  */
 static inline void
-poor_wl_output_send_mode(struct poor_wl_resource *resource_, uint32_t flags, int32_t width, int32_t height, int32_t refresh)
+poor_wl_output_send_mode(struct poor_wl_output_resource *resource_, uint32_t flags, int32_t width, int32_t height, int32_t refresh)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_MODE, flags, width, height, refresh);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_OUTPUT_MODE, flags, width, height, refresh);
 }
 
 /**
@@ -4739,9 +5180,9 @@ poor_wl_output_send_mode(struct poor_wl_resource *resource_, uint32_t flags, int
  * @param resource_ The client's resource
  */
 static inline void
-poor_wl_output_send_done(struct poor_wl_resource *resource_)
+poor_wl_output_send_done(struct poor_wl_output_resource *resource_)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_DONE);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_OUTPUT_DONE);
 }
 
 /**
@@ -4751,10 +5192,18 @@ poor_wl_output_send_done(struct poor_wl_resource *resource_)
  * @param factor scaling factor of output
  */
 static inline void
-poor_wl_output_send_scale(struct poor_wl_resource *resource_, int32_t factor)
+poor_wl_output_send_scale(struct poor_wl_output_resource *resource_, int32_t factor)
 {
-	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_SCALE, factor);
+	poor_wl_resource_post_event(&resource_->resource, POOR_WL_OUTPUT_SCALE, factor);
 }
+
+/**
+ * @ingroup iface_poor_wl_region
+ * @struct poor_wl_region_resource
+ */
+struct poor_wl_region_resource {
+	struct poor_wl_resource resource;
+};
 
 /**
  * @ingroup iface_poor_wl_region
@@ -4767,7 +5216,7 @@ struct poor_wl_region_interface {
 	 * Destroy the region. This will invalidate the object ID.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_region_resource *resource);
 	/**
 	 * add rectangle to region
 	 *
@@ -4778,7 +5227,7 @@ struct poor_wl_region_interface {
 	 * @param height rectangle height
 	 */
 	void (*add)(struct poor_wl_client *client,
-		    struct poor_wl_resource *resource,
+		    struct poor_wl_region_resource *resource,
 		    int32_t x,
 		    int32_t y,
 		    int32_t width,
@@ -4793,12 +5242,29 @@ struct poor_wl_region_interface {
 	 * @param height rectangle height
 	 */
 	void (*subtract)(struct poor_wl_client *client,
-			 struct poor_wl_resource *resource,
+			 struct poor_wl_region_resource *resource,
 			 int32_t x,
 			 int32_t y,
 			 int32_t width,
 			 int32_t height);
 };
+
+/** @ingroup iface_poor_wl_region */
+static inline int
+poor_wl_region_resource_init(struct poor_wl_region_resource *resource,
+			     struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_region_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_region */
+static inline void
+poor_wl_region_resource_set_implementation(struct poor_wl_region_resource *resource,
+					   const struct poor_wl_region_interface *implementation, void *data,
+					   poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -4846,6 +5312,14 @@ poor_wl_subcompositor_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_subcompositor
+ * @struct poor_wl_subcompositor_resource
+ */
+struct poor_wl_subcompositor_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_subcompositor
  * @struct poor_wl_subcompositor_interface
  */
 struct poor_wl_subcompositor_interface {
@@ -4857,7 +5331,7 @@ struct poor_wl_subcompositor_interface {
 	 * wl_subsurface objects included.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_subcompositor_resource *resource);
 	/**
 	 * give a surface the role sub-surface
 	 *
@@ -4873,11 +5347,28 @@ struct poor_wl_subcompositor_interface {
 	 * @param parent the parent surface
 	 */
 	void (*get_subsurface)(struct poor_wl_client *client,
-			       struct poor_wl_resource *resource,
+			       struct poor_wl_subcompositor_resource *resource,
 			       uint32_t id,
-			       struct poor_wl_resource *surface,
-			       struct poor_wl_resource *parent);
+			       struct poor_wl_surface_resource *surface,
+			       struct poor_wl_surface_resource *parent);
 };
+
+/** @ingroup iface_poor_wl_subcompositor */
+static inline int
+poor_wl_subcompositor_resource_init(struct poor_wl_subcompositor_resource *resource,
+				    struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_subcompositor_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_subcompositor */
+static inline void
+poor_wl_subcompositor_resource_set_implementation(struct poor_wl_subcompositor_resource *resource,
+						  const struct poor_wl_subcompositor_interface *implementation, void *data,
+						  poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**
@@ -4921,6 +5412,14 @@ poor_wl_subsurface_error_is_valid(uint32_t value, uint32_t version) {
 
 /**
  * @ingroup iface_poor_wl_subsurface
+ * @struct poor_wl_subsurface_resource
+ */
+struct poor_wl_subsurface_resource {
+	struct poor_wl_resource resource;
+};
+
+/**
+ * @ingroup iface_poor_wl_subsurface
  * @struct poor_wl_subsurface_interface
  */
 struct poor_wl_subsurface_interface {
@@ -4934,7 +5433,7 @@ struct poor_wl_subsurface_interface {
 	 * its role as a sub-surface. The wl_surface is unmapped.
 	 */
 	void (*destroy)(struct poor_wl_client *client,
-			struct poor_wl_resource *resource);
+			struct poor_wl_subsurface_resource *resource);
 	/**
 	 * reposition the sub-surface
 	 *
@@ -4959,7 +5458,7 @@ struct poor_wl_subsurface_interface {
 	 * @param y y coordinate in the parent surface
 	 */
 	void (*set_position)(struct poor_wl_client *client,
-			     struct poor_wl_resource *resource,
+			     struct poor_wl_subsurface_resource *resource,
 			     int32_t x,
 			     int32_t y);
 	/**
@@ -4983,8 +5482,8 @@ struct poor_wl_subsurface_interface {
 	 * @param sibling the reference surface
 	 */
 	void (*place_above)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
-			    struct poor_wl_resource *sibling);
+			    struct poor_wl_subsurface_resource *resource,
+			    struct poor_wl_surface_resource *sibling);
 	/**
 	 * restack the sub-surface
 	 *
@@ -4993,8 +5492,8 @@ struct poor_wl_subsurface_interface {
 	 * @param sibling the reference surface
 	 */
 	void (*place_below)(struct poor_wl_client *client,
-			    struct poor_wl_resource *resource,
-			    struct poor_wl_resource *sibling);
+			    struct poor_wl_subsurface_resource *resource,
+			    struct poor_wl_surface_resource *sibling);
 	/**
 	 * set sub-surface to synchronized mode
 	 *
@@ -5013,7 +5512,7 @@ struct poor_wl_subsurface_interface {
 	 * See wl_subsurface for the recursive effect of this mode.
 	 */
 	void (*set_sync)(struct poor_wl_client *client,
-			 struct poor_wl_resource *resource);
+			 struct poor_wl_subsurface_resource *resource);
 	/**
 	 * set sub-surface to desynchronized mode
 	 *
@@ -5039,8 +5538,25 @@ struct poor_wl_subsurface_interface {
 	 * the cached state is applied on set_desync.
 	 */
 	void (*set_desync)(struct poor_wl_client *client,
-			   struct poor_wl_resource *resource);
+			   struct poor_wl_subsurface_resource *resource);
 };
+
+/** @ingroup iface_poor_wl_subsurface */
+static inline int
+poor_wl_subsurface_resource_init(struct poor_wl_subsurface_resource *resource,
+				 struct poor_wl_client *client, int version, uint32_t id)
+{
+	return poor_wl_resource_init(&resource->resource, client, &poor_wl_subsurface_interface, version, id);
+}
+
+/** @ingroup iface_poor_wl_subsurface */
+static inline void
+poor_wl_subsurface_resource_set_implementation(struct poor_wl_subsurface_resource *resource,
+					       const struct poor_wl_subsurface_interface *implementation, void *data,
+					       poor_wl_resource_destroy_func_t destroy)
+{
+	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+}
 
 
 /**

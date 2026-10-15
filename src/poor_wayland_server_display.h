@@ -26,7 +26,7 @@ struct poor_wl_display {
 	uint32_t serial;
 	uint32_t generation;
 	uint64_t ack_slots;
-	struct poor_wl_list registry_resource_list;
+	struct poor_wl_list registry_list;
 	struct poor_wl_list global_list;
 	struct poor_wl_list socket_list;
 	struct poor_wl_list client_list;

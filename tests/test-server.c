@@ -25,10 +25,6 @@ struct test_client {
 	union poor_wl_map_entry server_objects[16];
 };
 
-struct object {
-	struct poor_wl_resource resource;
-};
-
 struct test_server_state test_server;
 
 static struct {
@@ -58,32 +54,12 @@ static void server_free(struct poor_wl_display *, void *ptr)
 	free(ptr);
 }
 
-static void object_destroy(struct poor_wl_resource *resource)
+static void child_destroy_request(struct poor_wl_client *, struct poor_test_child_resource *resource)
 {
-	free(container_of(resource, struct object, resource));
+	poor_wl_resource_destroy(&resource->resource);
 }
 
-static struct poor_wl_resource *object_new(struct poor_wl_client *client, const struct poor_wl_interface *interface, int version, uint32_t id,
-				      const void *implementation, poor_wl_resource_destroy_func_t destroy)
-{
-	struct object *object = malloc(sizeof(*object));
-
-	assert(object);
-	if (poor_wl_resource_init(&object->resource, client, interface, version, id) < 0) {
-		free(object);
-		poor_wl_client_post_no_memory(client);
-		return nullptr;
-	}
-	poor_wl_resource_set_implementation(&object->resource, implementation, nullptr, destroy);
-	return &object->resource;
-}
-
-static void destroy_request(struct poor_wl_client *, struct poor_wl_resource *resource)
-{
-	poor_wl_resource_destroy(resource);
-}
-
-static void child_ping(struct poor_wl_client *, struct poor_wl_resource *resource)
+static void child_ping(struct poor_wl_client *, struct poor_test_child_resource *resource)
 {
 	int fds[2];
 
@@ -94,51 +70,63 @@ static void child_ping(struct poor_wl_client *, struct poor_wl_resource *resourc
 }
 
 static const struct poor_test_child_interface child_impl = {
-	destroy_request,
+	child_destroy_request,
 	child_ping,
 };
 
 static void child_destroy(struct poor_wl_resource *resource)
 {
 	test_server.children--;
-	object_destroy(resource);
+	free(container_of(resource, struct poor_test_child_resource, resource));
 }
 
-static struct poor_wl_resource *child_new(struct poor_wl_client *client, int version, uint32_t id)
+static struct poor_test_child_resource *child_new(struct poor_wl_client *client, int version, uint32_t id)
 {
-	struct poor_wl_resource *child = object_new(client, &poor_test_child_interface, version, id, &child_impl, child_destroy);
+	struct poor_test_child_resource *child = malloc(sizeof(*child));
 
-	if (child)
-		test_server.children++;
+	assert(child);
+	if (poor_test_child_resource_init(child, client, version, id) < 0) {
+		free(child);
+		poor_wl_client_post_no_memory(client);
+		return nullptr;
+	}
+	poor_test_child_resource_set_implementation(child, &child_impl, nullptr, child_destroy);
+	test_server.children++;
 	return child;
 }
 
-static void global_echo(struct poor_wl_client *, struct poor_wl_resource *resource, int32_t i, uint32_t u, poor_wl_fixed_t f, const char *s,
-			const char *ns, struct poor_wl_resource *o, struct poor_wl_array *a, int32_t fd)
+static void global_destroy_request(struct poor_wl_client *, struct poor_test_global_resource *resource)
+{
+	poor_wl_resource_destroy(&resource->resource);
+}
+
+static void global_echo(struct poor_wl_client *, struct poor_test_global_resource *resource, int32_t i, uint32_t u,
+			poor_wl_fixed_t f, const char *s, const char *ns, struct poor_test_global_resource *o,
+			struct poor_wl_array *a, int32_t fd)
 {
 	poor_test_global_send_echoed(resource, i, u, f, s, ns, o, a, fd);
 	poor_loop_close_fd_or_submit(server.loop, fd, 0);
 }
 
-static void global_create_child(struct poor_wl_client *client, struct poor_wl_resource *resource, uint32_t id)
+static void global_create_child(struct poor_wl_client *client, struct poor_test_global_resource *resource, uint32_t id)
 {
-	child_new(client, poor_wl_resource_get_version(resource), id);
+	child_new(client, poor_wl_resource_get_version(&resource->resource), id);
 }
 
-static void global_spawn_child(struct poor_wl_client *client, struct poor_wl_resource *resource)
+static void global_spawn_child(struct poor_wl_client *client, struct poor_test_global_resource *resource)
 {
-	struct poor_wl_resource *child = child_new(client, poor_wl_resource_get_version(resource), 0);
+	struct poor_test_child_resource *child = child_new(client, poor_wl_resource_get_version(&resource->resource), 0);
 
 	if (child)
 		poor_test_global_send_child_spawned(resource, child);
 }
 
-static void global_post_error(struct poor_wl_client *, struct poor_wl_resource *resource, uint32_t code)
+static void global_post_error(struct poor_wl_client *, struct poor_test_global_resource *resource, uint32_t code)
 {
-	poor_wl_resource_post_error(resource, code, "test error %u", code);
+	poor_wl_resource_post_error(&resource->resource, code, "test error %u", code);
 }
 
-static void global_flood(struct poor_wl_client *, struct poor_wl_resource *resource, uint32_t count, uint32_t size)
+static void global_flood(struct poor_wl_client *, struct poor_test_global_resource *resource, uint32_t count, uint32_t size)
 {
 	char payload[POOR_WL_MAX_MESSAGE_SIZE];
 	struct poor_wl_array array = POOR_WL_ARRAY_INIT(payload);
@@ -151,12 +139,13 @@ static void global_flood(struct poor_wl_client *, struct poor_wl_resource *resou
 		poor_test_global_send_data(resource, &array);
 }
 
-static void global_disconnect(struct poor_wl_client *client, struct poor_wl_resource *)
+static void global_disconnect(struct poor_wl_client *client, struct poor_test_global_resource *)
 {
 	poor_wl_client_destroy(client);
 }
 
-static void global_read_buffer(struct poor_wl_client *, struct poor_wl_resource *, struct poor_wl_resource *resource)
+static void global_read_buffer(struct poor_wl_client *, struct poor_test_global_resource *,
+			       struct poor_wl_buffer_resource *resource)
 {
 	struct poor_wl_shm_buffer *buffer = poor_wl_shm_buffer_get(resource);
 
@@ -167,12 +156,12 @@ static void global_read_buffer(struct poor_wl_client *, struct poor_wl_resource 
 	test_server.shm_buffers++;
 }
 
-static void global_since_two(struct poor_wl_client *, struct poor_wl_resource *)
+static void global_since_two(struct poor_wl_client *, struct poor_test_global_resource *)
 {
 }
 
 static const struct poor_test_global_interface global_impl = {
-	destroy_request,
+	global_destroy_request,
 	global_echo,
 	global_create_child,
 	global_spawn_child,
@@ -183,9 +172,22 @@ static const struct poor_test_global_interface global_impl = {
 	global_since_two,
 };
 
+static void global_destroy(struct poor_wl_resource *resource)
+{
+	free(container_of(resource, struct poor_test_global_resource, resource));
+}
+
 static void bind_global(struct poor_wl_client *client, void *, uint32_t version, uint32_t id)
 {
-	object_new(client, &poor_test_global_interface, version, id, &global_impl, object_destroy);
+	struct poor_test_global_resource *global = malloc(sizeof(*global));
+
+	assert(global);
+	if (poor_test_global_resource_init(global, client, version, id) < 0) {
+		free(global);
+		poor_wl_client_post_no_memory(client);
+		return;
+	}
+	poor_test_global_resource_set_implementation(global, &global_impl, nullptr, global_destroy);
 }
 
 static void bind_extra(struct poor_wl_client *client, void *, uint32_t version, uint32_t id)
@@ -200,26 +202,45 @@ static void extra_withdrawn(struct poor_wl_global *global)
 	server.extra_destroyed = true;
 }
 
-static void fixes_destroy_registry(struct poor_wl_client *, struct poor_wl_resource *, struct poor_wl_resource *registry)
+static void fixes_destroy_request(struct poor_wl_client *, struct poor_wl_fixes_resource *resource)
 {
-	poor_wl_resource_destroy(registry);
+	poor_wl_resource_destroy(&resource->resource);
 }
 
-static void fixes_ack_global_remove(struct poor_wl_client *, struct poor_wl_resource *resource, struct poor_wl_resource *registry,
-				    uint32_t name)
+static void fixes_destroy_registry(struct poor_wl_client *, struct poor_wl_fixes_resource *,
+				   struct poor_wl_registry_resource *registry)
+{
+	poor_wl_resource_destroy(&registry->resource);
+}
+
+static void fixes_ack_global_remove(struct poor_wl_client *, struct poor_wl_fixes_resource *resource,
+				    struct poor_wl_registry_resource *registry, uint32_t name)
 {
 	poor_wl_fixes_handle_ack_global_remove(resource, registry, name);
 }
 
 static const struct poor_wl_fixes_interface fixes_impl = {
-	destroy_request,
+	fixes_destroy_request,
 	fixes_destroy_registry,
 	fixes_ack_global_remove,
 };
 
+static void fixes_destroy(struct poor_wl_resource *resource)
+{
+	free(container_of(resource, struct poor_wl_fixes_resource, resource));
+}
+
 static void bind_fixes(struct poor_wl_client *client, void *, uint32_t version, uint32_t id)
 {
-	object_new(client, &poor_wl_fixes_interface, version, id, &fixes_impl, object_destroy);
+	struct poor_wl_fixes_resource *fixes = malloc(sizeof(*fixes));
+
+	assert(fixes);
+	if (poor_wl_fixes_resource_init(fixes, client, version, id) < 0) {
+		free(fixes);
+		poor_wl_client_post_no_memory(client);
+		return;
+	}
+	poor_wl_fixes_resource_set_implementation(fixes, &fixes_impl, nullptr, fixes_destroy);
 }
 
 static void client_done(struct poor_wl_client *client)

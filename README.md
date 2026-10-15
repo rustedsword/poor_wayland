@@ -36,6 +36,9 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
 - Every interface has a structure that holds its proxy, so objects can be
   embedded, and requests that create objects take them, e.g.
   `poor_wl_compositor_create_surface(&app->compositor, &app->surface)`.
+- On the server, every interface has a structure that holds its resource,
+  e.g. `struct poor_wl_surface_resource`, which request handlers and event
+  functions take, so an event can't be sent on the wrong kind of object.
 - Everything has a `poor_` prefix: libpoor_wayland_client,
   libpoor_wayland_server, poor_wayland_scanner, the headers and all C names,
   so it works next to the system libwayland, even in one process. Only the

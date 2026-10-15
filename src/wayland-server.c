@@ -52,7 +52,7 @@ static_assert(sizeof(((struct poor_wl_client *)nullptr)->cred) == sizeof(struct 
 
 /* A registry remembers when it was created, which tells the globals it saw, and the removals it acknowledged */
 struct registry {
-	struct poor_wl_resource resource;
+	struct poor_wl_registry_resource resource;
 	uint32_t generation;
 	uint64_t acked;
 };
@@ -83,11 +83,6 @@ static struct poor_wl_client *client_of(poor_wl_client_io *io)
 static struct poor_wl_socket *socket_of(poor_wl_socket_io *io)
 {
 	return container_of(io, struct poor_wl_socket, io);
-}
-
-static struct registry *registry_of(struct poor_wl_resource *resource)
-{
-	return container_of(resource, struct registry, resource);
 }
 
 static void display_release(struct poor_wl_display *display)
@@ -449,7 +444,7 @@ static void bind_display(struct poor_wl_client *client, struct poor_wl_display *
 {
 	[[maybe_unused]] int ret;
 
-	client->display_resource = &client->display_object;
+	client->display_resource = &client->display_object.resource;
 	ret = poor_wl_resource_init(client->display_resource, client, &poor_wl_display_interface, 1, 1);
 	assert(!ret);
 	poor_wl_resource_set_implementation(client->display_resource, &display_interface, display, destroy_client_display_resource);
@@ -698,7 +693,7 @@ static bool poor_wl_global_is_visible(const struct poor_wl_client *client, const
 
 static bool registry_announced(struct registry *registry, const struct poor_wl_global *global)
 {
-	return poor_wl_global_is_visible(registry->resource.client, global) &&
+	return poor_wl_global_is_visible(registry->resource.resource.client, global) &&
 	       (!global->removed || global->removed_generation > registry->generation);
 }
 
@@ -708,10 +703,10 @@ static void global_acked(struct poor_wl_global *global)
 		global->withdrawn(global);
 }
 
-static void registry_bind(struct poor_wl_client *client, struct poor_wl_resource *resource, uint32_t name, const char *interface,
-			  uint32_t version, uint32_t id)
+static void registry_bind(struct poor_wl_client *client, struct poor_wl_registry_resource *resource, uint32_t name,
+			  const char *interface, uint32_t version, uint32_t id)
 {
-	struct poor_wl_display *display = resource->data;
+	struct poor_wl_display *display = resource->resource.data;
 	struct poor_wl_global *global;
 
 	poor_wl_list_for_each(global, &display->global_list, link)
@@ -719,17 +714,17 @@ static void registry_bind(struct poor_wl_client *client, struct poor_wl_resource
 			break;
 
 	if (&global->link == &display->global_list || !poor_wl_global_is_visible(client, global))
-		poor_wl_resource_post_error(resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT, "global %s (%" PRIu32 ") is unavailable",
-				       interface, name);
+		poor_wl_resource_post_error(&resource->resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
+				       "global %s (%" PRIu32 ") is unavailable", interface, name);
 	else if (strcmp(global->interface->name, interface) != 0)
-		poor_wl_resource_post_error(resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
+		poor_wl_resource_post_error(&resource->resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
 				       "invalid interface for global %" PRIu32 ": expected %s, got %s", name,
 				       global->interface->name, interface);
 	else if (version == 0)
-		poor_wl_resource_post_error(resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
+		poor_wl_resource_post_error(&resource->resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
 				       "invalid version for global %s (%" PRIu32 "): 0 is not a valid version", interface, name);
 	else if (global->version < version)
-		poor_wl_resource_post_error(resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
+		poor_wl_resource_post_error(&resource->resource, POOR_WL_DISPLAY_ERROR_INVALID_OBJECT,
 				       "invalid version for global %s (%" PRIu32 "): expected at most %" PRIu32 ", got %" PRIu32,
 				       interface, name, global->version, version);
 	else
@@ -741,22 +736,22 @@ static const struct poor_wl_registry_interface registry_interface = {
 };
 
 /* The callback is created and destroyed right away, so it lives on the stack */
-static void display_sync(struct poor_wl_client *client, struct poor_wl_resource *, uint32_t id)
+static void display_sync(struct poor_wl_client *client, struct poor_wl_display_resource *, uint32_t id)
 {
-	struct poor_wl_resource callback;
+	struct poor_wl_callback_resource callback;
 
-	if (poor_wl_resource_init(&callback, client, &poor_wl_callback_interface, 1, id) < 0) {
+	if (poor_wl_callback_resource_init(&callback, client, 1, id) < 0) {
 		poor_wl_client_post_no_memory(client);
 		return;
 	}
 	poor_wl_callback_send_done(&callback, poor_wl_display_get_serial(client->display));
-	poor_wl_resource_destroy(&callback);
+	poor_wl_resource_destroy(&callback.resource);
 }
 
 /* Dropping the registry acknowledges the removals of the globals it announced */
 static void unbind_registry_resource(struct poor_wl_resource *resource)
 {
-	struct registry *registry = registry_of(resource);
+	struct registry *registry = container_of(resource, struct registry, resource.resource);
 	struct poor_wl_display *display = resource->data;
 	struct poor_wl_global *global, *next;
 
@@ -768,9 +763,9 @@ static void unbind_registry_resource(struct poor_wl_resource *resource)
 	display->free(display, registry);
 }
 
-static void display_get_registry(struct poor_wl_client *client, struct poor_wl_resource *resource, uint32_t id)
+static void display_get_registry(struct poor_wl_client *client, struct poor_wl_display_resource *resource, uint32_t id)
 {
-	struct poor_wl_display *display = resource->data;
+	struct poor_wl_display *display = resource->resource.data;
 	struct registry *registry = display->alloc ? display->alloc(display, client, sizeof(*registry)) : nullptr;
 	struct poor_wl_global *global;
 
@@ -778,19 +773,18 @@ static void display_get_registry(struct poor_wl_client *client, struct poor_wl_r
 		poor_wl_client_post_no_memory(client);
 		return;
 	}
-	if (poor_wl_resource_init(&registry->resource, client, &poor_wl_registry_interface, 1, id) < 0) {
+	if (poor_wl_registry_resource_init(&registry->resource, client, 1, id) < 0) {
 		display->free(display, registry);
 		poor_wl_client_post_no_memory(client);
 		return;
 	}
 	registry->generation = ++display->generation;
 	registry->acked = 0;
-	poor_wl_resource_set_implementation(&registry->resource, &registry_interface, display, unbind_registry_resource);
-	poor_wl_list_insert(&display->registry_resource_list, &registry->resource.link);
+	poor_wl_registry_resource_set_implementation(&registry->resource, &registry_interface, display, unbind_registry_resource);
+	poor_wl_list_insert(&display->registry_list, &registry->resource.resource.link);
 	poor_wl_list_for_each(global, &display->global_list, link)
 		if (poor_wl_global_is_visible(client, global) && !global->removed)
-			poor_wl_resource_post_event(&registry->resource, POOR_WL_REGISTRY_GLOBAL, global->name, global->interface->name,
-					       global->version);
+			poor_wl_registry_send_global(&registry->resource, global->name, global->interface->name, global->version);
 }
 
 static const struct poor_wl_display_interface display_interface = {
@@ -834,7 +828,7 @@ POOR_WL_EXPORT void poor_wl_display_init(struct poor_wl_display *display, struct
 	display->serial = 0;
 	display->generation = 0;
 	display->ack_slots = 0;
-	poor_wl_list_init(&display->registry_resource_list);
+	poor_wl_list_init(&display->registry_list);
 	poor_wl_list_init(&display->global_list);
 	poor_wl_list_init(&display->socket_list);
 	poor_wl_list_init(&display->client_list);
@@ -883,7 +877,7 @@ POOR_WL_EXPORT void poor_wl_display_set_global_filter(struct poor_wl_display *di
 POOR_WL_EXPORT void poor_wl_global_init(struct poor_wl_global *global, struct poor_wl_display *display, const struct poor_wl_interface *interface,
 			      int version, void *data, poor_wl_global_bind_func_t bind)
 {
-	struct poor_wl_resource *resource;
+	struct registry *registry;
 
 	assert(version >= 1 && version <= interface->version);
 	assert(display->next_global_name < UINT32_MAX);
@@ -898,21 +892,21 @@ POOR_WL_EXPORT void poor_wl_global_init(struct poor_wl_global *global, struct po
 	global->withdrawn = nullptr;
 	global->removed = false;
 	poor_wl_list_insert(display->global_list.prev, &global->link);
-	poor_wl_list_for_each(resource, &display->registry_resource_list, link)
-		if (poor_wl_global_is_visible(resource->client, global))
-			poor_wl_resource_post_event(resource, POOR_WL_REGISTRY_GLOBAL, global->name, global->interface->name, global->version);
+	poor_wl_list_for_each(registry, &display->registry_list, resource.resource.link)
+		if (poor_wl_global_is_visible(registry->resource.resource.client, global))
+			poor_wl_registry_send_global(&registry->resource, global->name, global->interface->name, global->version);
 }
 
 static void global_unpublish(struct poor_wl_global *global)
 {
 	struct poor_wl_display *display = global->display;
-	struct poor_wl_resource *resource;
+	struct registry *registry;
 
-	poor_wl_list_for_each(resource, &display->registry_resource_list, link) {
-		if (!registry_announced(registry_of(resource), global))
+	poor_wl_list_for_each(registry, &display->registry_list, resource.resource.link) {
+		if (!registry_announced(registry, global))
 			continue;
 		global->pending_acks++;
-		poor_wl_resource_post_event(resource, POOR_WL_REGISTRY_GLOBAL_REMOVE, global->name);
+		poor_wl_registry_send_global_remove(&registry->resource, global->name);
 	}
 	global->removed = true;
 	global->removed_generation = ++display->generation;
@@ -950,7 +944,7 @@ POOR_WL_EXPORT void poor_wl_global_set_withdrawn_listener(struct poor_wl_global 
 POOR_WL_EXPORT void poor_wl_global_destroy(struct poor_wl_global *global)
 {
 	struct poor_wl_display *display = global->display;
-	struct poor_wl_resource *resource;
+	struct registry *registry;
 	uint64_t bit;
 
 	if (!global->removed)
@@ -958,8 +952,8 @@ POOR_WL_EXPORT void poor_wl_global_destroy(struct poor_wl_global *global)
 	if (global->ack_slot >= 0) {
 		bit = 1ull << global->ack_slot;
 		display->ack_slots &= ~bit;
-		poor_wl_list_for_each(resource, &display->registry_resource_list, link)
-			registry_of(resource)->acked &= ~bit;
+		poor_wl_list_for_each(registry, &display->registry_list, resource.resource.link)
+			registry->acked &= ~bit;
 	}
 	poor_wl_list_remove(&global->link);
 }
@@ -1631,11 +1625,12 @@ POOR_WL_EXPORT void *poor_wl_client_get_user_data(struct poor_wl_client *client)
  * The compositor calls this from its wl_fixes.ack_global_remove implementation. Dropping the registry or the client
  * acknowledges the removal too.
  */
-POOR_WL_EXPORT void poor_wl_fixes_handle_ack_global_remove(struct poor_wl_resource *fixes_resource, struct poor_wl_resource *registry_resource,
-						 uint32_t global_name)
+POOR_WL_EXPORT void poor_wl_fixes_handle_ack_global_remove(struct poor_wl_fixes_resource *fixes_resource,
+							   struct poor_wl_registry_resource *registry_resource,
+							   uint32_t global_name)
 {
-	struct registry *registry = registry_of(registry_resource);
-	struct poor_wl_display *display = registry_resource->data;
+	struct registry *registry = container_of(registry_resource, struct registry, resource);
+	struct poor_wl_display *display = registry_resource->resource.data;
 	struct poor_wl_global *global;
 
 	poor_wl_list_for_each(global, &display->global_list, link)
@@ -1643,13 +1638,13 @@ POOR_WL_EXPORT void poor_wl_fixes_handle_ack_global_remove(struct poor_wl_resour
 			break;
 	if (&global->link == &display->global_list ||
 	    (global->removed && registry->acked & (1ull << global->ack_slot))) {
-		poor_wl_resource_post_error(fixes_resource, POOR_WL_FIXES_ERROR_INVALID_ACK_REMOVE,
+		poor_wl_resource_post_error(&fixes_resource->resource, POOR_WL_FIXES_ERROR_INVALID_ACK_REMOVE,
 				       "the given registry did not announce global %u", global_name);
 		return;
 	}
 	if (!global->removed) {
-		poor_wl_resource_post_error(fixes_resource, POOR_WL_FIXES_ERROR_INVALID_ACK_REMOVE, "global %u is not removed",
-				       global_name);
+		poor_wl_resource_post_error(&fixes_resource->resource, POOR_WL_FIXES_ERROR_INVALID_ACK_REMOVE,
+				       "global %u is not removed", global_name);
 		return;
 	}
 	registry->acked |= 1ull << global->ack_slot;

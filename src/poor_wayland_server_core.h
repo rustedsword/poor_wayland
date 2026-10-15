@@ -51,6 +51,10 @@ extern "C" {
  * function is called from the loop once nothing uses its memory anymore. A client and the display can't be used
  * from other threads.
  *
+ * Every interface has a structure that holds its resource, such as struct poor_wl_surface_resource. It is what
+ * poor_wl_surface_resource_init() initializes and what the request handlers and the event functions of the
+ * interface take.
+ *
  * Events are sent when the loop iteration that queued them ends, or right away with poor_wl_client_flush().
  */
 
@@ -60,6 +64,9 @@ struct poor_wl_global;
 struct poor_wl_resource;
 struct poor_wl_socket;
 struct poor_wl_listener;
+struct poor_wl_buffer_resource;
+struct poor_wl_fixes_resource;
+struct poor_wl_registry_resource;
 
 typedef void (*poor_wl_notify_func_t)(struct poor_wl_listener *listener, void *data);
 
@@ -279,6 +286,11 @@ struct poor_wl_resource {
 	struct poor_wl_priv_signal destroy_signal;
 };
 
+/* The library implements the wl_display of every client */
+struct poor_wl_display_resource {
+	struct poor_wl_resource resource;
+};
+
 struct poor_wl_client {
 	poor_wl_client_io io;
 	struct poor_wl_connection connection;
@@ -288,7 +300,7 @@ struct poor_wl_client {
 	struct poor_loop_timer timer;
 	struct poor_wl_display *display;
 	struct poor_wl_resource *display_resource;
-	struct poor_wl_resource display_object;
+	struct poor_wl_display_resource display_object;
 	struct poor_wl_list link;
 	struct poor_wl_map objects;
 	struct poor_wl_priv_signal destroy_signal;
@@ -710,7 +722,7 @@ poor_wl_resource_get_destroy_listener(struct poor_wl_resource *resource,
 	     tmp = poor_wl_resource_from_link(poor_wl_resource_get_link(resource)->next))
 
 struct poor_wl_shm_buffer *
-poor_wl_shm_buffer_get(struct poor_wl_resource *resource);
+poor_wl_shm_buffer_get(struct poor_wl_buffer_resource *resource);
 
 void
 poor_wl_shm_buffer_begin_access(struct poor_wl_shm_buffer *buffer);
@@ -739,11 +751,11 @@ poor_wl_shm_buffer_ref(struct poor_wl_shm_buffer *buffer);
 void
 poor_wl_shm_buffer_unref(struct poor_wl_shm_buffer *buffer);
 
-struct poor_wl_shm_pool *
-poor_wl_shm_buffer_ref_pool(struct poor_wl_shm_buffer *buffer);
+struct poor_wl_shm_mapping *
+poor_wl_shm_buffer_ref_mapping(struct poor_wl_shm_buffer *buffer);
 
 void
-poor_wl_shm_pool_unref(struct poor_wl_shm_pool *pool);
+poor_wl_shm_mapping_unref(struct poor_wl_shm_mapping *mapping);
 
 /* Announce poor_wl_shm with 'global'. Pools and buffers come from the allocator of the display. */
 void
@@ -766,8 +778,8 @@ void
 poor_wl_protocol_logger_destroy(struct poor_wl_protocol_logger *logger);
 
 void
-poor_wl_fixes_handle_ack_global_remove(struct poor_wl_resource *fixes_resource,
-				  struct poor_wl_resource *registry_resource,
+poor_wl_fixes_handle_ack_global_remove(struct poor_wl_fixes_resource *fixes_resource,
+				  struct poor_wl_registry_resource *registry_resource,
 				  uint32_t global_name);
 
 #ifdef  __cplusplus

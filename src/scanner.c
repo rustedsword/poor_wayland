@@ -1234,6 +1234,67 @@ emit_type(struct arg *a)
 	}
 }
 
+static void
+emit_resource_type(struct arg *a)
+{
+	if (a->interface_name)
+		printf("struct %s_resource *", a->interface_name);
+	else
+		printf("struct poor_wl_resource *");
+}
+
+/* The server library defines the display resource, which its clients hold */
+static void
+emit_resource_struct(struct interface *interface)
+{
+	if (strcmp(interface->wire_name, "wl_display") == 0)
+		return;
+
+	printf("/**\n"
+	       " * @ingroup iface_%s\n"
+	       " * @struct %s_resource\n"
+	       " */\n"
+	       "struct %s_resource {\n"
+	       "\tstruct poor_wl_resource resource;\n"
+	       "};\n\n",
+	       interface->name, interface->name, interface->name);
+}
+
+static void
+emit_resource_init(struct poor_wl_list *message_list, struct interface *interface)
+{
+	if (strcmp(interface->wire_name, "wl_display") == 0)
+		return;
+
+	printf("/** @ingroup iface_%s */\n"
+	       "static inline int\n"
+	       "%s_resource_init(struct %s_resource *resource,\n"
+	       "%sstruct poor_wl_client *client, int version, uint32_t id)\n"
+	       "{\n"
+	       "\treturn poor_wl_resource_init(&resource->resource, client, &%s_interface, version, id);\n"
+	       "}\n\n",
+	       interface->name,
+	       interface->name, interface->name,
+	       indent(15 + strlen(interface->name)),
+	       interface->name);
+
+	if (poor_wl_list_empty(message_list))
+		return;
+
+	printf("/** @ingroup iface_%s */\n"
+	       "static inline void\n"
+	       "%s_resource_set_implementation(struct %s_resource *resource,\n"
+	       "%sconst struct %s_interface *implementation, void *data,\n"
+	       "%spoor_wl_resource_destroy_func_t destroy)\n"
+	       "{\n"
+	       "\tpoor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);\n"
+	       "}\n\n",
+	       interface->name,
+	       interface->name, interface->name,
+	       indent(29 + strlen(interface->name)), interface->name,
+	       indent(29 + strlen(interface->name)));
+}
+
 /* The client library defines the display, which holds more than its proxy */
 static void
 emit_proxy_struct(struct interface *interface)
@@ -1431,15 +1492,15 @@ emit_event_wrappers(struct poor_wl_list *message_list, struct interface *interfa
 		}
 		printf(" */\n");
 		printf("static inline void\n"
-		       "%s_send_%s(struct poor_wl_resource *resource_",
-		       interface->name, m->name);
+		       "%s_send_%s(struct %s_resource *resource_",
+		       interface->name, m->name, interface->name);
 
 		poor_wl_list_for_each(a, &m->arg_list, link) {
 			printf(", ");
 			switch (a->type) {
 			case NEW_ID:
 			case OBJECT:
-				printf("struct poor_wl_resource *");
+				emit_resource_type(a);
 				break;
 			default:
 				emit_type(a);
@@ -1449,7 +1510,7 @@ emit_event_wrappers(struct poor_wl_list *message_list, struct interface *interfa
 
 		printf(")\n"
 		       "{\n"
-		       "\tpoor_wl_resource_post_event(resource_, %s_%s",
+		       "\tpoor_wl_resource_post_event(&resource_->resource, %s_%s",
 		       interface->uppercase_name, m->uppercase_name);
 
 		poor_wl_list_for_each(a, &m->arg_list, link)
@@ -1630,8 +1691,8 @@ emit_structs(struct poor_wl_list *message_list, struct interface *interface, enu
 		n = strlen(m->name) + 17;
 		if (side == SERVER) {
 			printf("struct poor_wl_client *client,\n"
-			       "%sstruct poor_wl_resource *resource",
-			       indent(n));
+			       "%sstruct %s_resource *resource",
+			       indent(n), interface->name);
 		} else {
 			printf("void *data,\n"),
 			printf("%sstruct %s *%s",
@@ -1642,7 +1703,7 @@ emit_structs(struct poor_wl_list *message_list, struct interface *interface, enu
 			printf(",\n%s", indent(n));
 
 			if (side == SERVER && a->type == OBJECT)
-				printf("struct poor_wl_resource *");
+				emit_resource_type(a);
 			else if (side == SERVER && a->type == NEW_ID && a->interface_name == NULL)
 				printf("const char *interface, uint32_t version, uint32_t ");
 			else if (side == CLIENT && a->type == OBJECT && a->interface_name == NULL)
@@ -1822,7 +1883,7 @@ emit_header(struct protocol *protocol, enum side side)
 	poor_wl_array_for_each(p, &types) {
 		if (prev && strcmp(*p, prev) == 0)
 			continue;
-		printf("struct %s;\n", *p);
+		printf(side == SERVER ? "struct %s_resource;\n" : "struct %s;\n", *p);
 		prev = *p;
 	}
 	name_array_release(&types);
@@ -1861,7 +1922,9 @@ emit_header(struct protocol *protocol, enum side side)
 		emit_enumerations(i, side == SERVER);
 
 		if (side == SERVER) {
+			emit_resource_struct(i);
 			emit_structs(&i->request_list, i, side);
+			emit_resource_init(&i->request_list, i);
 			emit_opcodes(&i->event_list, i);
 			emit_opcode_versions(&i->event_list, i);
 			emit_opcode_versions(&i->request_list, i);
