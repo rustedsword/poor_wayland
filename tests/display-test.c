@@ -395,6 +395,38 @@ TEST(server_created_object)
 	loop_fini(&loop);
 }
 
+/* The server gives the id of a destroyed object to its next one, which takes the place of the zombie */
+TEST(server_reuses_id_of_destroyed_object)
+{
+	struct poor_loop loop;
+	struct client c;
+	uint32_t id;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	poor_wl_display_set_new_proxy(&c.display, new_proxy);
+	client_bind_global(&c, 2);
+	poor_test_global_add_listener(&c.global, &global_listener, &c);
+	poor_test_global_spawn_child(&c.global);
+	run_until(&loop, c.events == 1);
+	id = poor_wl_proxy_get_id(&c.spawned.proxy);
+	poor_test_child_destroy(&c.spawned);
+	client_roundtrip(&c);
+	poor_test_global_spawn_child(&c.global);
+	run_until(&loop, c.events == 2);
+	assert(poor_wl_proxy_get_id(&c.spawned.proxy) == id);
+	poor_test_child_add_listener(&c.spawned, &child_listener, &c);
+	poor_test_child_ping(&c.spawned);
+	run_until(&loop, c.pongs == 1);
+	poor_test_child_destroy(&c.spawned);
+	client_roundtrip(&c);
+	assert(test_server.children == 0);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
 TEST(server_created_object_without_memory)
 {
 	struct poor_loop loop;
