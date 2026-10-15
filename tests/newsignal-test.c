@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include <assert.h>
 
 #include "test-runner.h"

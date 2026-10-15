@@ -26,9 +26,14 @@
 #ifndef WAYLAND_SERVER_CORE_H
 #define WAYLAND_SERVER_CORE_H
 
-#include <sys/types.h>
+#include <linux/stat.h>
+#include <poor_loop.h>
+#include <poor_loop_group.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/un.h>
+
+#include "wayland-connection.h"
 #include "wayland-util.h"
 #include "wayland-version.h"
 
@@ -36,362 +41,28 @@
 extern "C" {
 #endif
 
-enum {
-	WL_EVENT_READABLE = 0x01,
-	WL_EVENT_WRITABLE = 0x02,
-	WL_EVENT_HANGUP   = 0x04,
-	WL_EVENT_ERROR    = 0x08
-};
-
-/** File descriptor dispatch function type
+/*
+ * libwayland-server runs on a poor_loop and on memory that the caller owns.
  *
- * Functions of this type are used as callbacks for file descriptor events.
+ * The display, clients, sockets, globals and resources are structures of the caller. Objects that the library
+ * creates on behalf of clients, registries and the objects of wl_shm, come from the allocator of the display.
  *
- * \param fd The file descriptor delivering the event.
- * \param mask Describes the kind of the event as a bitwise-or of:
- * \c WL_EVENT_READABLE, \c WL_EVENT_WRITABLE, \c WL_EVENT_HANGUP,
- * \c WL_EVENT_ERROR.
- * \param data The user data argument of the related wl_event_loop_add_fd()
- * call.
- * \return If the event source is registered for re-check with
- * wl_event_source_check(): 0 for all done, 1 for needing a re-check.
- * If not registered, the return value is ignored and should be zero.
+ * All I/O goes through the loop, so destroying a display, a client or a socket only starts closing it: its 'done'
+ * function is called from the loop once nothing uses its memory anymore. A client and the display can't be used
+ * from other threads.
  *
- * \sa wl_event_loop_add_fd()
- * \memberof wl_event_source
- */
-typedef int (*wl_event_loop_fd_func_t)(int fd, uint32_t mask, void *data);
-
-/** Timer dispatch function type
- *
- * Functions of this type are used as callbacks for timer expiry.
- *
- * \param data The user data argument of the related wl_event_loop_add_timer()
- * call.
- * \return If the event source is registered for re-check with
- * wl_event_source_check(): 0 for all done, 1 for needing a re-check.
- * If not registered, the return value is ignored and should be zero.
- *
- * \sa wl_event_loop_add_timer()
- * \memberof wl_event_source
- */
-typedef int (*wl_event_loop_timer_func_t)(void *data);
-
-/** Signal dispatch function type
- *
- * Functions of this type are used as callbacks for (POSIX) signals.
- *
- * \param signal_number
- * \param data The user data argument of the related wl_event_loop_add_signal()
- * call.
- * \return If the event source is registered for re-check with
- * wl_event_source_check(): 0 for all done, 1 for needing a re-check.
- * If not registered, the return value is ignored and should be zero.
- *
- * \sa wl_event_loop_add_signal()
- * \memberof wl_event_source
- */
-typedef int (*wl_event_loop_signal_func_t)(int signal_number, void *data);
-
-/** Idle task function type
- *
- * Functions of this type are used as callbacks before blocking in
- * wl_event_loop_dispatch().
- *
- * \param data The user data argument of the related wl_event_loop_add_idle()
- * call.
- *
- * \sa wl_event_loop_add_idle() wl_event_loop_dispatch()
- * \memberof wl_event_source
- */
-typedef void (*wl_event_loop_idle_func_t)(void *data);
-
-/** \struct wl_event_loop
- *
- * \brief An event loop context
- *
- * Usually you create an event loop context, add sources to it, and call
- * wl_event_loop_dispatch() in a loop to process events.
- *
- * \sa wl_event_source
+ * Events are sent when the loop iteration that queued them ends, or right away with wl_client_flush().
  */
 
-/** \struct wl_event_source
- *
- * \brief An abstract event source
- *
- * This is the generic type for fd, timer, signal, and idle sources.
- * Functions that operate on specific source types must not be used with
- * a different type, even if the function signature allows it.
- */
-
-struct wl_event_loop *
-wl_event_loop_create(void);
-
-void
-wl_event_loop_destroy(struct wl_event_loop *loop);
-
-struct wl_event_source *
-wl_event_loop_add_fd(struct wl_event_loop *loop,
-		     int fd, uint32_t mask,
-		     wl_event_loop_fd_func_t func,
-		     void *data);
-
-int
-wl_event_source_fd_update(struct wl_event_source *source, uint32_t mask);
-
-struct wl_event_source *
-wl_event_loop_add_timer(struct wl_event_loop *loop,
-			wl_event_loop_timer_func_t func,
-			void *data);
-
-struct wl_event_source *
-wl_event_loop_add_signal(struct wl_event_loop *loop,
-			 int signal_number,
-			 wl_event_loop_signal_func_t func,
-			 void *data);
-
-int
-wl_event_source_timer_update(struct wl_event_source *source,
-			     int ms_delay);
-
-int
-wl_event_source_remove(struct wl_event_source *source);
-
-void
-wl_event_source_check(struct wl_event_source *source);
-
-int
-wl_event_loop_dispatch(struct wl_event_loop *loop, int timeout);
-
-void
-wl_event_loop_dispatch_idle(struct wl_event_loop *loop);
-
-struct wl_event_source *
-wl_event_loop_add_idle(struct wl_event_loop *loop,
-		       wl_event_loop_idle_func_t func,
-		       void *data);
-
-int
-wl_event_loop_get_fd(struct wl_event_loop *loop);
-
+struct wl_client;
+struct wl_display;
+struct wl_global;
+struct wl_resource;
+struct wl_socket;
 struct wl_listener;
 
 typedef void (*wl_notify_func_t)(struct wl_listener *listener, void *data);
 
-void
-wl_event_loop_add_destroy_listener(struct wl_event_loop *loop,
-				   struct wl_listener *listener);
-
-struct wl_listener *
-wl_event_loop_get_destroy_listener(struct wl_event_loop *loop,
-				   wl_notify_func_t notify);
-
-struct wl_display *
-wl_display_create(void);
-
-void
-wl_display_destroy(struct wl_display *display);
-
-struct wl_event_loop *
-wl_display_get_event_loop(struct wl_display *display);
-
-int
-wl_display_add_socket(struct wl_display *display, const char *name);
-
-const char *
-wl_display_add_socket_auto(struct wl_display *display);
-
-int
-wl_display_add_socket_fd(struct wl_display *display, int sock_fd);
-
-int
-wl_display_remove_socket_fd(struct wl_display *display, int sock_fd);
-
-void
-wl_display_terminate(struct wl_display *display);
-
-void
-wl_display_run(struct wl_display *display);
-
-void
-wl_display_flush_clients(struct wl_display *display);
-
-void
-wl_display_destroy_clients(struct wl_display *display);
-
-void
-wl_display_set_default_max_buffer_size(struct wl_display *display,
-				       size_t max_buffer_size);
-
-struct wl_client;
-struct wl_global;
-
-typedef void (*wl_global_bind_func_t)(struct wl_client *client, void *data,
-				      uint32_t version, uint32_t id);
-
-typedef void (*wl_global_withdrawn_func_t)(struct wl_global *global);
-
-uint32_t
-wl_display_get_serial(const struct wl_display *display);
-
-uint32_t
-wl_display_next_serial(struct wl_display *display);
-
-void
-wl_display_add_destroy_listener(struct wl_display *display,
-				struct wl_listener *listener);
-
-void
-wl_display_add_client_created_listener(struct wl_display *display,
-					struct wl_listener *listener);
-
-struct wl_listener *
-wl_display_get_destroy_listener(struct wl_display *display,
-				wl_notify_func_t notify);
-
-struct wl_global *
-wl_global_create(struct wl_display *display,
-		 const struct wl_interface *interface,
-		 int version,
-		 void *data, wl_global_bind_func_t bind);
-
-void
-wl_global_remove(struct wl_global *global);
-
-void
-wl_global_set_withdrawn_listener(struct wl_global *global,
-				 wl_global_withdrawn_func_t func);
-
-void
-wl_global_destroy(struct wl_global *global);
-
-/** A filter function for wl_global objects
- *
- * \param client The client object
- * \param global The global object to show or hide
- * \param data   The user data pointer
- *
- * A filter function enables the server to decide which globals to
- * advertise to each client.
- *
- * When a wl_global filter is set, the given callback function will be
- * called during wl_global advertisement and binding.
- *
- * This function should return true if the global object should be made
- * visible to the client or false otherwise.
- */
-typedef bool (*wl_display_global_filter_func_t)(const struct wl_client *client,
-						const struct wl_global *global,
-						void *data);
-
-void
-wl_display_set_global_filter(struct wl_display *display,
-			     wl_display_global_filter_func_t filter,
-			     void *data);
-
-const struct wl_interface *
-wl_global_get_interface(const struct wl_global *global);
-
-uint32_t
-wl_global_get_name(const struct wl_global *global,
-                   const struct wl_client *client);
-
-uint32_t
-wl_global_get_version(const struct wl_global *global);
-
-struct wl_display *
-wl_global_get_display(const struct wl_global *global);
-
-void *
-wl_global_get_user_data(const struct wl_global *global);
-
-void
-wl_global_set_user_data(struct wl_global *global, void *data);
-
-struct wl_client *
-wl_client_create(struct wl_display *display, int fd);
-
-struct wl_list *
-wl_display_get_client_list(struct wl_display *display);
-
-struct wl_list *
-wl_client_get_link(struct wl_client *client);
-
-struct wl_client *
-wl_client_from_link(struct wl_list *link);
-
-/** Iterate over a list of clients. */
-#define wl_client_for_each(client, list)				\
-	for (client = wl_client_from_link((list)->next);	\
-	     wl_client_get_link(client) != (list);			\
-	     client = wl_client_from_link(wl_client_get_link(client)->next))
-
-void
-wl_client_destroy(struct wl_client *client);
-
-void
-wl_client_flush(struct wl_client *client);
-
-void
-wl_client_get_credentials(const struct wl_client *client,
-			  pid_t *pid, uid_t *uid, gid_t *gid);
-
-int
-wl_client_get_fd(struct wl_client *client);
-
-void
-wl_client_add_destroy_listener(struct wl_client *client,
-			       struct wl_listener *listener);
-
-struct wl_listener *
-wl_client_get_destroy_listener(struct wl_client *client,
-			       wl_notify_func_t notify);
-
-void
-wl_client_add_destroy_late_listener(struct wl_client *client,
-				    struct wl_listener *listener);
-
-struct wl_listener *
-wl_client_get_destroy_late_listener(struct wl_client *client,
-				    wl_notify_func_t notify);
-
-struct wl_resource *
-wl_client_get_object(struct wl_client *client, uint32_t id);
-
-void
-wl_client_post_no_memory(struct wl_client *client);
-
-void
-wl_client_post_implementation_error(struct wl_client *client,
-                                    const char* msg, ...) WL_PRINTF(2,3);
-
-void
-wl_client_add_resource_created_listener(struct wl_client *client,
-                                        struct wl_listener *listener);
-
-/** Callback function type for wl_client_for_each_resource() */
-typedef enum wl_iterator_result (*wl_client_for_each_resource_iterator_func_t)(
-						struct wl_resource *resource,
-						void *user_data);
-
-void
-wl_client_for_each_resource(struct wl_client *client,
-                            wl_client_for_each_resource_iterator_func_t iterator,
-                            void *user_data);
-
-typedef void (*wl_user_data_destroy_func_t)(void *data);
-
-void
-wl_client_set_user_data(struct wl_client *client,
-			void *data,
-			wl_user_data_destroy_func_t dtor);
-
-void *
-wl_client_get_user_data(struct wl_client *client);
-
-void
-wl_client_set_max_buffer_size(struct wl_client *client, size_t max_buffer_size);
 
 /** \class wl_listener
  *
@@ -530,7 +201,382 @@ wl_signal_emit(struct wl_signal *signal, void *data)
 void
 wl_signal_emit_mutable(struct wl_signal *signal, void *data);
 
+struct wl_priv_signal {
+	struct wl_list listener_list;
+	struct wl_list emit_list;
+};
+
 typedef void (*wl_resource_destroy_func_t)(struct wl_resource *resource);
+
+typedef void (*wl_global_bind_func_t)(struct wl_client *client, void *data,
+				      uint32_t version, uint32_t id);
+
+typedef void (*wl_global_withdrawn_func_t)(struct wl_global *global);
+
+/** A filter function for wl_global objects
+ *
+ * \param client The client object
+ * \param global The global object to show or hide
+ * \param data   The user data pointer
+ *
+ * A filter function enables the server to decide which globals to
+ * advertise to each client.
+ *
+ * When a wl_global filter is set, the given callback function will be
+ * called during wl_global advertisement and binding.
+ *
+ * This function should return true if the global object should be made
+ * visible to the client or false otherwise.
+ */
+typedef bool (*wl_display_global_filter_func_t)(const struct wl_client *client,
+						const struct wl_global *global,
+						void *data);
+
+typedef void (*wl_user_data_destroy_func_t)(void *data);
+
+typedef void wl_display_done_fn(struct wl_display *display);
+typedef void *wl_display_alloc_fn(struct wl_display *display, struct wl_client *client, size_t size);
+typedef void wl_display_free_fn(struct wl_display *display, void *ptr);
+typedef void wl_client_done_fn(struct wl_client *client);
+typedef void wl_socket_ready_fn(struct wl_socket *socket);
+typedef void wl_socket_accept_fn(struct wl_socket *socket, int fd);
+typedef void wl_socket_done_fn(struct wl_socket *socket);
+
+enum wl_protocol_logger_type {
+	WL_PROTOCOL_LOGGER_REQUEST,
+	WL_PROTOCOL_LOGGER_EVENT,
+};
+
+struct wl_protocol_logger_message {
+	struct wl_resource *resource;
+	int message_opcode;
+	const struct wl_message *message;
+	int arguments_count;
+	const union wl_argument *arguments;
+};
+
+/** Callback function type for wl_display_add_protocol_logger() */
+typedef void (*wl_protocol_logger_func_t)(void *user_data,
+					  enum wl_protocol_logger_type direction,
+					  const struct wl_protocol_logger_message *message);
+
+/** Callback function type for wl_client_for_each_resource() */
+typedef enum wl_iterator_result (*wl_client_for_each_resource_iterator_func_t)(
+						struct wl_resource *resource,
+						void *user_data);
+
+poor_loop_group_declare(wl_client_io);
+poor_loop_group_declare(wl_socket_io);
+
+struct wl_resource {
+	struct wl_object object;
+	wl_resource_destroy_func_t destroy;
+	struct wl_list link;
+	struct wl_client *client;
+	void *data;
+	int version;
+	wl_dispatcher_func_t dispatcher;
+	struct wl_priv_signal destroy_signal;
+};
+
+struct wl_client {
+	wl_client_io io;
+	struct wl_connection connection;
+	struct poor_loop_op recv_op;
+	struct poor_loop_op send_op;
+	struct poor_loop_op cred_op;
+	struct poor_loop_timer timer;
+	struct wl_display *display;
+	struct wl_resource *display_resource;
+	struct wl_resource display_object;
+	struct wl_list link;
+	struct wl_map objects;
+	struct wl_priv_signal destroy_signal;
+	struct wl_priv_signal destroy_late_signal;
+	struct wl_priv_signal resource_created_signal;
+	struct {
+		pid_t pid;
+		uid_t uid;
+		gid_t gid;
+	} cred;
+	wl_client_done_fn *done;
+	void *data;
+	wl_user_data_destroy_func_t data_dtor;
+	int fd;
+	bool ready;
+	bool error;
+	bool destroyed;
+};
+
+/*
+ * A global with 'ack_slot' waits for the registries that announced it to acknowledge its removal. They are the
+ * registries that saw it before 'removed_generation'.
+ */
+struct wl_global {
+	struct wl_display *display;
+	const struct wl_interface *interface;
+	struct wl_list link;
+	uint32_t name;
+	uint32_t version;
+	uint32_t removed_generation;
+	uint32_t pending_acks;
+	int ack_slot;
+	void *data;
+	wl_global_bind_func_t bind;
+	wl_global_withdrawn_func_t withdrawn;
+	bool removed;
+};
+
+struct wl_socket {
+	wl_socket_io io;
+	struct wl_display *display;
+	struct wl_list link;
+	struct poor_loop_op lock_op;
+	struct poor_loop_op stat_op;
+	struct poor_loop_op unlink_op;
+	struct poor_loop_op socket_op;
+	struct poor_loop_op bind_op;
+	struct poor_loop_op listen_op;
+	struct poor_loop_op accept_op;
+	struct poor_loop_op cleanup_op;
+	struct poor_loop_timer timer;
+	wl_socket_ready_fn *ready;
+	wl_socket_accept_fn *accept;
+	wl_socket_done_fn *done;
+	struct statx stx;
+	struct sockaddr_un addr;
+	const char *display_name;
+	int fd;
+	int fd_lock;
+	int displayno;
+	int error;
+	int bind_error;
+	int listen_error;
+	bool auto_name;
+	bool closing;
+	bool cleaned;
+	char lock_addr[sizeof(((struct sockaddr_un *)nullptr)->sun_path) + 5];
+};
+
+struct wl_protocol_logger {
+	struct wl_list link;
+	wl_protocol_logger_func_t func;
+	void *user_data;
+};
+
+/*
+ * Initialize a display that runs on 'loop'. 'done' is called once wl_display_destroy() has finished, after the
+ * done functions of all its clients and sockets.
+ */
+void
+wl_display_init(struct wl_display *display, struct poor_loop *loop,
+		wl_display_done_fn *done);
+
+/*
+ * Set the allocator for the objects that the library creates for clients:
+ * registries and the objects of wl_shm. Without it clients get no_memory
+ * errors when they ask for them.
+ */
+void
+wl_display_set_allocator(struct wl_display *display,
+			 wl_display_alloc_fn *alloc, wl_display_free_fn *free);
+
+/* Destroy all sockets and clients, then call 'done' */
+void
+wl_display_destroy(struct wl_display *display);
+
+struct poor_loop *
+wl_display_get_loop(struct wl_display *display);
+
+void
+wl_display_flush_clients(struct wl_display *display);
+
+void
+wl_display_destroy_clients(struct wl_display *display);
+
+uint32_t
+wl_display_get_serial(const struct wl_display *display);
+
+uint32_t
+wl_display_next_serial(struct wl_display *display);
+
+void
+wl_display_add_destroy_listener(struct wl_display *display,
+				struct wl_listener *listener);
+
+/* The listeners are called once the client credentials are known */
+void
+wl_display_add_client_created_listener(struct wl_display *display,
+					struct wl_listener *listener);
+
+struct wl_listener *
+wl_display_get_destroy_listener(struct wl_display *display,
+				wl_notify_func_t notify);
+
+void
+wl_display_set_global_filter(struct wl_display *display,
+			     wl_display_global_filter_func_t filter,
+			     void *data);
+
+struct wl_list *
+wl_display_get_client_list(struct wl_display *display);
+
+/*
+ * Prepare a listening socket. 'ready' is called once it listens, 'accept' with
+ * every connection, whose fd the callee owns, and 'done' once it is closed.
+ */
+void
+wl_socket_init(struct wl_socket *socket, struct wl_display *display,
+	       wl_socket_ready_fn *ready, wl_socket_accept_fn *accept,
+	       wl_socket_done_fn *done);
+
+/*
+ * Listen on the socket 'name' in XDG_RUNTIME_DIR, or on the path 'name' if it
+ * is absolute. Without 'name', WAYLAND_DISPLAY or "wayland-0" is used.
+ *
+ * Returns 0, or -1 with errno set if the path is invalid, then 'done' isn't
+ * called. If listening fails later, 'done' is called with the socket's 'error'
+ * set to an errno value.
+ */
+int
+wl_socket_listen(struct wl_socket *socket, const char *name);
+
+/* Like wl_socket_listen() with the first free name of "wayland-0" to "wayland-32" */
+int
+wl_socket_listen_auto(struct wl_socket *socket);
+
+/* Accept on a socket that already listens, without calling 'ready'. The socket owns 'fd'. */
+void
+wl_socket_listen_fd(struct wl_socket *socket, int fd);
+
+/* Stop accepting and remove the socket and its lock file */
+void
+wl_socket_destroy(struct wl_socket *socket);
+
+const char *
+wl_socket_get_name(const struct wl_socket *socket);
+
+/*
+ * Make the global visible to clients. The version is between 1 and the version
+ * of the interface. The global must stay valid until wl_global_destroy().
+ */
+void
+wl_global_init(struct wl_global *global, struct wl_display *display,
+	       const struct wl_interface *interface, int version,
+	       void *data, wl_global_bind_func_t bind);
+
+void
+wl_global_remove(struct wl_global *global);
+
+void
+wl_global_set_withdrawn_listener(struct wl_global *global,
+				 wl_global_withdrawn_func_t func);
+
+void
+wl_global_destroy(struct wl_global *global);
+
+const struct wl_interface *
+wl_global_get_interface(const struct wl_global *global);
+
+uint32_t
+wl_global_get_name(const struct wl_global *global,
+                   const struct wl_client *client);
+
+uint32_t
+wl_global_get_version(const struct wl_global *global);
+
+struct wl_display *
+wl_global_get_display(const struct wl_global *global);
+
+void *
+wl_global_get_user_data(const struct wl_global *global);
+
+void
+wl_global_set_user_data(struct wl_global *global, void *data);
+
+/*
+ * Serve a client on the connected socket 'fd', which the client owns. The
+ * client uses 'memory' and the client structure until 'done' is called.
+ */
+void
+wl_client_init(struct wl_client *client, struct wl_display *display, int fd,
+	       const struct wl_connection_memory *memory,
+	       wl_client_done_fn *done);
+
+struct wl_list *
+wl_client_get_link(struct wl_client *client);
+
+struct wl_client *
+wl_client_from_link(struct wl_list *link);
+
+/** Iterate over a list of clients. */
+#define wl_client_for_each(client, list)				\
+	for (client = wl_client_from_link((list)->next);	\
+	     wl_client_get_link(client) != (list);			\
+	     client = wl_client_from_link(wl_client_get_link(client)->next))
+
+/*
+ * Destroy the client's resources and start closing it. Queued events, like a
+ * protocol error, are sent if the socket takes them right away.
+ */
+void
+wl_client_destroy(struct wl_client *client);
+
+void
+wl_client_flush(struct wl_client *client);
+
+struct wl_display *
+wl_client_get_display(struct wl_client *client);
+
+void
+wl_client_get_credentials(const struct wl_client *client,
+			  pid_t *pid, uid_t *uid, gid_t *gid);
+
+int
+wl_client_get_fd(struct wl_client *client);
+
+void
+wl_client_add_destroy_listener(struct wl_client *client,
+			       struct wl_listener *listener);
+
+struct wl_listener *
+wl_client_get_destroy_listener(struct wl_client *client,
+			       wl_notify_func_t notify);
+
+void
+wl_client_add_destroy_late_listener(struct wl_client *client,
+				    struct wl_listener *listener);
+
+struct wl_listener *
+wl_client_get_destroy_late_listener(struct wl_client *client,
+				    wl_notify_func_t notify);
+
+struct wl_resource *
+wl_client_get_object(struct wl_client *client, uint32_t id);
+
+void
+wl_client_post_no_memory(struct wl_client *client);
+
+void
+wl_client_post_implementation_error(struct wl_client *client,
+                                    const char* msg, ...) WL_PRINTF(2,3);
+
+void
+wl_client_add_resource_created_listener(struct wl_client *client,
+                                        struct wl_listener *listener);
+
+void
+wl_client_for_each_resource(struct wl_client *client,
+                            wl_client_for_each_resource_iterator_func_t iterator,
+                            void *user_data);
+
+void
+wl_client_set_user_data(struct wl_client *client,
+			void *data,
+			wl_user_data_destroy_func_t dtor);
+
+void *
+wl_client_get_user_data(struct wl_client *client);
 
 /*
  * Post an event to the client's object referred to by 'resource'.
@@ -544,7 +590,7 @@ typedef void (*wl_resource_destroy_func_t)(struct wl_resource *resource);
  * - type=fixed:	wl_fixed_t
  * - type=string:	(const char *) to a nil-terminated string
  * - type=array:	(struct wl_array *)
- * - type=fd:		int, that is an open file descriptor
+ * - type=fd:		int, that is an open file descriptor, the caller keeps it
  * - type=new_id:	(struct wl_object *) or (struct wl_resource *)
  * - type=object:	(struct wl_object *) or (struct wl_resource *)
  */
@@ -575,13 +621,17 @@ wl_resource_post_error(struct wl_resource *resource,
 void
 wl_resource_post_no_memory(struct wl_resource *resource);
 
-struct wl_display *
-wl_client_get_display(struct wl_client *client);
-
-struct wl_resource *
-wl_resource_create(struct wl_client *client,
-		   const struct wl_interface *interface,
-		   int version, uint32_t id);
+/*
+ * Initialize a resource with the new id 'id', or with an id of the server if
+ * 'id' is 0. Returns 0, or -1 when the client can't have it.
+ *
+ * The resource stays in use until its destructor is called, which is the last
+ * time the library touches it.
+ */
+int
+wl_resource_init(struct wl_resource *resource, struct wl_client *client,
+		 const struct wl_interface *interface,
+		 int version, uint32_t id);
 
 void
 wl_resource_set_implementation(struct wl_resource *resource,
@@ -695,42 +745,22 @@ wl_shm_buffer_ref_pool(struct wl_shm_buffer *buffer);
 void
 wl_shm_pool_unref(struct wl_shm_pool *pool);
 
-int
-wl_display_init_shm(struct wl_display *display);
+/* Announce wl_shm with 'global'. Pools and buffers come from the allocator of the display. */
+void
+wl_display_init_shm(struct wl_display *display, struct wl_global *global);
 
-uint32_t *
-wl_display_add_shm_format(struct wl_display *display, uint32_t format);
-
-WL_DEPRECATED
-struct wl_shm_buffer *
-wl_shm_buffer_create(struct wl_client *client,
-		     uint32_t id, int32_t width, int32_t height,
-		     int32_t stride, uint32_t format);
+/* Advertise 'formats' besides ARGB8888 and XRGB8888. The caller keeps them valid. */
+void
+wl_display_set_shm_formats(struct wl_display *display,
+			   const uint32_t *formats, size_t count);
 
 void
 wl_log_set_handler_server(wl_log_func_t handler);
 
-enum wl_protocol_logger_type {
-	WL_PROTOCOL_LOGGER_REQUEST,
-	WL_PROTOCOL_LOGGER_EVENT,
-};
-
-struct wl_protocol_logger_message {
-	struct wl_resource *resource;
-	int message_opcode;
-	const struct wl_message *message;
-	int arguments_count;
-	const union wl_argument *arguments;
-};
-
-/** Callback function type for wl_display_add_protocol_logger() */
-typedef void (*wl_protocol_logger_func_t)(void *user_data,
-					  enum wl_protocol_logger_type direction,
-					  const struct wl_protocol_logger_message *message);
-
-struct wl_protocol_logger *
+void
 wl_display_add_protocol_logger(struct wl_display *display,
-			       wl_protocol_logger_func_t, void *user_data);
+			       struct wl_protocol_logger *logger,
+			       wl_protocol_logger_func_t func, void *user_data);
 
 void
 wl_protocol_logger_destroy(struct wl_protocol_logger *logger);

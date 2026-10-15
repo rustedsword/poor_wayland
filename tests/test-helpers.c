@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include "config.h"
 
 #include <assert.h>

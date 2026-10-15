@@ -1,2009 +1,1190 @@
-/*
- * Copyright © 2012 Intel Corporation
- * Copyright © 2013 Jason Ekstrand
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice (including the
- * next paragraph) shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
- * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
+/* SPDX-License-Identifier: MIT */
 #define _GNU_SOURCE
-#include <stdbool.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <poor_loop_fd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <string.h>
-#include <assert.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-#include <pthread.h>
-#include <poll.h>
-
-#include "wayland-private.h"
-#include "wayland-server.h"
-#include "wayland-client.h"
+#include "test-ring.h"
 #include "test-runner.h"
-#include "test-compositor.h"
-
-#include "tests-server-protocol.h"
+#include "test-server.h"
 #include "tests-client-protocol.h"
+#include "wayland-client-display.h"
+#include "wayland-client.h"
 
-static void
-registry_handle_global_noop(void *data,
-			    struct wl_registry *registry,
-			    uint32_t id, const char *interface,
-			    uint32_t ver)
-{
-}
+constexpr uint64_t TIMEOUT_NS = 5'000'000'000;
 
-static void
-registry_handle_global_remove_noop(void *data,
-				   struct wl_registry *registry,
-				   uint32_t id)
-{
-}
-
-static void
-fixes_destroy(struct wl_client *client,
-	      struct wl_resource *resource)
-{
-	wl_resource_destroy(resource);
-}
-
-static void
-fixes_destroy_registry(struct wl_client *client,
-		       struct wl_resource *resource,
-		       struct wl_resource *registry)
-{
-	wl_resource_destroy(registry);
-}
-
-static void
-fixes_ack_global_remove(struct wl_client *client,
-			struct wl_resource *resource,
-			struct wl_resource *registry,
-			uint32_t global_id)
-{
-	wl_fixes_handle_ack_global_remove(resource, registry, global_id);
-}
-
-static const struct wl_fixes_interface fixes_implementation = {
-	.destroy = fixes_destroy,
-	.destroy_registry = fixes_destroy_registry,
-	.ack_global_remove = fixes_ack_global_remove,
+struct client {
+	struct wl_display display;
+	struct poor_loop *loop;
+	struct wl_proxy registry, callback, global, child, spawned, fixes, shm, pool, buffer;
+	struct wl_registry *wl_registry;
+	struct test_global *test_global;
+	uint32_t global_name, extra_name, fixes_name, shm_name, removed_name;
+	unsigned events, pongs;
+	int error, pong_fd;
+	bool error_called, done, synced, echoed;
+	char in[16384];
+	char out[16384];
+	union wl_map_entry objects[256];
+	union wl_map_entry server_objects[16];
 };
 
-static void
-bind_fixes(struct wl_client *client,
-	   void *data,
-	   uint32_t version,
-	   uint32_t id)
+static void watchdog_fire(struct poor_loop *, struct poor_loop_timer *)
 {
-	struct wl_resource *resource;
-
-	resource = wl_resource_create(client, &wl_fixes_interface, version, id);
-	wl_resource_set_implementation(resource, &fixes_implementation, NULL, NULL);
+	fprintf(stderr, "loop timed out\n");
+	abort();
 }
 
-struct display_destroy_listener {
-	struct wl_listener listener;
-	int done;
+static struct poor_loop_timer watchdog = POOR_LOOP_TIMER_INIT(watchdog_fire);
+
+static unsigned log_requests, log_events;
+
+static void log_handler(const char *fmt, va_list ap)
+{
+	char line[8192];
+
+	vsnprintf(line, sizeof(line), fmt, ap);
+	if (strstr(line, " -> "))
+		log_requests++;
+	else if (strstr(line, "] test_global#"))
+		log_events++;
+	fprintf(stderr, "client: %s", line);
+}
+
+static void loop_init(struct poor_loop *loop)
+{
+	struct io_uring_params params = {};
+
+	test_ring_params(&params);
+	assert(!poor_loop_init(loop, 64, &params));
+	poor_loop_timer_arm(loop, &watchdog, poor_loop_now() + TIMEOUT_NS);
+	wl_log_set_handler_client(log_handler);
+}
+
+#define run_until(loop, cond) \
+	do { \
+		while (!(cond)) \
+			assert(!poor_loop_run_once(loop)); \
+	} while (0)
+
+struct expiry {
+	struct poor_loop_timer timer;
+	bool expired;
 };
 
-static void
-display_destroy_notify(struct wl_listener *l, void *data)
+static void expire(struct poor_loop *, struct poor_loop_timer *timer)
 {
-	struct display_destroy_listener *listener;
-
-	listener = wl_container_of(l, listener, listener);
-	listener->done = 1;
+	container_of(timer, struct expiry, timer)->expired = true;
 }
 
-TEST(display_destroy_listener)
+/* Let the requests that can complete do so */
+static void run_for(struct poor_loop *loop, uint64_t ns)
 {
-	struct wl_display *display;
-	struct display_destroy_listener a, b;
+	struct expiry expiry;
 
-	display = wl_display_create();
-	assert(display);
-
-	a.listener.notify = &display_destroy_notify;
-	a.done = 0;
-	wl_display_add_destroy_listener(display, &a.listener);
-
-	assert(wl_display_get_destroy_listener(display, display_destroy_notify) ==
-	       &a.listener);
-
-	b.listener.notify = display_destroy_notify;
-	b.done = 0;
-	wl_display_add_destroy_listener(display, &b.listener);
-
-	wl_list_remove(&a.listener.link);
-
-	wl_display_destroy(display);
-
-	assert(!a.done);
-	assert(b.done);
+	poor_loop_timer_init(&expiry.timer, expire);
+	expiry.expired = false;
+	poor_loop_timer_arm(loop, &expiry.timer, poor_loop_now() + ns);
+	run_until(loop, expiry.expired);
 }
 
-/* Fake 'client' which does not use wl_display_connect, and thus leaves the
- * file descriptor passed through WAYLAND_SOCKET intact. This should not
- * trigger an assertion in the leak check. */
-static void
-empty_client(void)
+static void loop_fini(struct poor_loop *loop)
 {
-	return;
+	poor_loop_timer_disarm(&watchdog);
+	assert(!poor_loop_drain(loop, poor_loop_now() + TIMEOUT_NS));
+	poor_loop_exit(loop);
 }
 
-TEST(tc_leaks_tests)
+static struct client *client_of(struct wl_display *display)
 {
-	struct display *d = display_create();
-	client_create_noarg(d, empty_client);
-	display_run(d);
-	display_destroy(d);
+	return container_of(display, struct client, display);
 }
 
-/* This is how pre proxy-version registry binds worked,
- * this should create a proxy that shares the display's
- * version number: 0 */
-static void *
-old_registry_bind(struct wl_registry *wl_registry,
-		  uint32_t name,
-		  const struct wl_interface *interface,
-		  uint32_t version)
+static void client_error(struct wl_display *display)
 {
-	struct wl_proxy *id;
+	struct client *c = client_of(display);
 
-	id = wl_proxy_marshal_constructor(
-		(struct wl_proxy *) wl_registry, WL_REGISTRY_BIND,
-		interface, name, interface->name, version, NULL);
-
-	return (void *) id;
+	assert(!c->error_called);
+	c->error_called = true;
+	c->error = wl_display_get_error(display);
 }
 
-struct handler_info {
-	struct wl_seat *seat;
-	uint32_t bind_version;
-	bool use_unversioned;
-};
-
-static void
-registry_handle_globals(void *data, struct wl_registry *registry,
-			uint32_t id, const char *intf, uint32_t ver)
+static void client_done(struct wl_display *display)
 {
-	struct handler_info *hi = data;
+	client_of(display)->done = true;
+}
 
-	/* This is only for the proxy version test */
-	if (hi->bind_version)
-		ver = hi->bind_version;
+static void registry_global(void *data, struct wl_registry *, uint32_t name, const char *interface, uint32_t)
+{
+	struct client *c = data;
 
-	if (strcmp(intf, "wl_seat") == 0) {
-		if (hi->use_unversioned)
-			hi->seat = old_registry_bind(registry, id,
-						     &wl_seat_interface, ver);
-		else
-			hi->seat = wl_registry_bind(registry, id,
-						    &wl_seat_interface, ver);
-		assert(hi->seat);
-	}
+	if (!strcmp(interface, "test_global"))
+		c->global_name = name;
+	else if (!strcmp(interface, "test_child"))
+		c->extra_name = name;
+	else if (!strcmp(interface, "wl_fixes"))
+		c->fixes_name = name;
+	else if (!strcmp(interface, "wl_shm"))
+		c->shm_name = name;
+}
+
+static void registry_global_remove(void *data, struct wl_registry *, uint32_t name)
+{
+	((struct client *)data)->removed_name = name;
 }
 
 static const struct wl_registry_listener registry_listener = {
-	registry_handle_globals,
-	NULL
+	registry_global,
+	registry_global_remove,
 };
 
-static struct wl_seat *
-client_get_seat_with_info(struct client *c, struct handler_info *hi)
+static struct wl_connection_memory client_memory(struct client *c)
 {
-	struct wl_registry *reg = wl_display_get_registry(c->wl_display);
-	assert(reg);
-
-	assert(hi);
-	hi->seat = NULL;
-	wl_registry_add_listener(reg, &registry_listener, hi);
-	wl_display_roundtrip(c->wl_display);
-	assert(hi->seat);
-
-	wl_registry_destroy(reg);
-
-	return hi->seat;
+	return WL_CONNECTION_MEMORY(c->in, c->out, c->objects, c->server_objects);
 }
 
-static struct wl_seat *
-client_get_seat(struct client *c)
+static void client_init(struct client *c, struct poor_loop *loop)
 {
-	struct handler_info hi;
-
-	hi.use_unversioned = false;
-	hi.bind_version = 0;
-
-	return client_get_seat_with_info(c, &hi);
+	c->loop = loop;
+	c->global_name = c->extra_name = c->fixes_name = c->shm_name = c->removed_name = 0;
+	c->events = c->pongs = 0;
+	c->error = 0;
+	c->pong_fd = -1;
+	c->error_called = c->done = c->synced = c->echoed = false;
 }
 
-static void
-check_pending_error(struct client *c, struct wl_proxy *proxy)
+static void client_get_registry(struct client *c)
 {
-	uint32_t ec, id;
-	int err;
-	const struct wl_interface *intf;
-
-	err = wl_display_get_error(c->wl_display);
-	assert(err == EPROTO);
-
-	ec = wl_display_get_protocol_error(c->wl_display, &intf, &id);
-	assert(ec == 23);
-	assert(intf == &wl_seat_interface);
-	assert(id == wl_proxy_get_id(proxy));
+	c->wl_registry = wl_display_get_registry(&c->display, &c->registry);
+	assert(c->wl_registry);
+	wl_registry_add_listener(c->wl_registry, &registry_listener, c);
 }
 
-static void
-check_for_error(struct client *c, struct wl_proxy *proxy)
+static void client_connect_fd(struct client *c, struct poor_loop *loop, int fd)
 {
-	/* client should be disconnected */
-	assert(wl_display_roundtrip(c->wl_display) == -1);
+	struct wl_connection_memory memory = client_memory(c);
 
-	check_pending_error(c, proxy);
+	client_init(c, loop);
+	wl_display_connect_to_fd(&c->display, loop, &memory, fd, client_error, client_done);
+	client_get_registry(c);
 }
 
-static struct client_info *
-find_client_info(struct display *d, struct wl_client *client)
+static void sync_done(void *data, struct wl_callback *callback, uint32_t)
 {
-	struct client_info *ci;
-
-	wl_list_for_each(ci, &d->clients, link) {
-		if (ci->wl_client == client)
-			return ci;
-	}
-
-	return NULL;
-}
-
-static void
-bind_seat(struct wl_client *client, void *data,
-	  uint32_t vers, uint32_t id)
-{
-	struct display *d = data;
-	struct client_info *ci;
-	struct wl_resource *res;
-
-	ci = find_client_info(d, client);
-	assert(ci);
-
-	res = wl_resource_create(client, &wl_seat_interface, vers, id);
-	assert(res);
-
-	/* save the resource as client's info data,
-	 * so that we can use it later */
-	ci->data = res;
-}
-
-static void
-client_disconnect_nocheck(struct client *c)
-{
-	wl_proxy_destroy((struct wl_proxy *) c->tc);
-	wl_display_disconnect(c->wl_display);
-	free(c);
-}
-
-static void
-post_error_main(void)
-{
-	struct client *c = client_connect();
-	struct wl_seat *seat = client_get_seat(c);
-
-	/* stop display so that it can post the error.
-	 * The function should return -1, because of the posted error */
-	assert(stop_display(c, 1) == -1);
-
-	/* display should have posted error, check it! */
-	check_for_error(c, (struct wl_proxy *) seat);
-
-	/* don't call client_disconnect(c), because then the test would be
-	 * aborted due to checks for error in this function */
-	wl_proxy_destroy((struct wl_proxy *) seat);
-	client_disconnect_nocheck(c);
-}
-
-TEST(post_error_to_one_client)
-{
-	struct display *d = display_create();
-	struct client_info *cl;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	cl = client_create_noarg(d, post_error_main);
-	display_run(d);
-
-	/* the display was stopped by client, so it can
-	 * proceed in the code and post an error */
-	assert(cl->data);
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       23, "Dummy error");
-
-	/* this one should be ignored */
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       21, "Dummy error (ignore)");
-
-	display_resume(d);
-	display_destroy(d);
-}
-
-static void
-post_error_main2(void)
-{
-	struct client *c = client_connect();
-	struct wl_seat *seat = client_get_seat(c);
-
-	/* the error should not be posted for this client */
-	assert(stop_display(c, 2) >= 0);
-
-	wl_proxy_destroy((struct wl_proxy *) seat);
-	client_disconnect(c);
-}
-
-static void
-post_error_main3(void)
-{
-	struct client *c = client_connect();
-	struct wl_seat *seat = client_get_seat(c);
-
-	assert(stop_display(c, 2) == -1);
-	check_for_error(c, (struct wl_proxy *) seat);
-
-	/* don't call client_disconnect(c), because then the test would be
-	 * aborted due to checks for error in this function */
-	wl_proxy_destroy((struct wl_proxy *) seat);
-	client_disconnect_nocheck(c);
-}
-
-/* all the testcases could be in one TEST, but splitting it
- * apart is better for debugging when the test fails */
-TEST(post_error_to_one_from_two_clients)
-{
-	struct display *d = display_create();
-	struct client_info *cl;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	client_create_noarg(d, post_error_main2);
-	cl = client_create_noarg(d, post_error_main3);
-	display_run(d);
-
-	/* post error only to the second client */
-	assert(cl->data);
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       23, "Dummy error");
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       21, "Dummy error (ignore)");
-
-	display_resume(d);
-	display_destroy(d);
-}
-
-/* all the testcases could be in one TEST, but splitting it
- * apart is better for debugging when the test fails */
-TEST(post_error_to_two_clients)
-{
-	struct display *d = display_create();
-	struct client_info *cl, *cl2;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	cl = client_create_noarg(d, post_error_main3);
-	cl2 = client_create_noarg(d, post_error_main3);
-
-	display_run(d);
-
-	/* Try to send the error to both clients */
-	assert(cl->data && cl2->data);
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       23, "Dummy error");
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       21, "Dummy error (ignore)");
-
-	wl_resource_post_error((struct wl_resource *) cl2->data,
-			       23, "Dummy error");
-	wl_resource_post_error((struct wl_resource *) cl2->data,
-			       21, "Dummy error (ignore)");
-
-	display_resume(d);
-	display_destroy(d);
-}
-
-static void
-post_nomem_main(void)
-{
-	struct client *c = client_connect();
-	struct wl_seat *seat = client_get_seat(c);
-
-	assert(stop_display(c, 1) == -1);
-	assert(wl_display_get_error(c->wl_display) == ENOMEM);
-
-	wl_proxy_destroy((struct wl_proxy *) seat);
-	client_disconnect_nocheck(c);
-}
-
-TEST(post_nomem_tst)
-{
-	struct display *d = display_create();
-	struct client_info *cl;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	cl = client_create_noarg(d, post_nomem_main);
-	display_run(d);
-
-	assert(cl->data);
-	wl_resource_post_no_memory((struct wl_resource *) cl->data);
-	display_resume(d);
-
-	/* first client terminated. Run it again,
-	 * but post no memory to client */
-	cl = client_create_noarg(d, post_nomem_main);
-	display_run(d);
-
-	assert(cl->data);
-	wl_client_post_no_memory(cl->wl_client);
-	display_resume(d);
-
-	display_destroy(d);
-}
-
-static void
-post_implementation_error_main(void)
-{
-	struct client *c = client_connect();
-	struct wl_seat *seat = client_get_seat(c);
-	uint32_t object_id, protocol_error;
-	const struct wl_interface *interface;
-
-	assert(stop_display(c, 1) == -1);
-	int err = wl_display_get_error(c->wl_display);
-	fprintf(stderr, "Err is %i\n", err);
-	assert(err == EPROTO);
-	protocol_error = wl_display_get_protocol_error(c->wl_display,
-						       &interface,
-						       &object_id);
-	assert(protocol_error == WL_DISPLAY_ERROR_IMPLEMENTATION);
-	assert(interface == &wl_display_interface);
-
-	wl_proxy_destroy((struct wl_proxy *) seat);
-	client_disconnect_nocheck(c);
-}
-
-TEST(post_internal_error_tst)
-{
-	struct display *d = display_create();
-	struct client_info *cl;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	cl = client_create_noarg(d, post_implementation_error_main);
-	display_run(d);
-
-	wl_client_post_implementation_error(cl->wl_client, "Error %i", 20);
-
-	display_resume(d);
-
-	display_destroy(d);
-}
-
-static void
-register_reading(struct wl_display *display)
-{
-	while(wl_display_prepare_read(display) != 0 && errno == EAGAIN)
-		assert(wl_display_dispatch_pending(display) >= 0);
-	assert(wl_display_flush(display) >= 0);
-}
-
-/* create thread that will call prepare+read so that
- * it will block */
-static pthread_t
-create_thread(struct client *c, void *(*func)(void*))
-{
-	pthread_t thread;
-
-	c->display_stopped = 0;
-	/* func must set display->stopped to 1 before sleeping */
-	assert(pthread_create(&thread, NULL, func, c) == 0);
-
-	/* make sure the thread is sleeping. It's a little bit racy
-	 * (setting display_stopped to 1 and calling wl_display_read_events)
-	 * so call usleep once again after the loop ends - it should
-	 * be sufficient... */
-	while (c->display_stopped == 0)
-		test_usleep(500);
-	test_usleep(10000);
-
-	return thread;
-}
-
-static void *
-thread_read_error(void *data)
-{
-	struct client *c = data;
-
-	register_reading(c->wl_display);
-
-	/*
-	 * Calling the read right now will block this thread
-	 * until the other thread will read the data.
-	 * However, after invoking an error, this
-	 * thread should be woken up or it will block indefinitely.
-	 */
-	c->display_stopped = 1;
-	assert(wl_display_read_events(c->wl_display) == -1);
-
-	assert(wl_display_dispatch_pending(c->wl_display) == -1);
-	assert(wl_display_get_error(c->wl_display));
-
-	pthread_exit(NULL);
-}
-
-/* test posting an error in multi-threaded environment. */
-static void
-threading_post_err(void)
-{
-	DISABLE_LEAK_CHECKS;
-
-	struct client *c = client_connect();
-	pthread_t thread;
-
-	/* register read intention */
-	register_reading(c->wl_display);
-
-	/* use this var as an indicator that thread is sleeping */
-	c->display_stopped = 0;
-
-	/* create new thread that will register its intention too */
-	thread = create_thread(c, thread_read_error);
-
-	/* so now we have sleeping thread waiting for a pthread_cond signal.
-	 * The main thread must call wl_display_read_events().
-	 * If this call fails, then it won't call broadcast at the
-	 * end of the function and the sleeping thread will block indefinitely.
-	 * Make the call fail and watch if libwayland will unblock the thread! */
-
-	/* create error on fd, so that wl_display_read_events will fail.
-	 * The same can happen when server hangs up */
-	close(wl_display_get_fd(c->wl_display));
-	/* this read events will fail and will
-	 * post an error that should wake the sleeping thread
-	 * and dispatch the incoming events */
-	assert(wl_display_read_events(c->wl_display) == -1);
-
-	/* kill test in 3 seconds. This should be enough time for the
-	 * thread to exit if it's not blocking. If everything is OK, than
-	 * the thread was woken up and the test will end before the SIGALRM */
-	test_set_timeout(3);
-	pthread_join(thread, NULL);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(threading_errors_tst)
-{
-	struct display *d = display_create();
-
-	client_create_noarg(d, threading_post_err);
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void *
-thread_prepare_and_read(void *data)
-{
-	struct client *c = data;
-
-	register_reading(c->wl_display);
-
-	c->display_stopped = 1;
-
-	assert(wl_display_read_events(c->wl_display) == 0);
-	assert(wl_display_dispatch_pending(c->wl_display) == 0);
-
-	pthread_exit(NULL);
-}
-
-/* test cancel read*/
-static void
-threading_cancel_read(void)
-{
-	DISABLE_LEAK_CHECKS;
-
-	struct client *c = client_connect();
-	pthread_t th1, th2, th3;
-
-	register_reading(c->wl_display);
-
-	th1 = create_thread(c, thread_prepare_and_read);
-	th2 = create_thread(c, thread_prepare_and_read);
-	th3 = create_thread(c, thread_prepare_and_read);
-
-	/* all the threads are sleeping, waiting until read or cancel
-	 * is called. Cancel the read and let the threads proceed */
-	wl_display_cancel_read(c->wl_display);
-
-	/* kill test in 3 seconds. This should be enough time for the
-	 * thread to exit if it's not blocking. If everything is OK, than
-	 * the thread was woken up and the test will end before the SIGALRM */
-	test_set_timeout(3);
-	pthread_join(th1, NULL);
-	pthread_join(th2, NULL);
-	pthread_join(th3, NULL);
-
-	client_disconnect(c);
-}
-
-TEST(threading_cancel_read_tst)
-{
-	struct display *d = display_create();
-
-	client_create_noarg(d, threading_cancel_read);
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void
-threading_read_eagain(void)
-{
-	DISABLE_LEAK_CHECKS;
-
-	struct client *c = client_connect();
-	pthread_t th1, th2, th3;
-
-	register_reading(c->wl_display);
-
-	th1 = create_thread(c, thread_prepare_and_read);
-	th2 = create_thread(c, thread_prepare_and_read);
-	th3 = create_thread(c, thread_prepare_and_read);
-
-	/* All the threads are sleeping, waiting until read or cancel
-	 * is called. Since we have no data on socket waiting,
-	 * the wl_connection_read should end up with error and set errno
-	 * to EAGAIN. Check if the threads are woken up in this case. */
-	assert(wl_display_read_events(c->wl_display) == 0);
-	/* errno should be still set to EAGAIN if wl_connection_read
-	 * set it - check if we're testing the right case */
-	assert(errno == EAGAIN);
-
-	test_set_timeout(3);
-	pthread_join(th1, NULL);
-	pthread_join(th2, NULL);
-	pthread_join(th3, NULL);
-
-	client_disconnect(c);
-}
-
-TEST(threading_read_eagain_tst)
-{
-	struct display *d = display_create();
-	client_create_noarg(d, threading_read_eagain);
-
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void *
-thread_prepare_and_read2(void *data)
-{
-	struct client *c = data;
-
-	while(wl_display_prepare_read(c->wl_display) != 0 && errno == EAGAIN)
-		assert(wl_display_dispatch_pending(c->wl_display) == -1);
-	assert(wl_display_flush(c->wl_display) == -1);
-
-	c->display_stopped = 1;
-
-	assert(wl_display_read_events(c->wl_display) == -1);
-	assert(wl_display_dispatch_pending(c->wl_display) == -1);
-
-	pthread_exit(NULL);
-}
-
-static void
-threading_read_after_error(void)
-{
-	DISABLE_LEAK_CHECKS;
-
-	struct client *c = client_connect();
-	pthread_t thread;
-
-	/* create an error */
-	close(wl_display_get_fd(c->wl_display));
-	assert(wl_display_dispatch(c->wl_display) == -1);
-
-	/* try to prepare for reading */
-	while(wl_display_prepare_read(c->wl_display) != 0 && errno == EAGAIN)
-		assert(wl_display_dispatch_pending(c->wl_display) == -1);
-	assert(wl_display_flush(c->wl_display) == -1);
-
-	assert(pthread_create(&thread, NULL,
-			      thread_prepare_and_read2, c) == 0);
-
-	/* make sure thread is sleeping */
-	while (c->display_stopped == 0)
-		test_usleep(500);
-	test_usleep(10000);
-
-	assert(wl_display_read_events(c->wl_display) == -1);
-
-	/* kill test in 3 seconds */
-	test_set_timeout(3);
-	pthread_join(thread, NULL);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(threading_read_after_error_tst)
-{
-	struct display *d = display_create();
-
-	client_create_noarg(d, threading_read_after_error);
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void
-wait_for_error_using_dispatch(struct client *c, struct wl_proxy *proxy)
-{
-	int ret;
-
-	while (true) {
-		/* Dispatching should eventually hit the protocol error before
-		 * any other error. */
-		ret = wl_display_dispatch(c->wl_display);
-		if (ret == 0) {
-			continue;
-		} else {
-			assert(errno == EPROTO);
-			break;
-		}
-	}
-
-	check_pending_error(c, proxy);
-}
-
-static void
-wait_for_error_using_prepare_read(struct client *c, struct wl_proxy *proxy)
-{
-	int ret = 0;
-	struct pollfd pfd[2];
-
-	while (true) {
-		while (wl_display_prepare_read(c->wl_display) != 0 &&
-		      errno == EAGAIN) {
-			assert(wl_display_dispatch_pending(c->wl_display) >= 0);
-		}
-
-		/* Flush may fail due to EPIPE if the connection is broken, but
-		 * this must not set a fatal display error because that would
-		 * result in it being impossible to read a potential protocol
-		 * error. */
-		do {
-			ret = wl_display_flush(c->wl_display);
-		} while (ret == -1 && (errno == EINTR || errno == EAGAIN));
-		assert(ret >= 0 || errno == EPIPE);
-		assert(wl_display_get_error(c->wl_display) == 0);
-
-		pfd[0].fd = wl_display_get_fd(c->wl_display);
-		pfd[0].events = POLLIN;
-		do {
-			ret = poll(pfd, 1, -1);
-		} while (ret == -1 && errno == EINTR);
-		assert(ret != -1);
-
-		/* We should always manage to read the error before the EPIPE
-		 * comes this way. */
-		assert(wl_display_read_events(c->wl_display) == 0);
-
-		/* Dispatching should eventually hit the protocol error before
-		 * any other error. */
-		ret = wl_display_dispatch_pending(c->wl_display);
-		if (ret == 0) {
-			continue;
-		} else {
-			assert(errno == EPROTO);
-			break;
-		}
-	}
-
-	check_pending_error(c, proxy);
-}
-
-static void
-check_error_after_epipe(void *data)
-{
-	bool use_dispatch_helpers = *(bool *) data;
-	struct client *client;
-	struct wl_seat *seat;
-	struct wl_callback *callback;
-
-	client = client_connect();
-
-	/* This will, according to the implementation below, cause the server
-	 * to post an error. */
-	seat = client_get_seat(client);
-	wl_display_flush(client->wl_display);
-
-	/* The server will not actually destroy the client until it receives
-	 * input, so send something to trigger the client destruction. */
-	callback = wl_display_sync(client->wl_display);
+	((struct client *)data)->synced = true;
 	wl_callback_destroy(callback);
+}
 
-	/* Sleep some to give the server a chance to react and destroy the
-	 * client. */
-	test_usleep(200000);
+static const struct wl_callback_listener sync_listener = {
+	sync_done,
+};
 
-	/* Wait for the protocol error and check that we reached it before
-	 * EPIPE. */
-	if (use_dispatch_helpers) {
-		wait_for_error_using_dispatch(client, (struct wl_proxy *) seat);
-	} else {
-		wait_for_error_using_prepare_read(client,
-						  (struct wl_proxy *) seat);
+static void client_roundtrip(struct client *c)
+{
+	struct wl_callback *callback = wl_display_sync(&c->display, &c->callback);
+
+	c->synced = false;
+	wl_callback_add_listener(callback, &sync_listener, c);
+	run_until(c->loop, c->synced || c->error_called);
+}
+
+static void client_bind_global(struct client *c, uint32_t version)
+{
+	client_roundtrip(c);
+	assert(c->global_name);
+	c->test_global = wl_registry_bind(c->wl_registry, c->global_name, &test_global_interface, version, &c->global);
+	assert(c->test_global);
+}
+
+static void client_disconnect(struct client *c)
+{
+	wl_display_disconnect(&c->display);
+	run_until(c->loop, c->done);
+}
+
+static void server_stop(struct poor_loop *loop)
+{
+	test_server_stop();
+	run_until(loop, test_server.display_done);
+}
+
+static bool is_cloexec_fifo(int fd)
+{
+	struct stat st;
+
+	return fcntl(fd, F_GETFD) & FD_CLOEXEC && !fstat(fd, &st) && S_ISFIFO(st.st_mode);
+}
+
+TEST(connect_to_fd_roundtrip)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_roundtrip(&c);
+	assert(c.synced && !c.error_called);
+	assert(c.global_name && c.extra_name && c.fixes_name && c.shm_name);
+	assert(test_server.clients_created == 1);
+	assert(test_server.pid == getpid() && test_server.uid == getuid());
+	client_disconnect(&c);
+	run_until(&loop, test_server.clients_done == 1);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static void global_echoed(void *data, struct test_global *global, int32_t i, uint32_t u, wl_fixed_t f, const char *s,
+			  const char *ns, struct test_global *o, struct wl_array *a, int32_t fd)
+{
+	struct client *c = data;
+
+	assert(i == -42 && u == 0xdeadbeef && f == wl_fixed_from_double(1.5));
+	assert(!strcmp(s, "hello") && !ns && o == global);
+	assert(a->size == 5 && !memcmp(a->data, "array", 5));
+	assert(is_cloexec_fifo(fd));
+	poor_loop_close_fd_or_submit(c->loop, fd, 0);
+	c->echoed = true;
+}
+
+static void global_child_spawned(void *data, struct test_global *, struct test_child *child)
+{
+	struct client *c = data;
+
+	assert((struct wl_proxy *)child == &c->spawned);
+	c->events++;
+}
+
+static void global_data(void *data, struct test_global *, struct wl_array *payload)
+{
+	struct client *c = data;
+	const char *p = payload->data;
+
+	for (size_t i = 0; i < payload->size; i++)
+		assert(p[i] == (char)i);
+	c->events++;
+}
+
+static const struct test_global_listener global_listener = {
+	global_echoed,
+	global_child_spawned,
+	global_data,
+};
+
+TEST(echo_all_argument_types)
+{
+	struct poor_loop loop;
+	struct client c;
+	char array_data[] = "array";
+	struct wl_array array = WL_ARRAY_INIT(array_data);
+	int fds[2];
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	assert(wl_array_add(&array, 5));
+	assert(!pipe2(fds, O_CLOEXEC));
+	test_global_echo(c.test_global, -42, 0xdeadbeef, wl_fixed_from_double(1.5), "hello", nullptr, c.test_global, &array,
+			 fds[0]);
+	poor_loop_close_fd_or_submit(&loop, fds[0], 0);
+	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	run_until(&loop, c.echoed);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static void child_pong(void *data, struct test_child *, int32_t fd)
+{
+	struct client *c = data;
+
+	assert(is_cloexec_fifo(fd));
+	poor_loop_close_fd_or_submit(c->loop, fd, 0);
+	c->pongs++;
+}
+
+static const struct test_child_listener child_listener = {
+	child_pong,
+};
+
+TEST(client_created_object)
+{
+	struct poor_loop loop;
+	struct test_child *child;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	child = test_global_create_child(c.test_global, &c.child);
+	assert((struct wl_proxy *)child == &c.child);
+	assert(wl_proxy_get_version(&c.child) == 2);
+	test_child_add_listener(child, &child_listener, &c);
+	test_child_ping(child);
+	run_until(&loop, c.pongs == 1);
+	assert(test_server.children == 1);
+	test_child_destroy(child);
+	client_roundtrip(&c);
+	assert(test_server.children == 0);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static struct wl_proxy *new_proxy(struct wl_display *display, struct wl_proxy *factory, const struct wl_interface *interface)
+{
+	struct client *c = client_of(display);
+
+	assert(factory == &c->global && interface == &test_child_interface);
+	return &c->spawned;
+}
+
+TEST(server_created_object)
+{
+	struct poor_loop loop;
+	struct test_child *child = nullptr;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	wl_display_set_new_proxy(&c.display, new_proxy);
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	test_global_spawn_child(c.test_global);
+	run_until(&loop, c.events == 1);
+	child = (struct test_child *)&c.spawned;
+	assert(wl_proxy_get_id(&c.spawned) >= 0xff000000);
+	test_child_add_listener(child, &child_listener, &c);
+	test_child_ping(child);
+	run_until(&loop, c.pongs == 1);
+	test_child_destroy(child);
+	client_roundtrip(&c);
+	assert(test_server.children == 0);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(server_created_object_without_memory)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	test_global_spawn_child(c.test_global);
+	run_until(&loop, c.error_called);
+	assert(c.error == ENOMEM && !c.events);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* The pong goes to a zombie, which closes its fd: the fd leak check of the runner sees it */
+TEST(events_of_destroyed_object_close_fds)
+{
+	struct poor_loop loop;
+	struct test_child *child;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	child = test_global_create_child(c.test_global, &c.child);
+	test_child_add_listener(child, &child_listener, &c);
+	test_child_ping(child);
+	test_child_destroy(child);
+	client_roundtrip(&c);
+	assert(!c.pongs && !c.error_called);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* The display has 1, the registry 2 and the global 3, then a child and a sync callback take 4 and 5 */
+TEST(ids_are_reused_after_delete_id)
+{
+	struct poor_loop loop;
+	struct test_child *child;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	for (int i = 0; i < 10; i++) {
+		child = test_global_create_child(c.test_global, &c.child);
+		assert(wl_proxy_get_id(&c.child) == 4 || wl_proxy_get_id(&c.child) == 5);
+		test_child_destroy(child);
+		client_roundtrip(&c);
 	}
-
-	wl_seat_destroy(seat);
-	client_disconnect_nocheck(client);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-bind_seat_and_post_error(struct wl_client *client, void *data,
-			 uint32_t version, uint32_t id)
+TEST(protocol_error)
 {
-	struct display *d = data;
-	struct client_info *ci;
-	struct wl_resource *resource;
-
-	ci = find_client_info(d, client);
-	assert(ci);
-
-	resource = wl_resource_create(client, &wl_seat_interface, version, id);
-	assert(resource);
-	ci->data = resource;
-
-	wl_resource_post_error(ci->data, 23, "Dummy error");
-}
-
-TEST(error_code_after_epipe)
-{
-	struct display *d = display_create();
-	bool use_dispatch_helpers;
-
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat_and_post_error);
-
-	use_dispatch_helpers = true;
-	client_create(d, check_error_after_epipe, &use_dispatch_helpers);
-	display_run(d);
-
-	use_dispatch_helpers = false;
-	client_create(d, check_error_after_epipe, &use_dispatch_helpers);
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void
-check_seat_versions(struct wl_seat *seat, uint32_t ev)
-{
-	struct wl_pointer *pointer;
-
-	assert(wl_proxy_get_version((struct wl_proxy *) seat) == ev);
-	assert(wl_seat_get_version(seat) == ev);
-
-	pointer = wl_seat_get_pointer(seat);
-	assert(wl_pointer_get_version(pointer) == ev);
-	assert(wl_proxy_get_version((struct wl_proxy *) pointer) == ev);
-	wl_proxy_destroy((struct wl_proxy *) pointer);
-}
-
-/* Normal client with proxy versions available. */
-static void
-seat_version(void *data)
-{
-	struct handler_info *hi = data;
-	struct client *c = client_connect();
-	struct wl_seat *seat;
-
-	/* display proxy should always be version 0 */
-	assert(wl_proxy_get_version((struct wl_proxy *) c->wl_display) == 0);
-
-	seat = client_get_seat_with_info(c, hi);
-	if (hi->use_unversioned)
-		check_seat_versions(seat, 0);
-	else
-		check_seat_versions(seat, hi->bind_version);
-
-	wl_proxy_destroy((struct wl_proxy *) seat);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(versions)
-{
-	struct display *d = display_create();
-	struct wl_global *global;
-	int i;
-
-	global = wl_global_create(d->wl_display, &wl_seat_interface,
-				  5, d, bind_seat);
-
-	for (i = 1; i <= 5; i++) {
-		struct handler_info hi;
-
-		hi.bind_version = i;
-		hi.use_unversioned = false;
-		client_create(d, seat_version, &hi);
-		hi.use_unversioned = true;
-		client_create(d, seat_version, &hi);
-	}
-
-	display_run(d);
-
-	wl_global_destroy(global);
-
-	display_destroy(d);
-}
-
-static void
-check_error_on_destroyed_object(void)
-{
-	struct client *c;
-	struct wl_seat *seat;
+	const struct wl_interface *interface;
+	struct poor_loop loop;
+	struct client c;
 	uint32_t id;
-	const struct wl_interface *intf;
 
-	c = client_connect();
-	seat = client_get_seat(c);
-
-	/* destroy the seat proxy. The display won't know
-	 * about it yet, so it will post the error as usual */
-	wl_proxy_destroy((struct wl_proxy *) seat);
-
-	/* let display post the error. The error will
-	 * be caught in stop_display while dispatching */
-	assert(stop_display(c, 1) == -1);
-
-	/* check the returned error. Since the object was destroyed,
-	 * we don't know the interface and id */
-	assert(wl_display_get_error(c->wl_display) == EPROTO);
-	assert(wl_display_get_protocol_error(c->wl_display, &intf, &id) == 23);
-	assert(intf == NULL);
-	assert(id == 0);
-
-	client_disconnect_nocheck(c);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_post_error(c.test_global, 42);
+	run_until(&loop, c.error_called);
+	assert(c.error == EPROTO);
+	assert(wl_display_get_protocol_error(&c.display, &interface, &id) == 42);
+	assert(interface == &test_global_interface && id == wl_proxy_get_id(&c.global));
+	run_until(&loop, test_server.clients_done == 1);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-TEST(error_on_destroyed_object)
+TEST(request_of_newer_version)
 {
-	struct client_info *cl;
-	struct display *d = display_create();
+	struct poor_loop loop;
+	struct client c;
 
-	wl_global_create(d->wl_display, &wl_seat_interface,
-			 1, d, bind_seat);
-
-	cl = client_create_noarg(d, check_error_on_destroyed_object);
-	display_run(d);
-
-	/* did client bind to the seat? */
-	assert(cl->data);
-
-	/* post error on the destroyed object */
-	wl_resource_post_error((struct wl_resource *) cl->data,
-			       23, "Dummy error");
-	display_resume(d);
-	display_destroy(d);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 1);
+	test_global_since_two(c.test_global);
+	run_until(&loop, c.error_called);
+	assert(c.error == EINVAL && wl_display_get_protocol_error(&c.display, nullptr, nullptr) == WL_DISPLAY_ERROR_INVALID_METHOD);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static bool
-global_filter(const struct wl_client *client,
-	      const struct wl_global *global,
-	      void *data)
+TEST(bind_of_newer_version)
 {
-	/* Hide the wl_data_offer interface if no data was provided */
-	if (wl_global_get_interface(global) == &wl_data_offer_interface)
-		return data != NULL;
+	const struct wl_interface *interface;
+	struct poor_loop loop;
+	struct client c;
 
-	/* Show all the others */
-	return true;
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 3);
+	run_until(&loop, c.error_called);
+	assert(c.error == EPROTO);
+	assert(wl_display_get_protocol_error(&c.display, &interface, nullptr) == WL_DISPLAY_ERROR_INVALID_OBJECT);
+	assert(interface == &wl_registry_interface);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-bind_data_offer(struct wl_client *client, void *data,
-		uint32_t vers, uint32_t id)
+TEST(server_destroys_client)
 {
-	/* Client should not be able to bind to this interface! */
-	assert(false);
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_disconnect(c.test_global);
+	run_until(&loop, c.error_called);
+	assert(c.error == EPIPE || c.error == ECONNRESET);
+	assert(test_server.clients_done == 1);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-registry_handle_filtered(void *data, struct wl_registry *registry,
-			 uint32_t id, const char *intf, uint32_t ver)
+TEST(server_destroys_display_with_clients)
 {
-	uint32_t *name = data;
+	struct poor_loop loop;
+	struct client a, b;
 
-	if (strcmp (intf, "wl_data_offer") == 0) {
-		assert(name);
-		*name = id;
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&a, &loop, test_server_connect());
+	client_connect_fd(&b, &loop, test_server_connect());
+	client_roundtrip(&a);
+	client_roundtrip(&b);
+	test_server_stop();
+	run_until(&loop, test_server.display_done && a.error_called && b.error_called);
+	assert(test_server.clients_done == 2);
+	client_disconnect(&a);
+	client_disconnect(&b);
+	loop_fini(&loop);
+}
+
+TEST(events_larger_than_client_buffer)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	for (int i = 0; i < 8; i++) {
+		test_global_flood(c.test_global, 3, 4000);
+		client_roundtrip(&c);
 	}
+	assert(c.events == 24 && !c.error_called);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-registry_handle_remove_filtered(void *data, struct wl_registry *registry,
-				uint32_t id)
+/* The events don't fit the server's buffer for the client before the loop iteration ends */
+TEST(server_buffer_overflow_disconnects_client)
 {
-	assert(false);
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_flood(c.test_global, 100, 1000);
+	run_until(&loop, c.error_called);
+	assert(c.error == EPIPE || c.error == ECONNRESET);
+	run_until(&loop, test_server.clients_done == 1);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static const struct wl_registry_listener registry_listener_filtered = {
-	registry_handle_filtered,
-	registry_handle_remove_filtered,
+TEST(client_buffer_overflow_fails_display)
+{
+	struct poor_loop loop;
+	char array_data[4000];
+	struct wl_array array = WL_ARRAY_INIT(array_data);
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	memset(wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	for (int i = 0; i < 5; i++)
+		test_global_echo(c.test_global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	run_until(&loop, c.error_called);
+	assert(c.error == E2BIG);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(message_too_large_fails_display)
+{
+	struct poor_loop loop;
+	char array_data[WL_MAX_MESSAGE_SIZE];
+	struct wl_array array = WL_ARRAY_INIT(array_data);
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	memset(wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	test_global_echo(c.test_global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	run_until(&loop, c.error_called);
+	assert(c.error == E2BIG);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* The server maps ids 0 to 3 only: the display, the registry and the global take 1 to 3 */
+TEST(too_many_objects)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect_small());
+	client_bind_global(&c, 2);
+	test_global_create_child(c.test_global, &c.child);
+	run_until(&loop, c.error_called);
+	assert(c.error == EINVAL && wl_display_get_protocol_error(&c.display, nullptr, nullptr) == WL_DISPLAY_ERROR_INVALID_METHOD);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(client_disconnect_destroys_server_resources)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_create_child(c.test_global, &c.child);
+	client_roundtrip(&c);
+	assert(test_server.children == 1);
+	client_disconnect(&c);
+	run_until(&loop, test_server.clients_done == 1);
+	assert(test_server.children == 0);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static void connect_by_name(struct client *c, struct poor_loop *loop, const char *name)
+{
+	struct wl_connection_memory memory = client_memory(c);
+
+	client_init(c, loop);
+	assert(!wl_display_connect(&c->display, loop, &memory, name, client_error, client_done));
+	client_get_registry(c);
+}
+
+static bool path_exists(const char *name, const char *suffix)
+{
+	char path[256];
+
+	snprintf(path, sizeof(path), "%s/%s%s", getenv("XDG_RUNTIME_DIR"), name, suffix);
+	return !access(path, F_OK);
+}
+
+TEST(socket_listen_and_connect)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen("wayland-test");
+	run_until(&loop, test_server.socket_ready);
+	assert(!strcmp(test_server_socket_name(), "wayland-test"));
+	assert(path_exists("wayland-test", "") && path_exists("wayland-test", ".lock"));
+	connect_by_name(&c, &loop, "wayland-test");
+	client_roundtrip(&c);
+	assert(c.synced && c.global_name);
+	client_disconnect(&c);
+	test_server_close_socket();
+	run_until(&loop, test_server.socket_done);
+	assert(!test_server.socket_error);
+	assert(!path_exists("wayland-test", "") && !path_exists("wayland-test", ".lock"));
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static int hold_lock(const char *name)
+{
+	char path[256];
+	int fd;
+
+	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	fd = open(path, O_CREAT | O_CLOEXEC | O_RDWR, 0600);
+	assert(fd >= 0 && !flock(fd, LOCK_EX | LOCK_NB));
+	return fd;
+}
+
+static void release_lock(struct poor_loop *loop, const char *name, int fd)
+{
+	char path[256];
+
+	snprintf(path, sizeof(path), "%s/%s.lock", getenv("XDG_RUNTIME_DIR"), name);
+	assert(!unlink(path));
+	poor_loop_close_fd_or_submit(loop, fd, 0);
+}
+
+TEST(socket_auto_skips_locked_names)
+{
+	struct poor_loop loop;
+	struct client c;
+	int lock;
+
+	loop_init(&loop);
+	lock = hold_lock("wayland-0");
+	test_server_start(&loop);
+	test_server_listen_auto();
+	run_until(&loop, test_server.socket_ready);
+	assert(!strcmp(test_server_socket_name(), "wayland-1"));
+	connect_by_name(&c, &loop, "wayland-1");
+	client_roundtrip(&c);
+	assert(c.synced);
+	client_disconnect(&c);
+	server_stop(&loop);
+	assert(test_server.socket_done && !path_exists("wayland-1", ""));
+	release_lock(&loop, "wayland-0", lock);
+	loop_fini(&loop);
+}
+
+TEST(socket_locked_by_other_compositor)
+{
+	struct poor_loop loop;
+	int lock;
+
+	loop_init(&loop);
+	lock = hold_lock("wayland-busy");
+	test_server_start(&loop);
+	test_server_listen("wayland-busy");
+	run_until(&loop, test_server.socket_done);
+	assert(!test_server.socket_ready && test_server.socket_error == EWOULDBLOCK);
+	assert(path_exists("wayland-busy", ".lock"));
+	server_stop(&loop);
+	release_lock(&loop, "wayland-busy", lock);
+	loop_fini(&loop);
+}
+
+TEST(connect_without_server)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	connect_by_name(&c, &loop, "wayland-nobody");
+	run_until(&loop, c.error_called);
+	assert(c.error == ENOENT);
+	client_disconnect(&c);
+	loop_fini(&loop);
+}
+
+TEST(global_removal_acknowledged)
+{
+	struct poor_loop loop;
+	struct wl_fixes *fixes;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_roundtrip(&c);
+	fixes = wl_registry_bind(c.wl_registry, c.fixes_name, &wl_fixes_interface, 2, &c.fixes);
+	test_server_remove_global();
+	run_until(&loop, c.removed_name);
+	assert(c.removed_name == c.extra_name && !test_server.withdrawn);
+	wl_fixes_ack_global_remove(fixes, c.wl_registry, c.removed_name);
+	client_roundtrip(&c);
+	assert(test_server.withdrawn == 1 && test_server_global_destroyed());
+	wl_fixes_ack_global_remove(fixes, c.wl_registry, c.removed_name);
+	run_until(&loop, c.error_called);
+	assert(wl_display_get_protocol_error(&c.display, nullptr, nullptr) == WL_FIXES_ERROR_INVALID_ACK_REMOVE);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(global_removal_acknowledged_by_registry_destruction)
+{
+	struct poor_loop loop;
+	struct wl_fixes *fixes;
+	struct client a, b;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&a, &loop, test_server_connect());
+	client_connect_fd(&b, &loop, test_server_connect());
+	client_roundtrip(&a);
+	client_roundtrip(&b);
+	fixes = wl_registry_bind(a.wl_registry, a.fixes_name, &wl_fixes_interface, 2, &a.fixes);
+	test_server_remove_global();
+	run_until(&loop, a.removed_name && b.removed_name);
+	wl_fixes_destroy_registry(fixes, a.wl_registry);
+	wl_registry_destroy(a.wl_registry);
+	client_roundtrip(&a);
+	assert(!test_server.withdrawn);
+	client_disconnect(&b);
+	run_until(&loop, test_server.withdrawn == 1);
+	client_disconnect(&a);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(registry_after_removal_does_not_announce)
+{
+	struct poor_loop loop;
+	struct client a, b;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&a, &loop, test_server_connect());
+	client_roundtrip(&a);
+	test_server_remove_global();
+	run_until(&loop, a.removed_name);
+	client_connect_fd(&b, &loop, test_server_connect());
+	client_roundtrip(&b);
+	assert(b.global_name && !b.extra_name);
+	client_disconnect(&b);
+	client_disconnect(&a);
+	run_until(&loop, test_server.withdrawn == 1);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(shm_buffer)
+{
+	constexpr uint32_t pixel = 0x11223344;
+	struct wl_shm_pool *pool;
+	struct wl_buffer *buffer;
+	struct poor_loop loop;
+	struct wl_shm *shm;
+	struct client c;
+	uint32_t *data;
+	int fd;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	shm = wl_registry_bind(c.wl_registry, c.shm_name, &wl_shm_interface, 1, &c.shm);
+	fd = memfd_create("shm-test", MFD_CLOEXEC);
+	assert(fd >= 0 && !ftruncate(fd, 4096));
+	data = mmap(nullptr, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	assert(data != MAP_FAILED);
+	data[0] = pixel;
+	pool = wl_shm_create_pool(shm, &c.pool, fd, 4096);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	buffer = wl_shm_pool_create_buffer(pool, &c.buffer, 0, 16, 16, 64, WL_SHM_FORMAT_XRGB8888);
+	test_global_read_buffer(c.test_global, buffer);
+	client_roundtrip(&c);
+	assert(!c.error_called && test_server.shm_buffers == 1 && test_server.shm_pixel == pixel);
+	wl_buffer_destroy(buffer);
+	wl_shm_pool_destroy(pool);
+	client_roundtrip(&c);
+	munmap(data, 4096);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(requests_before_connect_are_sent)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen("wayland-early");
+	run_until(&loop, test_server.socket_ready);
+	connect_by_name(&c, &loop, "wayland-early");
+	client_bind_global(&c, 2);
+	client_roundtrip(&c);
+	assert(!c.error_called && c.synced);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(protocol_logger)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_log_messages();
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	test_global_flood(c.test_global, 2, 8);
+	client_roundtrip(&c);
+	assert(c.events == 2);
+	/* get_registry, sync twice, bind and flood; globals, done twice, delete_id twice and data twice */
+	assert(test_server.logged_requests == 5);
+	assert(test_server.logged_events >= 2 + 2 + 2 + 2);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(global_filter)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_hide_extra();
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_roundtrip(&c);
+	assert(c.global_name && !c.extra_name);
+	wl_registry_bind(c.wl_registry, c.global_name + 1, &test_child_interface, 1, &c.child);
+	run_until(&loop, c.error_called);
+	assert(c.error == EPROTO && wl_display_get_protocol_error(&c.display, nullptr, nullptr) == WL_DISPLAY_ERROR_INVALID_OBJECT);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+TEST(debug_output)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	setenv("WAYLAND_DEBUG", "client", 1);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &global_listener, &c);
+	test_global_flood(c.test_global, 3, 4);
+	client_roundtrip(&c);
+	assert(log_requests == 5 && log_events == 3);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+/* The checker runs after exec and fails if it inherits more fds than the test started with */
+TEST(all_fds_are_cloexec)
+{
+	struct poor_loop loop;
+	struct test_child *child;
+	int nr_fds = count_open_fds(), status;
+	struct client c;
+	pid_t pid;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen("wayland-cloexec");
+	run_until(&loop, test_server.socket_ready);
+	connect_by_name(&c, &loop, "wayland-cloexec");
+	client_bind_global(&c, 2);
+	child = test_global_create_child(c.test_global, &c.child);
+	test_child_add_listener(child, &child_listener, &c);
+	test_child_ping(child);
+	run_until(&loop, c.pongs == 1);
+	pid = fork();
+	assert(pid >= 0);
+	if (!pid)
+		exec_fd_leak_check(nr_fds);
+	assert(waitpid(pid, &status, 0) == pid && WIFEXITED(status) && !WEXITSTATUS(status));
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
+static void echoed_then_disconnect(void *data, struct test_global *, int32_t, uint32_t, wl_fixed_t, const char *, const char *,
+				   struct test_global *, struct wl_array *, int32_t fd)
+{
+	struct client *c = data;
+
+	poor_loop_close_fd_or_submit(c->loop, fd, 0);
+	c->echoed = true;
+	wl_display_disconnect(&c->display);
+}
+
+static const struct test_global_listener disconnecting_listener = {
+	echoed_then_disconnect,
+	global_child_spawned,
+	global_data,
 };
 
-static void
-get_globals(void *data)
+/* The second echo is not dispatched, the display is gone */
+TEST(disconnect_in_event_listener)
 {
-	struct client *c = client_connect();
-	struct wl_registry *registry;
+	struct poor_loop loop;
+	char array_data[1];
+	struct wl_array array = WL_ARRAY_INIT(array_data);
+	struct client c;
 
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry, &registry_listener_filtered, data);
-	wl_display_roundtrip(c->wl_display);
-
-	wl_registry_destroy(registry);
-	client_disconnect_nocheck(c);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	test_global_add_listener(c.test_global, &disconnecting_listener, &c);
+	test_global_echo(c.test_global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	test_global_echo(c.test_global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	run_until(&loop, c.done);
+	assert(c.echoed && !c.error_called);
+	run_until(&loop, test_server.clients_done == 1);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-TEST(filtered_global_is_hidden)
+TEST(socket_invalid_names)
 {
-	struct display *d;
-	struct wl_global *g;
+	struct poor_loop loop;
+	char name[200];
+	const char *runtime_dir = getenv("XDG_RUNTIME_DIR");
+	struct client c;
+	struct wl_connection_memory memory = client_memory(&c);
 
-	d = display_create();
-
-	g = wl_global_create(d->wl_display, &wl_data_offer_interface,
-		      1, d, bind_data_offer);
-	wl_display_set_global_filter(d->wl_display, global_filter, NULL);
-
-	client_create(d, get_globals, NULL);
-	display_run(d);
-
-	wl_global_destroy(g);
-
-	display_destroy(d);
+	loop_init(&loop);
+	memset(name, 'a', sizeof(name) - 1);
+	name[sizeof(name) - 1] = '\0';
+	assert(wl_display_connect(&c.display, &loop, &memory, name, client_error, client_done) == -1 && errno == ENAMETOOLONG);
+	unsetenv("XDG_RUNTIME_DIR");
+	assert(wl_display_connect(&c.display, &loop, &memory, "wayland-0", client_error, client_done) == -1 && errno == ENOENT);
+	setenv("XDG_RUNTIME_DIR", runtime_dir, 1);
+	loop_fini(&loop);
 }
 
-static void
-get_dynamic_globals(void)
+TEST(socket_absolute_path)
 {
-	struct client *c = client_connect();
-	struct wl_registry *registry;
+	struct poor_loop loop;
+	char path[256];
+	struct client c;
 
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry, &registry_listener_filtered, NULL);
-	wl_display_roundtrip(c->wl_display);
-
-	/* Wait for the server to create a new global */
-	assert(stop_display(c, 1) >= 0);
-
-	/* Check that we don't see it */
-	wl_display_roundtrip(c->wl_display);
-
-	/* Wait for the server to remove that global */
-	assert(stop_display(c, 1) >= 0);
-
-	/* Check that we don't get a global_remove event */
-	wl_display_roundtrip(c->wl_display);
-
-	wl_registry_destroy(registry);
-	client_disconnect_nocheck(c);
+	snprintf(path, sizeof(path), "%s/absolute-socket", getenv("XDG_RUNTIME_DIR"));
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen(path);
+	run_until(&loop, test_server.socket_ready);
+	assert(!strcmp(test_server_socket_name(), path));
+	connect_by_name(&c, &loop, path);
+	client_roundtrip(&c);
+	assert(c.synced);
+	client_disconnect(&c);
+	server_stop(&loop);
+	assert(access(path, F_OK));
+	loop_fini(&loop);
 }
 
-TEST(filtered_dynamic_global_is_hidden)
+TEST(socket_adopted_fd)
 {
-	struct display *d;
-	struct wl_global *g;
+	struct sockaddr_un addr = { .sun_family = AF_LOCAL };
+	struct poor_loop loop;
+	struct client c;
+	int fd;
 
-	d = display_create();
-	wl_display_set_global_filter(d->wl_display, global_filter, NULL);
-
-	/* Create a client and let it enumerate the globals */
-	client_create_noarg(d, get_dynamic_globals);
-	display_run(d);
-
-	/* Dynamically create a new global */
-	g = wl_global_create(d->wl_display, &wl_data_offer_interface,
-			     1, d, bind_data_offer);
-
-	display_resume(d);
-
-	/* Dynamically remove the global */
-	wl_global_destroy(g);
-
-	display_resume(d);
-
-	display_destroy(d);
+	snprintf(addr.sun_path, sizeof(addr.sun_path), "%s/adopted", getenv("XDG_RUNTIME_DIR"));
+	fd = socket(AF_LOCAL, SOCK_STREAM | SOCK_CLOEXEC, 0);
+	assert(fd >= 0 && !bind(fd, (struct sockaddr *)&addr, sizeof(addr)) && !listen(fd, 1));
+	loop_init(&loop);
+	test_server_start(&loop);
+	test_server_listen_fd(fd);
+	connect_by_name(&c, &loop, addr.sun_path);
+	client_roundtrip(&c);
+	assert(c.synced);
+	client_disconnect(&c);
+	server_stop(&loop);
+	assert(test_server.socket_done && !test_server.socket_ready);
+	assert(!unlink(addr.sun_path));
+	loop_fini(&loop);
 }
 
-static void
-check_bind_error(struct client *c)
+TEST(wayland_socket_environment)
 {
-	uint32_t errorcode, id;
-	int err;
-	const struct wl_interface *intf;
+	struct poor_loop loop;
+	char fd_string[16];
+	struct client c;
+	struct wl_connection_memory memory = client_memory(&c);
 
-	err = wl_display_get_error(c->wl_display);
-	assert(err == EPROTO);
-
-	errorcode = wl_display_get_protocol_error(c->wl_display, &intf, &id);
-	assert(errorcode == WL_DISPLAY_ERROR_INVALID_OBJECT);
+	loop_init(&loop);
+	test_server_start(&loop);
+	snprintf(fd_string, sizeof(fd_string), "%d", test_server_connect());
+	setenv("WAYLAND_SOCKET", fd_string, 1);
+	client_init(&c, &loop);
+	assert(!wl_display_connect(&c.display, &loop, &memory, "wayland-ignored", client_error, client_done));
+	assert(!getenv("WAYLAND_SOCKET"));
+	assert(wl_display_get_fd(&c.display) == atoi(fd_string));
+	client_get_registry(&c);
+	client_roundtrip(&c);
+	assert(c.synced && c.global_name);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-force_bind(void *data)
+static int dispatcher(const void *implementation, void *target, uint32_t opcode, const struct wl_message *message,
+		      union wl_argument *args)
 {
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-	void *ptr;
-	uint32_t *name = data;
+	struct client *c = (void *)implementation;
 
-	registry = wl_display_get_registry(c->wl_display);
-
-	ptr = wl_registry_bind (registry, *name, &wl_data_offer_interface, 1);
-	wl_display_roundtrip(c->wl_display);
-	check_bind_error(c);
-
-	wl_proxy_destroy((struct wl_proxy *) ptr);
-	wl_registry_destroy(registry);
-
-	client_disconnect_nocheck(c);
+	assert(target == &c->global && message == &test_global_interface.events[opcode] && !strcmp(message->name, "data"));
+	assert(args[0].a->size == 3);
+	c->events++;
+	return 0;
 }
 
-TEST(bind_fails_on_filtered_global)
+TEST(proxy_dispatcher)
 {
-	struct display *d;
-	struct wl_global *g;
-	uint32_t *name;
+	struct poor_loop loop;
+	struct client c;
 
-	/* Create a anonymous shared memory to pass the interface name */
-	name = mmap(NULL, sizeof(uint32_t),
-		    PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-
-	d = display_create();
-
-	g = wl_global_create(d->wl_display, &wl_data_offer_interface,
-			     1, d, bind_data_offer);
-	wl_display_set_global_filter(d->wl_display, global_filter, name);
-
-	client_create(d, get_globals, name);
-	*name = 0;
-
-	display_run(d);
-	/* wl_data_offer should be 2 */
-	assert(*name == 2);
-	wl_display_set_global_filter(d->wl_display, global_filter, NULL);
-
-	/* Try to bind to the interface name when a global filter is in place */
-	client_create(d, force_bind, name);
-	display_run(d);
-
-	wl_global_destroy(g);
-
-	display_destroy(d);
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	assert(!wl_proxy_add_dispatcher(&c.global, dispatcher, &c, nullptr));
+	assert(wl_proxy_add_listener(&c.global, (void (**)(void))&global_listener, &c) == -1);
+	test_global_flood(c.test_global, 2, 3);
+	assert(!wl_display_flush(&c.display));
+	client_roundtrip(&c);
+	assert(c.events == 2);
+	client_disconnect(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-static void
-pre_fd(void *data, struct fd_passer *fdp)
+static void write_words(int fd, const uint32_t *words, size_t count)
 {
-	fd_passer_destroy(fdp);
+	assert(write(fd, words, count * sizeof(*words)) == (ssize_t)(count * sizeof(*words)));
 }
 
-static void
-fd(void *data, struct fd_passer *fdp, int32_t fd)
+/* The client never reads, so the server's send waits for room until the destruction cancels it */
+TEST(destroy_client_with_blocked_send)
 {
-	/* We destroyed the resource before this event */
-	assert(false);
+	static const uint32_t requests[] = {
+		1, 12 << 16 | 1, 2,
+		2, 36 << 16 | 0, 1, 12, 0x74736574, 0x6f6c675f, 0x006c6162, 1, 3,
+		3, 16 << 16 | 5, 10, 1000,
+	};
+	struct poor_loop loop;
+	int fd;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	fd = test_server_connect_sndbuf(4096);
+	write_words(fd, requests, ARRAY_SIZE(requests));
+	run_for(&loop, 100'000'000);
+	assert(!test_server.clients_done && test_server_sending());
+	test_server_destroy_clients();
+	run_until(&loop, test_server.clients_done == 1);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	server_stop(&loop);
+	loop_fini(&loop);
 }
 
-struct fd_passer_listener fd_passer_listener = {
-	pre_fd,
-	fd,
-};
-
-static void
-zombie_fd_handle_globals(void *data, struct wl_registry *registry,
-			 uint32_t id, const char *intf, uint32_t ver)
+/* Nobody reads the requests, so the display's send waits for room until the disconnect cancels it */
+TEST(disconnect_with_blocked_send)
 {
-	struct fd_passer *fdp;
-
-	if (!strcmp(intf, "fd_passer")) {
-		fdp = wl_registry_bind(registry, id, &fd_passer_interface, 1);
-		fd_passer_add_listener(fdp, &fd_passer_listener, NULL);
-	}
-}
-
-static const struct wl_registry_listener zombie_fd_registry_listener = {
-	zombie_fd_handle_globals,
-	NULL
-};
-
-static void
-zombie_client(void)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry, &zombie_fd_registry_listener, NULL);
-
-	/* Gets the registry */
-	wl_display_roundtrip(c->wl_display);
-
-	/* push out the fd_passer bind */
-	wl_display_roundtrip(c->wl_display);
-
-	/* push out our fd_passer.destroy */
-	wl_display_roundtrip(c->wl_display);
-
-	wl_registry_destroy(registry);
-
-	client_disconnect_nocheck(c);
-}
-
-struct passer_data {
-	struct wl_resource *conjoined_passer;
-};
-
-static void
-feed_pipe(int fd, char tosend)
-{
-	int count;
-
-	do {
-		count = write(fd, &tosend, 1);
-	} while (count != 1 && errno == EAGAIN);
-	assert(count == 1);
-	close(fd);
-}
-
-static void
-fd_passer_clobber(struct wl_client *client, struct wl_resource *res)
-{
-	struct passer_data *pdata = wl_resource_get_user_data(res);
-	int pipes1[2], pipes2[2], ret;
-
-	if (pdata->conjoined_passer) {
-		ret = pipe(pipes1);
-		assert(ret == 0);
-		ret = pipe(pipes2);
-		assert(ret == 0);
-
-		wl_resource_queue_event(res, FD_PASSER_FD, pipes1[0]);
-		fd_passer_send_fd(pdata->conjoined_passer, pipes2[0]);
-		feed_pipe(pipes1[1], '1');
-		feed_pipe(pipes2[1], '2');
-		close(pipes1[0]);
-		close(pipes2[0]);
-	}
-	wl_resource_destroy(res);
-}
-
-static void
-fd_passer_twin(struct wl_client *client, struct wl_resource *res, struct wl_resource *passer)
-{
-	struct passer_data *pdata = wl_resource_get_user_data(res);
-
-	pdata->conjoined_passer = passer;
-}
-
-static const struct fd_passer_interface fdp_interface = {
-	fd_passer_clobber,
-	fd_passer_twin
-};
-
-static void
-pdata_destroy(struct wl_resource *res)
-{
-	struct passer_data *pdata = wl_resource_get_user_data(res);
-
-	free(pdata);
-}
-
-static void
-bind_fd_passer(struct wl_client *client, void *data,
-	       uint32_t vers, uint32_t id)
-{
-	struct wl_resource *res;
-	struct passer_data *pdata;
-
-	pdata = malloc(sizeof(*pdata));
-	assert(pdata);
-	pdata->conjoined_passer = NULL;
-
-	res = wl_resource_create(client, &fd_passer_interface, vers, id);
-	wl_resource_set_implementation(res, &fdp_interface, pdata, pdata_destroy);
-	assert(res);
-	if (vers == 1) {
-		fd_passer_send_pre_fd(res);
-		fd_passer_send_fd(res, fileno(stdin));
-	}
-}
-
-TEST(zombie_fd)
-{
-	struct display *d;
-	struct wl_global *g;
-
-	d = display_create();
-
-	g = wl_global_create(d->wl_display, &fd_passer_interface,
-			     1, d, bind_fd_passer);
-
-	client_create_noarg(d, zombie_client);
-	display_run(d);
-
-	wl_global_destroy(g);
-
-	display_destroy(d);
-}
-
-
-static void
-double_pre_fd(void *data, struct fd_passer *fdp)
-{
-	assert(false);
-}
-
-static void
-double_fd(void *data, struct fd_passer *fdp, int32_t fd)
-{
-	char buf;
-	int count;
-
-	do {
-		count = read(fd, &buf, 1);
-	} while (count != 1 && errno == EAGAIN);
-	assert(count == 1);
-
-	close(fd);
-	fd_passer_destroy(fdp);
-	assert(buf == '2');
-}
-
-struct fd_passer_listener double_fd_passer_listener = {
-	double_pre_fd,
-	double_fd,
-};
-
-
-static void
-double_zombie_fd_handle_globals(void *data, struct wl_registry *registry,
-			 uint32_t id, const char *intf, uint32_t ver)
-{
-	struct fd_passer *fdp1, *fdp2;
-
-	if (!strcmp(intf, "fd_passer")) {
-		fdp1 = wl_registry_bind(registry, id, &fd_passer_interface, 2);
-		fd_passer_add_listener(fdp1, &double_fd_passer_listener, NULL);
-		fdp2 = wl_registry_bind(registry, id, &fd_passer_interface, 2);
-		fd_passer_add_listener(fdp2, &double_fd_passer_listener, NULL);
-		fd_passer_conjoin(fdp1, fdp2);
-		fd_passer_destroy(fdp1);
-	}
-}
-
-static const struct wl_registry_listener double_zombie_fd_registry_listener = {
-	double_zombie_fd_handle_globals,
-	NULL
-};
-
-static void
-double_zombie_client(void)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry, &double_zombie_fd_registry_listener, NULL);
-
-	/* Gets the registry */
-	wl_display_roundtrip(c->wl_display);
-
-	/* One more so server can respond to conjoin+destroy */
-	wl_display_roundtrip(c->wl_display);
-
-	/* And finally push out our last fd_passer.destroy */
-	wl_display_roundtrip(c->wl_display);
-
-	wl_registry_destroy(registry);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(zombie_fd_errant_consumption)
-{
-	struct display *d;
-	struct wl_global *g;
-
-	d = display_create();
-
-	g = wl_global_create(d->wl_display, &fd_passer_interface,
-			     2, d, bind_fd_passer);
-
-	client_create_noarg(d, double_zombie_client);
-	display_run(d);
-
-	wl_global_destroy(g);
-
-	display_destroy(d);
-}
-
-
-static void
-registry_bind_interface_mismatch_handle_global(void *data,
-					       struct wl_registry *registry,
-					       uint32_t id, const char *intf,
-					       uint32_t ver)
-{
-	uint32_t *seat_id_ptr = data;
-
-	if (strcmp(intf, wl_seat_interface.name) == 0) {
-		*seat_id_ptr = id;
-	}
-}
-
-static const struct wl_registry_listener bind_interface_mismatch_registry_listener = {
-	registry_bind_interface_mismatch_handle_global,
-	NULL
-};
-
-static void
-registry_bind_interface_mismatch_client(void)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-	uint32_t seat_id = 0;
-	void *ptr;
-	int ret;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry,
-				 &bind_interface_mismatch_registry_listener,
-				 &seat_id);
-
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-	assert(seat_id != 0);
-
-	/* Bind with a different interface */
-	ptr = wl_registry_bind(registry, seat_id, &wl_output_interface, 1);
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret < 0);
-	check_bind_error(c);
-
-	wl_proxy_destroy((struct wl_proxy *) ptr);
-	wl_registry_destroy(registry);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(registry_bind_interface_mismatch)
-{
-	struct display *d;
-	struct wl_global *seat_global;
-
-	d = display_create();
-
-	seat_global = wl_global_create(d->wl_display, &wl_seat_interface,
-				       1, NULL, NULL);
-
-	client_create_noarg(d, registry_bind_interface_mismatch_client);
-	display_run(d);
-
-	wl_global_destroy(seat_global);
-
-	display_destroy(d);
-}
-
-static void
-send_overflow_client(void *data)
-{
-	struct client *c = client_connect();
-	int i, err = 0;
-	int *pipes = data;
-	char tmp = '\0';
-	int sock, optval = 16384;
-
-	/* By default, client buffers are now unbounded, set a limit to cause
-	 * an overflow, otherwise the client buffers will grow indefinitely. */
-	wl_display_set_max_buffer_size(c->wl_display, 4096);
-
-	/* Limit the send buffer size for the display socket to guarantee
-	 * that the test will cause an overflow. */
-	sock = wl_display_get_fd(c->wl_display);
-	assert(setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &optval, sizeof(optval)) == 0);
-
-	/* Request to break out of 'display_run' in the main process */
-	assert(stop_display(c, 1) >= 0);
-
-	/* On Linux, the actual socket data + metadata space is twice `optval`;
-	 * since each noop request requires 8 bytes, the buffer should overflow
-	 * within <=4096 iterations. */
-	for (i = 0; i < 1000000; i++) {
-		noop_request(c);
-		fprintf(stderr, "Send loop %i\n", i);
-		err = wl_display_get_error(c->wl_display);
-		if (err)
-			break;
-	}
-
-	/* Do not close the pipe file descriptors afterwards, because the leak
-	 * check verifies that the initial/final FD counts are the same */
-	assert(write(pipes[1], &tmp, sizeof(tmp)) == (ssize_t)sizeof(tmp));
-
-	/* Expect an error - ring_buffer_ensure_space() returns E2BIG */
-	fprintf(stderr, "Send loop failed on try %d, err = %d, %s\n", i, err, strerror(err));
-	assert(err == EAGAIN || err == E2BIG);
-
-	client_disconnect_nocheck(c);
-}
-
-TEST(send_overflow_disconnection)
-{
-	struct display *d;
-	char tmp;
-	int rpipe[2];
-	ssize_t ret;
-
-	assert(pipe(rpipe) != -1);
-
-	d = display_create();
-
-	(void) client_create(d, send_overflow_client, &rpipe);
-
-	/* Close write end of the pipe, so that the later read() call gets
-	 * interrupted if the client dies */
-	close(rpipe[1]);
-
-	/* Run the display until the client sends a `stop_display`, then
-	 * send a resume message but don't actually look at new messages */
-	display_run(d);
-	display_post_resume_events(d);
-	wl_display_flush_clients(d->wl_display);
-
-	/* Wait until all noop requests have been sent (read returns 1), or
-	 * until client process aborts (read returns 0) */
-	do {
-		ret = read(rpipe[0], &tmp, sizeof(tmp));
-	} while (ret == -1 && errno == EINTR);
-	assert(ret != -1);
-	close(rpipe[0]);
-
-	/* For a clean shutdown */
-	display_run(d);
-
-	display_destroy(d);
-}
-
-static void
-registry_global_remove_before_handle_global(void *data,
-					    struct wl_registry *registry,
-					    uint32_t id, const char *intf,
-					    uint32_t ver)
-{
-	uint32_t *id_ptr = data;
-
-	if (strcmp(intf, wl_seat_interface.name) == 0) {
-		assert(*id_ptr == 0);
-		*id_ptr = id;
-	}
-}
-
-static void
-registry_global_remove_before_handle_global_remove(void *data,
-						   struct wl_registry *registry,
-						   uint32_t id)
-{
-	uint32_t *id_ptr = data;
-
-	if (*id_ptr == id) {
-		*id_ptr = 0;
-	}
-}
-
-/* This listener expects a uint32_t user data pointer, sets it to the wl_seat
- * global ID when receiving a "global" event, and sets it to zero when receiving
- * a "global_remove" event. */
-static const struct wl_registry_listener global_remove_before_registry_listener = {
-	registry_global_remove_before_handle_global,
-	registry_global_remove_before_handle_global_remove,
-};
-
-static void
-global_remove_before_client(void)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-	uint32_t global_id = 0, saved_global_id;
-	struct wl_seat *seat;
-	int ret;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry,
-				 &global_remove_before_registry_listener,
-				 &global_id);
-
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-	assert(global_id != 0);
-	saved_global_id = global_id;
-
-	/* Wait for the compositor to remove the global */
-	assert(stop_display(c, 1) >= 0);
-
-	/* Check binding still works after the global has been removed. Also
-	 * check we get the global_remove event. */
-	seat = wl_registry_bind(registry, saved_global_id, &wl_seat_interface, 1);
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-	assert(global_id == 0);
-
-	wl_seat_destroy(seat);
-	wl_registry_destroy(registry);
-
-	client_disconnect(c);
-}
-
-static void
-registry_global_remove_after_handle_global(void *data,
-					   struct wl_registry *registry,
-					   uint32_t id, const char *intf,
-					   uint32_t ver)
-{
-	/* Make sure the global isn't advertised anymore after being removed */
-	assert(strcmp(intf, wl_seat_interface.name) != 0);
-}
-
-static const struct wl_registry_listener global_remove_after_registry_listener = {
-	registry_global_remove_after_handle_global,
-	NULL,
-};
-
-static void
-global_remove_after_client(void)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-	uint32_t global_id = 0;
-	int ret;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry,
-				 &global_remove_after_registry_listener,
-				 &global_id);
-
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-
-	wl_registry_destroy(registry);
-
-	client_disconnect(c);
-}
-
-TEST(global_remove)
-{
-	struct display *d;
-	struct wl_global *global;
-
-	d = display_create();
-
-	global = wl_global_create(d->wl_display, &wl_seat_interface,
-				  1, d, bind_seat);
-
-	/* Create a client before removing the global */
-	client_create_noarg(d, global_remove_before_client);
-
-	display_run(d);
-
-	wl_global_remove(global);
-
-	/* Create another client after removing the global */
-	client_create_noarg(d, global_remove_after_client);
-
-	display_resume(d);
-
-	wl_global_destroy(global);
-
-	display_destroy(d);
-}
-
-static void
-registry_ack_global_remove_handle_global_remove(void *data,
-						struct wl_registry *registry,
-						uint32_t id)
-{
-	struct client *client = data;
-
-	wl_fixes_ack_global_remove(client->wl_fixes, registry, id);
-}
-
-static struct wl_registry_listener registry_ack_global_remove_listener = {
-	.global = registry_handle_global_noop,
-	.global_remove = registry_ack_global_remove_handle_global_remove,
-};
-
-static void
-ack_global_remove_client(void *data)
-{
-	struct client *c = client_connect();
-	struct wl_registry *registry;
-	struct wl_registry_listener *registry_listener = data;
-	int ret;
-
-	registry = wl_display_get_registry(c->wl_display);
-	wl_registry_add_listener(registry,
-				 registry_listener,
-				 c);
-
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-
-	/* yield the control back to the compositor so it can remove
-	 * the global */
-	assert(stop_display(c, 1) >= 0);
-
-	/* check if there are any global_remove events */
-	ret = wl_display_roundtrip(c->wl_display);
-	assert(ret >= 0);
-
-	/* yield the control back to the compositor so it can check
-	 * whether the global is withdrawn */
-	assert(stop_display(c, 1) >= 0);
-
-	wl_registry_destroy(registry);
-
-	client_disconnect(c);
-}
-
-static void
-mark_global_withdrawn(struct wl_global *global)
-{
-	bool *withdrawn = wl_global_get_user_data(global);
-
-	*withdrawn = true;
-}
-
-TEST(ack_global_remove)
-{
-	struct display *d;
-	struct wl_global *seat;
-	struct wl_global *fixes;
-	bool withdrawn = false;
-
-	d = display_create();
-
-	fixes = wl_global_create(d->wl_display, &wl_fixes_interface,
-				 2, NULL, bind_fixes);
-
-	seat = wl_global_create(d->wl_display, &wl_seat_interface,
-				1, &withdrawn, NULL);
-
-	wl_global_set_withdrawn_listener(seat, mark_global_withdrawn);
-
-	client_create(d, ack_global_remove_client,
-		      &registry_ack_global_remove_listener);
-
-	display_run(d);
-	assert(!withdrawn);
-
-	wl_global_remove(seat);
-
-	/* the global will be marked as withdrawn after the client
-	 * acknowledges the wl_registry.global_remove event */
-	display_resume(d);
-	assert(withdrawn);
-
-	/* the global will be still marked as withdrawn even after
-	 * the client disconnects */
-	display_resume(d);
-	assert(withdrawn);
-
-	wl_global_destroy(seat);
-	wl_global_destroy(fixes);
-
-	display_destroy(d);
-}
-
-static struct wl_registry_listener registry_no_ack_global_remove_listener = {
-	.global = registry_handle_global_noop,
-	.global_remove = registry_handle_global_remove_noop,
-};
-
-TEST(no_ack_global_remove)
-{
-	struct display *d;
-	struct wl_global *seat;
-	struct wl_global *fixes;
-	bool withdrawn = false;
-
-	d = display_create();
-
-	fixes = wl_global_create(d->wl_display, &wl_fixes_interface,
-				 2, NULL, bind_fixes);
-
-	seat = wl_global_create(d->wl_display, &wl_seat_interface,
-				1, &withdrawn, NULL);
-
-	wl_global_set_withdrawn_listener(seat, mark_global_withdrawn);
-
-	client_create(d, ack_global_remove_client,
-		      &registry_no_ack_global_remove_listener);
-
-	display_run(d);
-	assert(!withdrawn);
-
-	wl_global_remove(seat);
-
-	/* if the client does not ack the wl_registry.global_remove event,
-	 * the global will not be marked as withdrawn */
-	display_resume(d);
-	assert(!withdrawn);
-
-	/* when the client disconnects, the wl_registry.global_remove will
-	 * be implicitly acknowledged and the global can be destroyed then */
-	display_resume(d);
-	assert(withdrawn);
-
-	wl_global_destroy(seat);
-	wl_global_destroy(fixes);
-
-	display_destroy(d);
-}
-
-TEST(global_remove_without_clients)
-{
-	struct display *d;
-	struct wl_global *global;
-	bool withdrawn = false;
-
-	d = display_create();
-
-	global = wl_global_create(d->wl_display, &wl_seat_interface,
-				  1, &withdrawn, NULL);
-
-	wl_global_set_withdrawn_listener(global, mark_global_withdrawn);
-
-	/* if there are no clients at all, the global can be destroyed
-	 * immediately */
-	wl_global_remove(global);
-	assert(withdrawn);
-
-	wl_global_destroy(global);
-
-	display_destroy(d);
-}
-
-static void
-dispatch_single_read_events(struct wl_display *d)
-{
-	if (wl_display_prepare_read(d) < 0) {
-		return;
-	}
-
-	int ret = 0;
-	do {
-		ret = wl_display_flush(d);
-	} while (ret < 0 && (errno == EINTR || errno == EAGAIN));
-	assert(ret >= 0);
-
-	struct pollfd pfd[1];
-	pfd[0].fd = wl_display_get_fd(d);
-	pfd[0].events = POLLIN;
-
-	do {
-		ret = poll(pfd, 1, -1);
-	} while (ret < 0 && errno == EINTR);
-	assert(ret > 0);
-
-	wl_display_read_events(d);
-}
-
-static void
-dispatch_single_client(void)
-{
-	struct client *c = client_connect();
-
-	assert(wl_display_dispatch_pending_single(c->wl_display) == 0);
-
-	struct wl_registry *registry = wl_display_get_registry(c->wl_display);
-
-	dispatch_single_read_events(c->wl_display);
-
-	// [1815110.061] {Default Queue} wl_registry#3.global(1, "test", 1)
-	assert(wl_display_dispatch_pending_single(c->wl_display) == 1);
-
-	dispatch_single_read_events(c->wl_display);
-
-	// [1815110.067] {Default Queue} wl_registry#3.global(2, "wl_seat", 1)
-	assert(wl_display_dispatch_pending_single(c->wl_display) == 1);
-
-	// No more events
-	assert(wl_display_dispatch_pending_single(c->wl_display) == 0);
-
-	wl_registry_destroy(registry);
-
-	client_disconnect(c);
-}
-
-TEST(dispatch_single)
-{
-	struct display *d = display_create();
-
-	struct wl_global *global = wl_global_create(d->wl_display,
-						    &wl_seat_interface,
-						    1, d, bind_seat);
-
-	client_create_noarg(d, dispatch_single_client);
-
-	display_run(d);
-
-	wl_global_destroy(global);
-
-	display_destroy(d);
-}
-
-static void
-terminate_display(void *arg)
-{
-	struct wl_display *wl_display = arg;
-	wl_display_terminate(wl_display);
-}
-
-TEST(no_source_terminate)
-{
-	struct display *d;
-	struct wl_event_loop *loop;
-
-	d = display_create();
-	loop = wl_display_get_event_loop(d->wl_display);
-
-	wl_event_loop_add_idle(loop, terminate_display, d->wl_display);
-
-	display_run(d);
-	display_destroy(d);
+	struct poor_loop loop;
+	char array_data[4000];
+	struct wl_array array = WL_ARRAY_INIT(array_data);
+	struct client c;
+	int fds[2], sndbuf = 4096;
+
+	loop_init(&loop);
+	assert(!socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0, fds));
+	assert(!setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)));
+	client_connect_fd(&c, &loop, fds[0]);
+	memset(wl_array_add(&array, sizeof(array_data)), 0, sizeof(array_data));
+	c.test_global = wl_registry_bind(c.wl_registry, 1, &test_global_interface, 1, &c.global);
+	for (int i = 0; i < 3; i++)
+		test_global_echo(c.test_global, 0, 0, 0, "", nullptr, nullptr, &array, STDERR_FILENO);
+	run_for(&loop, 100'000'000);
+	assert(c.display.send_op.pending && !c.error_called);
+	client_disconnect(&c);
+	poor_loop_close_fd_or_submit(&loop, fds[1], 0);
+	loop_fini(&loop);
 }

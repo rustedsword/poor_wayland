@@ -28,620 +28,250 @@
 
 #include "../config.h"
 
-#include <math.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#include <assert.h>
 #include <errno.h>
-#include <sys/uio.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <time.h>
 #include <ffi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-#include "wayland-util.h"
 #include "wayland-private.h"
-#include "wayland-os.h"
 
-static inline uint32_t
-div_roundup(uint32_t n, size_t a)
+static_assert(!(WL_CONNECTION_FDS & (WL_CONNECTION_FDS - 1)), "the fd queues wrap around with their counters");
+
+/* The cast prevents overflow when rounding values close to UINT32_MAX */
+static inline uint32_t div_roundup(uint32_t n, size_t a)
 {
-	/* The cast to uint64_t is necessary to prevent overflow when rounding
-	 * values close to UINT32_MAX. After the division it is again safe to
-	 * cast back to uint32_t.
-	 */
-	return (uint32_t) (((uint64_t) n + (a - 1)) / a);
+	return (uint32_t)(((uint64_t)n + (a - 1)) / a);
 }
 
-struct wl_ring_buffer {
-	char *data;
-	size_t head, tail;
-	uint32_t size_bits;
-	uint32_t max_size_bits;  /* 0 for unlimited */
-};
-
-#define MAX_FDS_OUT	28
-#define CLEN		(CMSG_LEN(MAX_FDS_OUT * sizeof(int32_t)))
-
-struct wl_connection {
-	struct wl_ring_buffer in, out;
-	struct wl_ring_buffer fds_in, fds_out;
-	int fd;
-	int want_flush;
-};
-
-static inline size_t
-size_pot(uint32_t size_bits)
+static uint32_t min_u32(uint32_t a, uint32_t b)
 {
-	if (!(size_bits < 8 * sizeof(size_t)))
-		wl_abort("Too many bits for size_t\n");
-
-	return ((size_t)1) << size_bits;
+	return a < b ? a : b;
 }
 
-static size_t
-ring_buffer_capacity(const struct wl_ring_buffer *b) {
-	return size_pot(b->size_bits);
-}
-
-static size_t
-ring_buffer_mask(const struct wl_ring_buffer *b, size_t i) {
-	size_t m = ring_buffer_capacity(b) - 1;
-	return i & m;
-}
-
-static int
-ring_buffer_put(struct wl_ring_buffer *b, const void *data, size_t count)
-{
-	size_t head, size;
-
-	if (count == 0)
-		return 0;
-
-	head = ring_buffer_mask(b, b->head);
-	if (head + count <= ring_buffer_capacity(b)) {
-		memcpy(b->data + head, data, count);
-	} else {
-		size = ring_buffer_capacity(b) - head;
-		memcpy(b->data + head, data, size);
-		memcpy(b->data, (const char *) data + size, count - size);
-	}
-
-	b->head += count;
-
-	return 0;
-}
-
-static void
-ring_buffer_put_iov(struct wl_ring_buffer *b, struct iovec *iov, int *count)
-{
-	size_t head, tail;
-
-	head = ring_buffer_mask(b, b->head);
-	tail = ring_buffer_mask(b, b->tail);
-	if (head < tail) {
-		iov[0].iov_base = b->data + head;
-		iov[0].iov_len = tail - head;
-		*count = 1;
-	} else if (tail == 0) {
-		iov[0].iov_base = b->data + head;
-		iov[0].iov_len = ring_buffer_capacity(b) - head;
-		*count = 1;
-	} else {
-		iov[0].iov_base = b->data + head;
-		iov[0].iov_len = ring_buffer_capacity(b) - head;
-		iov[1].iov_base = b->data;
-		iov[1].iov_len = tail;
-		*count = 2;
-	}
-}
-
-static void
-ring_buffer_get_iov(struct wl_ring_buffer *b, struct iovec *iov, int *count)
-{
-	size_t head, tail;
-
-	head = ring_buffer_mask(b, b->head);
-	tail = ring_buffer_mask(b, b->tail);
-	if (tail < head) {
-		iov[0].iov_base = b->data + tail;
-		iov[0].iov_len = head - tail;
-		*count = 1;
-	} else if (head == 0) {
-		iov[0].iov_base = b->data + tail;
-		iov[0].iov_len = ring_buffer_capacity(b) - tail;
-		*count = 1;
-	} else {
-		iov[0].iov_base = b->data + tail;
-		iov[0].iov_len = ring_buffer_capacity(b) - tail;
-		iov[1].iov_base = b->data;
-		iov[1].iov_len = head;
-		*count = 2;
-	}
-}
-
-static void
-ring_buffer_copy(struct wl_ring_buffer *b, void *data, size_t count)
-{
-	size_t tail, size;
-
-	if (count == 0)
-		return;
-
-	tail = ring_buffer_mask(b, b->tail);
-	if (tail + count <= ring_buffer_capacity(b)) {
-		memcpy(data, b->data + tail, count);
-	} else {
-		size = ring_buffer_capacity(b) - tail;
-		memcpy(data, b->data + tail, size);
-		memcpy((char *) data + size, b->data, count - size);
-	}
-}
-
-static size_t
-ring_buffer_size(struct wl_ring_buffer *b)
+static uint32_t ring_used(const struct wl_ring_buffer *b)
 {
 	return b->head - b->tail;
 }
 
-static char *
-ring_buffer_tail(const struct wl_ring_buffer *b)
+static uint32_t ring_free(const struct wl_ring_buffer *b)
 {
-	return b->data + ring_buffer_mask(b, b->tail);
+	return b->size - ring_used(b);
 }
 
-static uint32_t
-get_max_size_bits_for_size(size_t buffer_size)
+static uint32_t ring_mask(const struct wl_ring_buffer *b, uint32_t i)
 {
-	uint32_t max_size_bits = WL_BUFFER_DEFAULT_SIZE_POT;
-
-	/* buffer_size == 0 means unbound buffer size */
-	if (buffer_size == 0)
-		return 0;
-
-	while (max_size_bits < 8 * sizeof(size_t) && size_pot(max_size_bits) < buffer_size)
-		max_size_bits++;
-
-	return max_size_bits;
+	return i & (b->size - 1);
 }
 
-static int
-ring_buffer_allocate(struct wl_ring_buffer *b, size_t size_bits)
+static void ring_put(struct wl_ring_buffer *b, const void *data, uint32_t count)
 {
-	char *new_data;
+	uint32_t head = ring_mask(b, b->head), first = min_u32(b->size - head, count);
 
-	new_data = zalloc(size_pot(size_bits));
-	if (!new_data)
-		return -1;
-
-	ring_buffer_copy(b, new_data, ring_buffer_size(b));
-	free(b->data);
-	b->data = new_data;
-	b->size_bits = size_bits;
-	b->head = ring_buffer_size(b);
-	b->tail = 0;
-
-	return 0;
+	memcpy(b->data + head, data, first);
+	memcpy(b->data, (const char *)data + first, count - first);
+	b->head += count;
 }
 
-static size_t
-ring_buffer_get_bits_for_size(struct wl_ring_buffer *b, size_t net_size)
+static void ring_copy(const struct wl_ring_buffer *b, void *data, uint32_t count)
 {
-	size_t max_size_bits = get_max_size_bits_for_size(net_size);
+	uint32_t tail = ring_mask(b, b->tail), first = min_u32(b->size - tail, count);
 
-	if (max_size_bits < WL_BUFFER_DEFAULT_SIZE_POT)
-		max_size_bits = WL_BUFFER_DEFAULT_SIZE_POT;
-
-	if (b->max_size_bits > 0 && max_size_bits > b->max_size_bits)
-		max_size_bits = b->max_size_bits;
-
-	return max_size_bits;
+	memcpy(data, b->data + tail, first);
+	memcpy((char *)data + first, b->data, count - first);
 }
 
-static bool
-ring_buffer_is_max_size_reached(struct wl_ring_buffer *b)
+static int ring_iov(const struct wl_ring_buffer *b, uint32_t start, uint32_t len, struct iovec *iov)
 {
-	size_t net_size = ring_buffer_size(b) + 1;
-	size_t size_bits = ring_buffer_get_bits_for_size(b, net_size);
+	uint32_t first = min_u32(b->size - ring_mask(b, start), len);
 
-	return net_size >= size_pot(size_bits);
+	iov[0].iov_base = b->data + ring_mask(b, start);
+	iov[0].iov_len = first;
+	if (first == len)
+		return 1;
+	iov[1].iov_base = b->data;
+	iov[1].iov_len = len - first;
+	return 2;
 }
 
-static int
-ring_buffer_ensure_space(struct wl_ring_buffer *b, size_t count)
+static uint32_t fds_used(const struct wl_fd_ring *r)
 {
-	size_t net_size = ring_buffer_size(b) + count;
-	size_t size_bits = ring_buffer_get_bits_for_size(b, net_size);
-
-	/* The 'size_bits' value represents the required size (in POT) to store
-	 * 'net_size', which depending whether the buffers are bounded or not
-	 * might not be sufficient (i.e. we might have reached the maximum size
-	 * allowed).
-	 */
-	if (net_size > size_pot(size_bits)) {
-		wl_log("Data too big for buffer (%zu + %zu > %zu).\n",
-		       ring_buffer_size(b), count, size_pot(size_bits));
-		errno = E2BIG;
-		return -1;
-	}
-
-	/* The following test here is a short-cut to avoid reallocating a buffer
-	 * of the same size.
-	 */
-	if (size_bits == b->size_bits)
-		return 0;
-
-	/* Otherwise, we (re)allocate the buffer to match the required size */
-	return ring_buffer_allocate(b, size_bits);
+	return r->head - r->tail;
 }
 
-static void
-ring_buffer_close_fds(struct wl_ring_buffer *buffer, int32_t count)
+static uint32_t fds_free(const struct wl_fd_ring *r)
 {
-	int32_t i, *p;
-	size_t size, tail;
-
-	size = ring_buffer_capacity(buffer);
-	tail = ring_buffer_mask(buffer, buffer->tail);
-	p = (int32_t *) (buffer->data + tail);
-
-	for (i = 0; i < count; i++) {
-		if (p >= (int32_t *) (buffer->data + size))
-			p = (int32_t *) buffer->data;
-		close(*p++);
-	}
+	return WL_CONNECTION_FDS - fds_used(r);
 }
 
-void
-wl_connection_set_max_buffer_size(struct wl_connection *connection,
-				  size_t max_buffer_size)
+static void fds_put(struct wl_fd_ring *r, int fd)
 {
-	uint32_t max_size_bits;
-
-	max_size_bits = get_max_size_bits_for_size(max_buffer_size);
-
-	connection->fds_in.max_size_bits = max_size_bits;
-	ring_buffer_ensure_space(&connection->fds_in, 0);
-
-	connection->fds_out.max_size_bits = max_size_bits;
-	ring_buffer_ensure_space(&connection->fds_out, 0);
-
-	connection->in.max_size_bits = max_size_bits;
-	ring_buffer_ensure_space(&connection->in, 0);
-
-	connection->out.max_size_bits = max_size_bits;
-	ring_buffer_ensure_space(&connection->out, 0);
+	r->fds[r->head++ % WL_CONNECTION_FDS] = fd;
 }
 
-struct wl_connection *
-wl_connection_create(int fd, size_t max_buffer_size)
+static int fds_get(struct wl_fd_ring *r)
 {
-	struct wl_connection *connection;
-
-	connection = zalloc(sizeof *connection);
-	if (connection == NULL)
-		return NULL;
-
-	wl_connection_set_max_buffer_size(connection, max_buffer_size);
-
-	connection->fd = fd;
-
-	return connection;
+	return r->fds[r->tail++ % WL_CONNECTION_FDS];
 }
 
-static void
-close_fds(struct wl_ring_buffer *buffer, int max)
+static void fds_close(struct wl_fd_ring *r, struct poor_loop *loop, uint32_t count)
 {
-	size_t size;
-	int32_t count;
-
-	size = ring_buffer_size(buffer);
-	if (size == 0)
-		return;
-
-	count = size / sizeof(int32_t);
-	if (max > 0 && max < count)
-		count = max;
-
-	ring_buffer_close_fds(buffer, count);
-
-	size = count * sizeof(int32_t);
-	buffer->tail += size;
+	while (count--)
+		poor_loop_close_fd_or_submit(loop, fds_get(r), 0);
 }
 
-void
-wl_connection_close_fds_in(struct wl_connection *connection, int max)
+static void ring_init(struct wl_ring_buffer *b, char *data, uint32_t size)
 {
-	close_fds(&connection->fds_in, max);
+	assert(size >= WL_MAX_MESSAGE_SIZE && size <= UINT32_MAX / 2 + 1 && !(size & (size - 1)));
+	b->data = data;
+	b->size = size;
+	b->head = b->tail = 0;
 }
 
-int
-wl_connection_destroy(struct wl_connection *connection)
+void wl_connection_init(struct wl_connection *connection, const struct wl_connection_memory *memory)
 {
-	int fd = connection->fd;
-
-	close_fds(&connection->fds_out, -1);
-	free(connection->fds_out.data);
-	free(connection->out.data);
-
-	close_fds(&connection->fds_in, -1);
-	free(connection->fds_in.data);
-	free(connection->in.data);
-
-	free(connection);
-
-	return fd;
+	ring_init(&connection->in, memory->in, memory->in_size);
+	ring_init(&connection->out, memory->out, memory->out_size);
+	connection->fds_in.head = connection->fds_in.tail = 0;
+	connection->fds_out.head = connection->fds_out.tail = 0;
+	connection->out_fds = 0;
+	connection->want_flush = false;
 }
 
-void
-wl_connection_copy(struct wl_connection *connection, void *data, size_t size)
+/* A recvmsg() gets the fds of one sendmsg() at most, so the queue keeps room for as many as one can send */
+bool wl_connection_can_recv(const struct wl_connection *connection)
 {
-	ring_buffer_copy(&connection->in, data, size);
+	return ring_free(&connection->in) && fds_free(&connection->fds_in) >= WL_CONNECTION_MAX_FDS;
 }
 
-void
-wl_connection_consume(struct wl_connection *connection, size_t size)
+void wl_connection_prep_recv(struct wl_connection *connection, struct io_uring_sqe *sqe, int fd)
 {
-	connection->in.tail += size;
+	struct msghdr *msg = &connection->in_msg;
+
+	msg->msg_name = nullptr;
+	msg->msg_namelen = 0;
+	msg->msg_iov = connection->in_iov;
+	msg->msg_iovlen = ring_iov(&connection->in, connection->in.head, ring_free(&connection->in), connection->in_iov);
+	msg->msg_control = connection->in_cmsg;
+	msg->msg_controllen = sizeof(connection->in_cmsg);
+	msg->msg_flags = 0;
+	io_uring_prep_recvmsg(sqe, fd, msg, MSG_CMSG_CLOEXEC);
 }
 
-static void
-build_cmsg(struct wl_ring_buffer *buffer, char *data, size_t *clen)
+/* A truncated control message lost fds, so the connection can't go on */
+int wl_connection_recv_done(struct wl_connection *connection, struct poor_loop *loop, int res)
 {
-	struct cmsghdr *cmsg;
-	size_t size;
+	struct msghdr *msg = &connection->in_msg;
+	bool overflow = msg->msg_flags & MSG_CTRUNC;
 
-	size = ring_buffer_size(buffer);
-	if (size > MAX_FDS_OUT * sizeof(int32_t))
-		size = MAX_FDS_OUT * sizeof(int32_t);
+	connection->in.head += res;
+	for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg); cmsg; cmsg = CMSG_NXTHDR(msg, cmsg)) {
+		size_t n = (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int);
+		int fd;
 
-	if (size > 0) {
-		cmsg = (struct cmsghdr *) data;
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SCM_RIGHTS;
-		cmsg->cmsg_len = CMSG_LEN(size);
-		ring_buffer_copy(buffer, CMSG_DATA(cmsg), size);
-		*clen = cmsg->cmsg_len;
-	} else {
-		*clen = 0;
-	}
-}
-
-static int
-decode_cmsg(struct wl_ring_buffer *buffer, struct msghdr *msg)
-{
-	struct cmsghdr *cmsg;
-	size_t size, i;
-	int overflow = 0;
-
-	for (cmsg = CMSG_FIRSTHDR(msg); cmsg != NULL;
-	     cmsg = CMSG_NXTHDR(msg, cmsg)) {
-		if (cmsg->cmsg_level != SOL_SOCKET ||
-		    cmsg->cmsg_type != SCM_RIGHTS)
+		if (cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS)
 			continue;
-
-		size = cmsg->cmsg_len - CMSG_LEN(0);
-
-		if (ring_buffer_ensure_space(buffer, size) < 0 || overflow) {
-			overflow = 1;
-			size /= sizeof(int32_t);
-			for (i = 0; i < size; i++)
-				close(((int*)CMSG_DATA(cmsg))[i]);
-		} else if (ring_buffer_put(buffer, CMSG_DATA(cmsg), size) < 0) {
-				return -1;
+		for (size_t i = 0; i < n; i++) {
+			memcpy(&fd, CMSG_DATA(cmsg) + i * sizeof(fd), sizeof(fd));
+			if (overflow || !fds_free(&connection->fds_in)) {
+				overflow = true;
+				poor_loop_close_fd_or_submit(loop, fd, 0);
+			} else {
+				fds_put(&connection->fds_in, fd);
+			}
 		}
 	}
-
 	if (overflow) {
 		errno = EOVERFLOW;
 		return -1;
 	}
-
 	return 0;
 }
 
-int
-wl_connection_flush(struct wl_connection *connection)
+bool wl_connection_has_output(const struct wl_connection *connection)
 {
-	struct iovec iov[2];
-	struct msghdr msg = {0};
-	char cmsg[CLEN];
-	int len = 0, count;
-	size_t clen;
-	size_t tail;
+	return ring_used(&connection->out);
+}
 
-	if (!connection->want_flush)
-		return 0;
+/*
+ * A send takes up to WL_CONNECTION_MAX_FDS fds. When that many are waiting, they go with a single byte, so the fds
+ * of messages that need more of them are all sent before the messages are.
+ */
+void wl_connection_prep_send(struct wl_connection *connection, struct io_uring_sqe *sqe, int fd, int flags)
+{
+	struct msghdr *msg = &connection->out_msg;
+	uint32_t nfds = min_u32(fds_used(&connection->fds_out), WL_CONNECTION_MAX_FDS);
+	struct cmsghdr *cmsg = (struct cmsghdr *)connection->out_cmsg;
+	uint32_t len = nfds == WL_CONNECTION_MAX_FDS ? 1 : ring_used(&connection->out);
 
-	tail = connection->out.tail;
-	while (ring_buffer_size(&connection->out) > 0) {
-		build_cmsg(&connection->fds_out, cmsg, &clen);
+	msg->msg_name = nullptr;
+	msg->msg_namelen = 0;
+	msg->msg_iov = connection->out_iov;
+	msg->msg_iovlen = ring_iov(&connection->out, connection->out.tail, len, connection->out_iov);
+	msg->msg_control = nullptr;
+	msg->msg_controllen = 0;
+	msg->msg_flags = 0;
+	if (nfds) {
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		cmsg->cmsg_len = CMSG_LEN(nfds * sizeof(int));
+		for (uint32_t i = 0; i < nfds; i++) {
+			int fd_out = connection->fds_out.fds[(connection->fds_out.tail + i) % WL_CONNECTION_FDS];
 
-		if (clen >= CLEN) {
-			/* UNIX domain sockets allows to send file descriptors
-			 * using ancillary data.
-			 *
-			 * As per the UNIX domain sockets man page (man 7 unix),
-			 * "at least one byte of real data should be sent when
-			 * sending ancillary data".
-			 *
-			 * This is why we send only a single byte here, to ensure
-			 * all file descriptors are sent before the bytes are
-			 * cleared out.
-			 *
-			 * Otherwise This can fail to clear the file descriptors
-			 * first if individual messages are allowed to have 224
-			 * (8 bytes * MAX_FDS_OUT = 224) file descriptors .
-			 */
-			iov[0].iov_base = ring_buffer_tail(&connection->out);
-			iov[0].iov_len = 1;
-			count = 1;
-		} else {
-			ring_buffer_get_iov(&connection->out, iov, &count);
+			memcpy(CMSG_DATA(cmsg) + i * sizeof(int), &fd_out, sizeof(int));
 		}
-
-		msg.msg_name = NULL;
-		msg.msg_namelen = 0;
-		msg.msg_iov = iov;
-		msg.msg_iovlen = count;
-		msg.msg_control = (clen > 0) ? cmsg : NULL;
-		msg.msg_controllen = clen;
-
-		do {
-			len = sendmsg(connection->fd, &msg,
-				      MSG_NOSIGNAL | MSG_DONTWAIT);
-		} while (len == -1 && errno == EINTR);
-
-		if (len == -1)
-			return -1;
-
-		close_fds(&connection->fds_out, MAX_FDS_OUT);
-
-		connection->out.tail += len;
+		msg->msg_control = cmsg;
+		msg->msg_controllen = CMSG_SPACE(nfds * sizeof(int));
 	}
-
-	connection->want_flush = 0;
-
-	return connection->out.head - tail;
+	connection->out_fds = nfds;
+	io_uring_prep_sendmsg(sqe, fd, msg, MSG_NOSIGNAL | flags);
 }
 
-uint32_t
-wl_connection_pending_input(struct wl_connection *connection)
+/* The fds went with the first byte, and the peer holds them now */
+void wl_connection_send_done(struct wl_connection *connection, struct poor_loop *loop, int res)
 {
-	return ring_buffer_size(&connection->in);
-}
-
-int
-wl_connection_read(struct wl_connection *connection)
-{
-	struct iovec iov[2];
-	struct msghdr msg;
-	char cmsg[CLEN];
-	int len, count, ret;
-
-	while (1) {
-		int data_size = ring_buffer_size(&connection->in);
-
-		/* Stop once we've read the max buffer size. */
-		if (ring_buffer_is_max_size_reached(&connection->in))
-			return data_size;
-
-		if (ring_buffer_ensure_space(&connection->in, 1) < 0)
-			return -1;
-
-		ring_buffer_put_iov(&connection->in, iov, &count);
-
-		msg.msg_name = NULL;
-		msg.msg_namelen = 0;
-		msg.msg_iov = iov;
-		msg.msg_iovlen = count;
-		msg.msg_control = cmsg;
-		msg.msg_controllen = sizeof cmsg;
-		msg.msg_flags = 0;
-
-		do {
-			len = wl_os_recvmsg_cloexec(connection->fd, &msg, MSG_DONTWAIT);
-		} while (len < 0 && errno == EINTR);
-
-		if (len == 0) {
-		    /* EOF, return previously read data first */
-		    return data_size;
-		}
-		if (len < 0) {
-		    if (errno == EAGAIN && data_size > 0) {
-			/* nothing new read, return previously read data */
-			return data_size;
-		    }
-		    return len;
-		}
-
-		ret = decode_cmsg(&connection->fds_in, &msg);
-		if (ret)
-			return -1;
-
-		connection->in.head += len;
+	if (res > 0) {
+		fds_close(&connection->fds_out, loop, connection->out_fds);
+		connection->out.tail += res;
 	}
+	connection->out_fds = 0;
 }
 
-int
-wl_connection_write(struct wl_connection *connection,
-		    const void *data, size_t count)
+void wl_connection_close_fds(struct wl_connection *connection, struct poor_loop *loop)
 {
-	if (wl_connection_queue(connection, data, count) < 0)
-		return -1;
-
-	connection->want_flush = 1;
-
-	return 0;
+	fds_close(&connection->fds_in, loop, fds_used(&connection->fds_in));
+	fds_close(&connection->fds_out, loop, fds_used(&connection->fds_out));
 }
 
-int
-wl_connection_queue(struct wl_connection *connection,
-		    const void *data, size_t count)
+void wl_connection_close_fds_in(struct wl_connection *connection, struct poor_loop *loop, int max)
 {
-	/* We want to try to flush when the buffer reaches the default maximum
-	 * size even if the buffer has been previously expanded.
-	 *
-	 * Otherwise the larger buffer will cause us to flush less frequently,
-	 * which could increase lag.
-	 *
-	 * We'd like to flush often and get the buffer size back down if possible.
-	 */
-	if (ring_buffer_size(&connection->out) + count > WL_BUFFER_DEFAULT_MAX_SIZE) {
-		connection->want_flush = 1;
-		if (wl_connection_flush(connection) < 0 && errno != EAGAIN)
-			return -1;
-	}
-
-	if (ring_buffer_ensure_space(&connection->out, count) < 0)
-		return -1;
-
-	return ring_buffer_put(&connection->out, data, count);
+	fds_close(&connection->fds_in, loop, min_u32(fds_used(&connection->fds_in), max));
 }
 
-int
-wl_message_count_arrays(const struct wl_message *message)
+uint32_t wl_connection_pending_input(const struct wl_connection *connection)
 {
-	int i, arrays;
-
-	for (i = 0, arrays = 0; message->signature[i]; i++) {
-		if (message->signature[i] == WL_ARG_ARRAY)
-			arrays++;
-	}
-
-	return arrays;
+	return ring_used(&connection->in);
 }
 
-int
-wl_connection_get_fd(struct wl_connection *connection)
+void wl_connection_copy(const struct wl_connection *connection, void *data, size_t size)
 {
-	return connection->fd;
+	ring_copy(&connection->in, data, size);
 }
 
-static int
-wl_connection_put_fd(struct wl_connection *connection, int32_t fd)
+void wl_connection_consume(struct wl_connection *connection, size_t size)
 {
-	if (ring_buffer_size(&connection->fds_out) >= MAX_FDS_OUT * sizeof fd) {
-		connection->want_flush = 1;
-		if (wl_connection_flush(connection) < 0 && errno != EAGAIN)
-			return -1;
-	}
-
-	if (ring_buffer_ensure_space(&connection->fds_out, sizeof fd) < 0)
-		return -1;
-
-	return ring_buffer_put(&connection->fds_out, &fd, sizeof fd);
+	connection->in.tail += size;
 }
 
-const char *
-get_next_argument(const char *signature, struct argument_details *details)
+const char *get_next_argument(const char *signature, struct argument_details *details)
 {
 	details->nullable = 0;
-	for(; *signature; ++signature) {
-		switch(*signature) {
+	for (; *signature; ++signature) {
+		switch (*signature) {
 		case WL_ARG_INT:
 		case WL_ARG_UINT:
 		case WL_ARG_FIXED:
@@ -660,12 +290,12 @@ get_next_argument(const char *signature, struct argument_details *details)
 	return signature;
 }
 
-int
-arg_count_for_signature(const char *signature)
+int arg_count_for_signature(const char *signature)
 {
 	int count = 0;
-	for(; *signature; ++signature) {
-		switch(*signature) {
+
+	for (; *signature; ++signature) {
+		switch (*signature) {
 		case WL_ARG_INT:
 		case WL_ARG_UINT:
 		case WL_ARG_FIXED:
@@ -680,32 +310,29 @@ arg_count_for_signature(const char *signature)
 	return count;
 }
 
-int
-wl_message_get_since(const struct wl_message *message)
+int wl_message_count_fds(const struct wl_message *message)
 {
-	int since;
+	int fds = 0;
 
-	since = atoi(message->signature);
-
-	if (since == 0)
-		since = 1;
-
-	return since;
+	for (const char *s = message->signature; *s; s++)
+		fds += *s == WL_ARG_FD;
+	return fds;
 }
 
-void
-wl_argument_from_va_list(const char *signature, union wl_argument *args,
-			 int count, va_list ap)
+int wl_message_get_since(const struct wl_message *message)
 {
-	int i;
-	const char *sig_iter;
+	int since = atoi(message->signature);
+
+	return since ? since : 1;
+}
+
+void wl_argument_from_va_list(const char *signature, union wl_argument *args, int count, va_list ap)
+{
 	struct argument_details arg;
 
-	sig_iter = signature;
-	for (i = 0; i < count; i++) {
-		sig_iter = get_next_argument(sig_iter, &arg);
-
-		switch(arg.type) {
+	for (int i = 0; i < count; i++) {
+		signature = get_next_argument(signature, &arg);
+		switch (arg.type) {
 		case WL_ARG_INT:
 			args[i].i = va_arg(ap, int32_t);
 			break;
@@ -719,8 +346,6 @@ wl_argument_from_va_list(const char *signature, union wl_argument *args,
 			args[i].s = va_arg(ap, const char *);
 			break;
 		case WL_ARG_OBJECT:
-			args[i].o = va_arg(ap, struct wl_object *);
-			break;
 		case WL_ARG_NEW_ID:
 			args[i].o = va_arg(ap, struct wl_object *);
 			break;
@@ -734,211 +359,218 @@ wl_argument_from_va_list(const char *signature, union wl_argument *args,
 	}
 }
 
-static void
-wl_closure_clear_fds(struct wl_closure *closure)
+static int closure_init(struct wl_closure *closure, const struct wl_message *message)
 {
-	const char *signature = closure->message->signature;
+	int count = arg_count_for_signature(message->signature);
+
+	if (count > WL_CLOSURE_MAX_ARGS) {
+		wl_log("too many args (%d) for %s (signature %s)\n", count, message->name, message->signature);
+		errno = EINVAL;
+		return -1;
+	}
+	closure->message = message;
+	closure->count = count;
+	return 0;
+}
+
+/* The fds stay with the caller, wl_closure_send() sends copies */
+int wl_closure_marshal(struct wl_closure *closure, struct wl_object *sender, uint32_t opcode, const union wl_argument *args,
+		       const struct wl_message *message)
+{
+	const char *signature = message->signature;
 	struct argument_details arg;
 	int i;
 
+	if (closure_init(closure, message) < 0)
+		return -1;
 	for (i = 0; i < closure->count; i++) {
 		signature = get_next_argument(signature, &arg);
-		if (arg.type == WL_ARG_FD)
-			closure->args[i].h = -1;
-	}
-}
-
-static struct wl_closure *
-wl_closure_init(const struct wl_message *message, uint32_t size,
-                int *num_arrays, union wl_argument *args)
-{
-	struct wl_closure *closure;
-	int count;
-
-	count = arg_count_for_signature(message->signature);
-	if (count > WL_CLOSURE_MAX_ARGS) {
-		wl_log("too many args (%d) for %s (signature %s)\n", count,
-		       message->name, message->signature);
-		errno = EINVAL;
-		return NULL;
-	}
-
-	int size_to_allocate;
-
-	if (size) {
-		*num_arrays = wl_message_count_arrays(message);
-		size_to_allocate = sizeof *closure + size +
-				   *num_arrays * sizeof(struct wl_array);
-	} else {
-		size_to_allocate = sizeof *closure;
-	}
-	closure = zalloc(size_to_allocate);
-
-	if (!closure) {
-		wl_log("could not allocate closure of size (%d) for "
-		       "%s (signature %s)\n", size_to_allocate, message->name,
-		       message->signature);
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	if (args)
-		memcpy(closure->args, args, count * sizeof *args);
-
-	closure->message = message;
-	closure->count = count;
-
-	/* Set these all to -1 so we can close any that have been
-	 * set to a real value during wl_closure_destroy().
-	 * We may have copied a bunch of fds into the closure with
-	 * memcpy previously, but those are undup()d client fds
-	 * that we would have replaced anyway.
-	 */
-	wl_closure_clear_fds(closure);
-
-	return closure;
-}
-
-struct wl_closure *
-wl_closure_marshal(struct wl_object *sender, uint32_t opcode,
-		   union wl_argument *args,
-		   const struct wl_message *message)
-{
-	struct wl_closure *closure;
-	struct wl_object *object;
-	int i, count, fd, dup_fd;
-	const char *signature;
-	struct argument_details arg;
-
-	closure = wl_closure_init(message, 0, NULL, args);
-	if (closure == NULL)
-		return NULL;
-
-	count = closure->count;
-
-	signature = message->signature;
-	for (i = 0; i < count; i++) {
-		signature = get_next_argument(signature, &arg);
-
+		closure->args[i] = args[i];
 		switch (arg.type) {
 		case WL_ARG_FIXED:
 		case WL_ARG_UINT:
 		case WL_ARG_INT:
+		case WL_ARG_FD:
 			break;
 		case WL_ARG_STRING:
-			if (!arg.nullable && args[i].s == NULL)
+			if (!arg.nullable && !args[i].s)
 				goto err_null;
 			break;
 		case WL_ARG_OBJECT:
-			if (!arg.nullable && args[i].o == NULL)
+			if (!arg.nullable && !args[i].o)
 				goto err_null;
 			break;
 		case WL_ARG_NEW_ID:
-			object = args[i].o;
-			if (object == NULL)
+			if (!args[i].o)
 				goto err_null;
-
-			closure->args[i].n = object ? object->id : 0;
+			closure->args[i].n = args[i].o->id;
 			break;
 		case WL_ARG_ARRAY:
-			if (args[i].a == NULL)
+			if (!args[i].a)
 				goto err_null;
-			break;
-		case WL_ARG_FD:
-			fd = args[i].h;
-			dup_fd = wl_os_dupfd_cloexec(fd, 0);
-			if (dup_fd < 0) {
-				wl_closure_destroy(closure);
-				wl_log("error marshalling arguments for %s: dup failed: %s\n",
-				       message->name, strerror(errno));
-				return NULL;
-			}
-			closure->args[i].h = dup_fd;
 			break;
 		default:
 			wl_abort("unhandled format code: '%c'\n", arg.type);
+		}
+	}
+	closure->sender_id = sender->id;
+	closure->opcode = opcode;
+	return 0;
+
+err_null:
+	wl_log("error marshalling arguments for %s (signature %s): null value passed for arg %i\n", message->name,
+	       message->signature, i);
+	errno = EINVAL;
+	return -1;
+}
+
+/* Returns the size of the message, or -1 if it doesn't fit 'buffer' */
+static int serialize_closure(const struct wl_closure *closure, uint32_t *buffer, size_t buffer_count, uint32_t *nfds)
+{
+	const struct wl_message *message = closure->message;
+	const char *signature = message->signature;
+	struct argument_details arg;
+	uint32_t *p = buffer + 2, *end = buffer + buffer_count, size;
+
+	*nfds = 0;
+	for (int i = 0; i < closure->count; i++) {
+		signature = get_next_argument(signature, &arg);
+		if (arg.type == WL_ARG_FD) {
+			(*nfds)++;
+			continue;
+		}
+		if (p >= end)
+			goto overflow;
+		switch (arg.type) {
+		case WL_ARG_UINT:
+			*p++ = closure->args[i].u;
+			break;
+		case WL_ARG_INT:
+			*p++ = closure->args[i].i;
+			break;
+		case WL_ARG_FIXED:
+			*p++ = closure->args[i].f;
+			break;
+		case WL_ARG_OBJECT:
+			*p++ = closure->args[i].o ? closure->args[i].o->id : 0;
+			break;
+		case WL_ARG_NEW_ID:
+			*p++ = closure->args[i].n;
+			break;
+		case WL_ARG_STRING:
+			if (!closure->args[i].s) {
+				*p++ = 0;
+				break;
+			}
+			size = strlen(closure->args[i].s) + 1;
+			*p++ = size;
+			if (div_roundup(size, sizeof(*p)) > (uint32_t)(end - p))
+				goto overflow;
+			p[div_roundup(size, sizeof(*p)) - 1] = 0;
+			memcpy(p, closure->args[i].s, size);
+			p += div_roundup(size, sizeof(*p));
+			break;
+		case WL_ARG_ARRAY:
+			size = closure->args[i].a->size;
+			*p++ = size;
+			if (div_roundup(size, sizeof(*p)) > (uint32_t)(end - p))
+				goto overflow;
+			if (size) {
+				p[div_roundup(size, sizeof(*p)) - 1] = 0;
+				memcpy(p, closure->args[i].a->data, size);
+			}
+			p += div_roundup(size, sizeof(*p));
+			break;
+		case WL_ARG_FD:
 			break;
 		}
 	}
+	size = (p - buffer) * sizeof(*p);
+	buffer[0] = closure->sender_id;
+	buffer[1] = size << 16 | (closure->opcode & 0x0000ffff);
+	return size;
 
-	closure->sender_id = sender->id;
-	closure->opcode = opcode;
-
-	return closure;
-
-err_null:
-	wl_closure_destroy(closure);
-	wl_log("error marshalling arguments for %s (signature %s): "
-	       "null value passed for arg %i\n", message->name,
-	       message->signature, i);
-	errno = EINVAL;
-	return NULL;
+overflow:
+	wl_log("message %s (signature %s) exceeds %d bytes\n", message->name, message->signature, WL_MAX_MESSAGE_SIZE);
+	errno = E2BIG;
+	return -1;
 }
 
-struct wl_closure *
-wl_closure_vmarshal(struct wl_object *sender, uint32_t opcode, va_list ap,
-		    const struct wl_message *message)
+/* The connection keeps duplicates of the fds until they are sent */
+int wl_closure_send(const struct wl_closure *closure, struct wl_connection *connection, struct poor_loop *loop)
 {
-	union wl_argument args[WL_CLOSURE_MAX_ARGS];
-
-	wl_argument_from_va_list(message->signature, args,
-				 WL_CLOSURE_MAX_ARGS, ap);
-
-	return wl_closure_marshal(sender, opcode, args, message);
-}
-
-struct wl_closure *
-wl_connection_demarshal(struct wl_connection *connection,
-			uint32_t size,
-			struct wl_map *objects,
-			const struct wl_message *message)
-{
-	uint32_t *p, *next, *end, length, length_in_u32, id;
-	int fd;
-	char *s;
-	int i, count, num_arrays;
-	const char *signature;
+	uint32_t buffer[WL_MAX_MESSAGE_SIZE / sizeof(uint32_t)], nfds, head = connection->fds_out.head;
+	const char *signature = closure->message->signature;
 	struct argument_details arg;
-	struct wl_closure *closure;
-	struct wl_array *array_extra;
+	int size = serialize_closure(closure, buffer, ARRAY_SIZE(buffer), &nfds);
 
-	/* Space for sender_id and opcode */
-	if (size < 2 * sizeof *p) {
+	if (size < 0)
+		return -1;
+	if ((uint32_t)size > ring_free(&connection->out) || nfds > fds_free(&connection->fds_out)) {
+		wl_log("no room for %s: %d bytes and %u fds queued\n", closure->message->name, ring_used(&connection->out),
+		       fds_used(&connection->fds_out));
+		errno = E2BIG;
+		return -1;
+	}
+	for (int i = 0; i < closure->count; i++) {
+		int fd;
+
+		signature = get_next_argument(signature, &arg);
+		if (arg.type != WL_ARG_FD)
+			continue;
+		fd = fcntl(closure->args[i].h, F_DUPFD_CLOEXEC, 0);
+		if (fd < 0) {
+			wl_log("error marshalling arguments for %s: dup failed: %s\n", closure->message->name, strerror(errno));
+			while (connection->fds_out.head != head)
+				poor_loop_close_fd_or_submit(loop, connection->fds_out.fds[--connection->fds_out.head % WL_CONNECTION_FDS], 0);
+			return -1;
+		}
+		fds_put(&connection->fds_out, fd);
+	}
+	ring_put(&connection->out, buffer, size);
+	return 0;
+}
+
+int wl_connection_demarshal(struct wl_connection *connection, struct poor_loop *loop, uint32_t size, struct wl_map *objects,
+			    const struct wl_message *message, struct wl_closure *closure, struct wl_closure_data *data)
+{
+	uint32_t *p = data->words, *next, *end, length, length_in_u32, id;
+	struct wl_array *array_extra = data->arrays;
+	const char *signature = message->signature;
+	struct argument_details arg;
+	char *s;
+
+	assert(size <= sizeof(data->words));
+	if (size < 2 * sizeof(*p)) {
 		wl_log("message too short, invalid header\n");
 		wl_connection_consume(connection, size);
 		errno = EINVAL;
-		return NULL;
+		return -1;
 	}
-
-	closure = wl_closure_init(message, size, &num_arrays, NULL);
-	if (closure == NULL) {
+	if (closure_init(closure, message) < 0) {
 		wl_connection_consume(connection, size);
-		return NULL;
+		return -1;
+	}
+	for (int i = 0; i < closure->count; i++) {
+		signature = get_next_argument(signature, &arg);
+		if (arg.type == WL_ARG_FD)
+			closure->args[i].h = -1;
 	}
 
-	count = closure->count;
-
-	array_extra = closure->extra;
-	p = (uint32_t *)(closure->extra + num_arrays);
-	end = p + size / sizeof *p;
-
+	end = p + size / sizeof(*p);
 	wl_connection_copy(connection, p, size);
 	closure->sender_id = *p++;
 	closure->opcode = *p++ & 0x0000ffff;
 
 	signature = message->signature;
-	for (i = 0; i < count; i++) {
+	for (int i = 0; i < closure->count; i++) {
 		signature = get_next_argument(signature, &arg);
-
 		if (arg.type != WL_ARG_FD && p >= end) {
-			wl_log("message too short, "
-			       "object (%d), message %s(%s)\n",
-			       closure->sender_id, message->name,
+			wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
 			       message->signature);
 			errno = EINVAL;
 			goto err;
 		}
-
 		switch (arg.type) {
 		case WL_ARG_UINT:
 			closure->args[i].u = *p++;
@@ -951,58 +583,44 @@ wl_connection_demarshal(struct wl_connection *connection,
 			break;
 		case WL_ARG_STRING:
 			length = *p++;
-
 			if (length == 0 && !arg.nullable) {
-				wl_log("NULL string received on non-nullable "
-				       "type, message %s(%s)\n", message->name,
+				wl_log("NULL string received on non-nullable type, message %s(%s)\n", message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			if (length == 0) {
-				closure->args[i].s = NULL;
+				closure->args[i].s = nullptr;
 				break;
 			}
-
-			length_in_u32 = div_roundup(length, sizeof *p);
-			if ((uint32_t) (end - p) < length_in_u32) {
-				wl_log("message too short, "
-				       "object (%d), message %s(%s)\n",
-				       closure->sender_id, message->name,
+			length_in_u32 = div_roundup(length, sizeof(*p));
+			if ((uint32_t)(end - p) < length_in_u32) {
+				wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			next = p + length_in_u32;
-
-			s = (char *) p;
-
+			s = (char *)p;
 			if (s[length - 1] != '\0') {
-				wl_log("string not nul-terminated, "
-				       "message %s(%s)\n",
-				       message->name, message->signature);
+				wl_log("string not nul-terminated, message %s(%s)\n", message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
-
 			if (strlen(s) != length - 1) {
-				wl_log("string has embedded nul at offset %zu, "
-				       "message %s(%s)\n", strlen(s),
-				       message->name, message->signature);
+				wl_log("string has embedded nul at offset %zu, message %s(%s)\n", strlen(s), message->name,
+				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
-
 			closure->args[i].s = s;
 			p = next;
 			break;
 		case WL_ARG_OBJECT:
 			id = *p++;
 			closure->args[i].n = id;
-
 			if (id == 0 && !arg.nullable) {
-				wl_log("NULL object received on non-nullable "
-				       "type, message %s(%s)\n", message->name,
+				wl_log("NULL object received on non-nullable type, message %s(%s)\n", message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
@@ -1011,158 +629,102 @@ wl_connection_demarshal(struct wl_connection *connection,
 		case WL_ARG_NEW_ID:
 			id = *p++;
 			closure->args[i].n = id;
-
 			if (id == 0) {
-				wl_log("NULL new ID received on non-nullable "
-				       "type, message %s(%s)\n", message->name,
+				wl_log("NULL new ID received on non-nullable type, message %s(%s)\n", message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
-
 			if (wl_map_reserve_new(objects, id) < 0) {
-				if (errno == EINVAL) {
-					wl_log("not a valid new object id (%u), "
-					       "message %s(%s)\n", id,
-					       message->name,
-					       message->signature);
-				}
+				wl_log("not a valid new object id (%u), message %s(%s): %s\n", id, message->name, message->signature,
+				       strerror(errno));
 				goto err;
 			}
-
 			break;
 		case WL_ARG_ARRAY:
 			length = *p++;
-
-			length_in_u32 = div_roundup(length, sizeof *p);
-			if ((uint32_t) (end - p) < length_in_u32) {
-				wl_log("message too short, "
-				       "object (%d), message %s(%s)\n",
-				       closure->sender_id, message->name,
+			length_in_u32 = div_roundup(length, sizeof(*p));
+			if ((uint32_t)(end - p) < length_in_u32) {
+				wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			next = p + length_in_u32;
-
 			array_extra->size = length;
 			array_extra->alloc = 0;
 			array_extra->data = p;
-
 			closure->args[i].a = array_extra++;
 			p = next;
 			break;
 		case WL_ARG_FD:
-			if (connection->fds_in.tail == connection->fds_in.head) {
-				wl_log("file descriptor expected, "
-				       "object (%d), message %s(%s)\n",
-				       closure->sender_id, message->name,
+			if (!fds_used(&connection->fds_in)) {
+				wl_log("file descriptor expected, object (%d), message %s(%s)\n", closure->sender_id, message->name,
 				       message->signature);
 				errno = EINVAL;
 				goto err;
 			}
-
-			ring_buffer_copy(&connection->fds_in, &fd, sizeof fd);
-			connection->fds_in.tail += sizeof fd;
-			closure->args[i].h = fd;
+			closure->args[i].h = fds_get(&connection->fds_in);
 			break;
 		default:
 			wl_abort("unknown type\n");
-			break;
 		}
 	}
-
 	wl_connection_consume(connection, size);
+	return 0;
 
-	return closure;
-
- err:
-	wl_closure_destroy(closure);
+err:
+	wl_closure_close_fds(closure, loop);
 	wl_connection_consume(connection, size);
-
-	return NULL;
+	return -1;
 }
 
-bool
-wl_object_is_zombie(struct wl_map *map, uint32_t id)
+bool wl_object_is_zombie(struct wl_map *map, uint32_t id)
 {
-	uint32_t flags;
-
-	/* Zombie objects only exist on the client side. */
-	if (map->side == WL_MAP_SERVER_SIDE)
-		return false;
-
-	/* Zombie objects can only have been created by the client. */
-	if (id >= WL_SERVER_ID_START)
-		return false;
-
-	flags = wl_map_lookup_flags(map, id);
-	return !!(flags & WL_MAP_ENTRY_ZOMBIE);
+	return map->side == WL_MAP_CLIENT_SIDE && (wl_map_lookup_flags(map, id) & WL_MAP_ENTRY_ZOMBIE);
 }
 
-int
-wl_closure_lookup_objects(struct wl_closure *closure, struct wl_map *objects)
+int wl_closure_lookup_objects(struct wl_closure *closure, struct wl_map *objects)
 {
-	struct wl_object *object;
-	const struct wl_message *message;
-	const char *signature;
+	const struct wl_message *message = closure->message;
+	const char *signature = message->signature;
 	struct argument_details arg;
-	int i, count;
+	struct wl_object *object;
 	uint32_t id;
 
-	message = closure->message;
-	signature = message->signature;
-	count = arg_count_for_signature(signature);
-	for (i = 0; i < count; i++) {
+	for (int i = 0; i < closure->count; i++) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type != WL_ARG_OBJECT)
 			continue;
-
 		id = closure->args[i].n;
-		closure->args[i].o = NULL;
-
+		closure->args[i].o = nullptr;
 		object = wl_map_lookup(objects, id);
 		if (wl_object_is_zombie(objects, id)) {
-			/* references object we've already
-			 * destroyed client side */
-			object = NULL;
-		} else if (object == NULL && id != 0) {
-			wl_log("unknown object (%u), message %s(%s)\n",
-			       id, message->name, message->signature);
+			object = nullptr;
+		} else if (!object && id) {
+			wl_log("unknown object (%u), message %s(%s)\n", id, message->name, message->signature);
 			errno = EINVAL;
 			return -1;
 		}
-
-		if (object != NULL && message->types[i] != NULL &&
-		    !wl_interface_equal((object)->interface,
-					message->types[i])) {
-			wl_log("invalid object (%u), type (%s), "
-			       "message %s(%s)\n",
-			       id, (object)->interface->name,
-			       message->name, message->signature);
+		if (object && message->types[i] && !wl_interface_equal(object->interface, message->types[i])) {
+			wl_log("invalid object (%u), type (%s), message %s(%s)\n", id, object->interface->name, message->name,
+			       message->signature);
 			errno = EINVAL;
 			return -1;
 		}
 		closure->args[i].o = object;
 	}
-
 	return 0;
 }
 
-static void
-convert_arguments_to_ffi(const char *signature, uint32_t flags,
-			 union wl_argument *args,
-			 int count, ffi_type **ffi_types, void** ffi_args)
+static void convert_arguments_to_ffi(const char *signature, uint32_t flags, union wl_argument *args, int count,
+				     ffi_type **ffi_types, void **ffi_args)
 {
-	int i;
-	const char *sig_iter;
 	struct argument_details arg;
 
-	sig_iter = signature;
-	for (i = 0; i < count; i++) {
-		sig_iter = get_next_argument(sig_iter, &arg);
-
-		switch(arg.type) {
+	for (int i = 0; i < count; i++) {
+		signature = get_next_argument(signature, &arg);
+		switch (arg.type) {
 		case WL_ARG_INT:
 			ffi_types[i] = &ffi_type_sint32;
 			ffi_args[i] = &args[i].i;
@@ -1202,493 +764,181 @@ convert_arguments_to_ffi(const char *signature, uint32_t flags,
 			break;
 		default:
 			wl_abort("unknown type\n");
-			break;
 		}
 	}
 }
 
-void
-wl_closure_invoke(struct wl_closure *closure, uint32_t flags,
-		  struct wl_object *target, uint32_t opcode, void *data)
+/* The implementation owns the fds now */
+static void closure_clear_fds(struct wl_closure *closure)
 {
-	int count;
-	ffi_cif cif;
-	ffi_type *ffi_types[WL_CLOSURE_MAX_ARGS + 2];
-	void * ffi_args[WL_CLOSURE_MAX_ARGS + 2];
-	void (* const *implementation)(void);
+	const char *signature = closure->message->signature;
+	struct argument_details arg;
 
-	count = arg_count_for_signature(closure->message->signature);
+	for (int i = 0; i < closure->count; i++) {
+		signature = get_next_argument(signature, &arg);
+		if (arg.type == WL_ARG_FD)
+			closure->args[i].h = -1;
+	}
+}
+
+void wl_closure_invoke(struct wl_closure *closure, uint32_t flags, struct wl_object *target, uint32_t opcode, void *data)
+{
+	ffi_type *ffi_types[WL_CLOSURE_MAX_ARGS + 2];
+	void *ffi_args[WL_CLOSURE_MAX_ARGS + 2];
+	void (*const *implementation)(void) = target->implementation;
+	ffi_cif cif;
 
 	ffi_types[0] = &ffi_type_pointer;
 	ffi_args[0] = &data;
 	ffi_types[1] = &ffi_type_pointer;
 	ffi_args[1] = &target;
-
-	convert_arguments_to_ffi(closure->message->signature, flags, closure->args,
-				 count, ffi_types + 2, ffi_args + 2);
-
-	ffi_prep_cif(&cif, FFI_DEFAULT_ABI,
-		     count + 2, &ffi_type_void, ffi_types);
-
-	implementation = target->implementation;
-	if (!implementation) {
-		wl_abort("Implementation of resource %d of %s is NULL\n",
-			  target->id, target->interface->name);
-	}
-
-	if (!implementation[opcode]) {
-		wl_abort("listener function for opcode %u of %s is NULL\n",
-			 opcode, target->interface->name);
-	}
-	ffi_call(&cif, implementation[opcode], NULL, ffi_args);
-
-	wl_closure_clear_fds(closure);
+	convert_arguments_to_ffi(closure->message->signature, flags, closure->args, closure->count, ffi_types + 2, ffi_args + 2);
+	ffi_prep_cif(&cif, FFI_DEFAULT_ABI, closure->count + 2, &ffi_type_void, ffi_types);
+	if (!implementation)
+		wl_abort("Implementation of resource %d of %s is NULL\n", target->id, target->interface->name);
+	if (!implementation[opcode])
+		wl_abort("listener function for opcode %u of %s is NULL\n", opcode, target->interface->name);
+	ffi_call(&cif, implementation[opcode], nullptr, ffi_args);
+	closure_clear_fds(closure);
 }
 
-void
-wl_closure_dispatch(struct wl_closure *closure, wl_dispatcher_func_t dispatcher,
-		    struct wl_object *target, uint32_t opcode)
+void wl_closure_dispatch(struct wl_closure *closure, wl_dispatcher_func_t dispatcher, struct wl_object *target, uint32_t opcode)
 {
-	dispatcher(target->implementation, target, opcode, closure->message,
-		   closure->args);
-
-	wl_closure_clear_fds(closure);
+	dispatcher(target->implementation, target, opcode, closure->message, closure->args);
+	closure_clear_fds(closure);
 }
 
-static int
-copy_fds_to_connection(struct wl_closure *closure,
-		       struct wl_connection *connection)
+void wl_closure_close_fds(struct wl_closure *closure, struct poor_loop *loop)
 {
-	const struct wl_message *message = closure->message;
-	uint32_t i, count;
+	const char *signature = closure->message->signature;
 	struct argument_details arg;
-	const char *signature = message->signature;
-	int fd;
 
-	count = arg_count_for_signature(signature);
-	for (i = 0; i < count; i++) {
+	for (int i = 0; i < closure->count; i++) {
 		signature = get_next_argument(signature, &arg);
-		if (arg.type != WL_ARG_FD)
-			continue;
-
-		fd = closure->args[i].h;
-		if (wl_connection_put_fd(connection, fd)) {
-			wl_log("request could not be marshaled: "
-			       "can't send file descriptor\n");
-			return -1;
-		}
-		closure->args[i].h = -1;
-	}
-
-	return 0;
-}
-
-
-static uint32_t
-buffer_size_for_closure(struct wl_closure *closure)
-{
-	const struct wl_message *message = closure->message;
-	int i, count;
-	struct argument_details arg;
-	const char *signature;
-	uint32_t size, buffer_size = 0;
-
-	signature = message->signature;
-	count = arg_count_for_signature(signature);
-	for (i = 0; i < count; i++) {
-		signature = get_next_argument(signature, &arg);
-
-		switch (arg.type) {
-		case WL_ARG_FD:
-			break;
-		case WL_ARG_UINT:
-		case WL_ARG_INT:
-		case WL_ARG_FIXED:
-		case WL_ARG_OBJECT:
-		case WL_ARG_NEW_ID:
-			buffer_size++;
-			break;
-		case WL_ARG_STRING:
-			if (closure->args[i].s == NULL) {
-				buffer_size++;
-				break;
-			}
-
-			size = strlen(closure->args[i].s) + 1;
-			buffer_size += 1 + div_roundup(size, sizeof(uint32_t));
-			break;
-		case WL_ARG_ARRAY:
-			if (closure->args[i].a == NULL) {
-				buffer_size++;
-				break;
-			}
-
-			size = closure->args[i].a->size;
-			buffer_size += (1 + div_roundup(size, sizeof(uint32_t)));
-			break;
-		default:
-			break;
+		if (arg.type == WL_ARG_FD && closure->args[i].h >= 0) {
+			poor_loop_close_fd_or_submit(loop, closure->args[i].h, 0);
+			closure->args[i].h = -1;
 		}
 	}
-
-	return buffer_size + 2;
 }
 
-static int
-serialize_closure(struct wl_closure *closure, uint32_t *buffer,
-		  size_t buffer_count)
-{
-	const struct wl_message *message = closure->message;
-	unsigned int i, count, size;
-	uint32_t *p, *end;
-	struct argument_details arg;
-	const char *signature;
-
-	if (buffer_count < 2)
-		goto overflow;
-
-	p = buffer + 2;
-	end = buffer + buffer_count;
-
-	signature = message->signature;
-	count = arg_count_for_signature(signature);
-	for (i = 0; i < count; i++) {
-		signature = get_next_argument(signature, &arg);
-
-		if (arg.type == WL_ARG_FD)
-			continue;
-
-		if (p >= end)
-			goto overflow;
-
-		switch (arg.type) {
-		case WL_ARG_UINT:
-			*p++ = closure->args[i].u;
-			break;
-		case WL_ARG_INT:
-			*p++ = closure->args[i].i;
-			break;
-		case WL_ARG_FIXED:
-			*p++ = closure->args[i].f;
-			break;
-		case WL_ARG_OBJECT:
-			*p++ = closure->args[i].o ? closure->args[i].o->id : 0;
-			break;
-		case WL_ARG_NEW_ID:
-			*p++ = closure->args[i].n;
-			break;
-		case WL_ARG_STRING:
-			if (closure->args[i].s == NULL) {
-				*p++ = 0;
-				break;
-			}
-
-			size = strlen(closure->args[i].s) + 1;
-			*p++ = size;
-
-			if (div_roundup(size, sizeof *p) > (uint32_t)(end - p))
-				goto overflow;
-
-			memcpy(p, closure->args[i].s, size);
-			p += div_roundup(size, sizeof *p);
-			break;
-		case WL_ARG_ARRAY:
-			if (closure->args[i].a == NULL) {
-				*p++ = 0;
-				break;
-			}
-
-			size = closure->args[i].a->size;
-			*p++ = size;
-
-			if (div_roundup(size, sizeof *p) > (uint32_t)(end - p))
-				goto overflow;
-
-			if (size != 0)
-				memcpy(p, closure->args[i].a->data, size);
-			p += div_roundup(size, sizeof *p);
-			break;
-		case WL_ARG_FD:
-			break;
-		}
-	}
-
-	size = (p - buffer) * sizeof *p;
-
-	buffer[0] = closure->sender_id;
-	buffer[1] = size << 16 | (closure->opcode & 0x0000ffff);
-
-	return size;
-
-overflow:
-	wl_log("serialize_closure overflow for %s (signature %s)\n",
-	       message->name, message->signature);
-	errno = ERANGE;
-	return -1;
-}
-
-int
-wl_closure_send(struct wl_closure *closure, struct wl_connection *connection)
-{
-	int size;
-	uint32_t buffer_size;
-	uint32_t *buffer;
-	int result;
-
-	if (copy_fds_to_connection(closure, connection))
-		return -1;
-
-	buffer_size = buffer_size_for_closure(closure);
-	buffer = zalloc(buffer_size * sizeof buffer[0]);
-	if (buffer == NULL) {
-		wl_log("wl_closure_send error: buffer allocation failure of "
-		       "size %d\n for %s (signature %s)",
-		       buffer_size * sizeof buffer[0], closure->message->name,
-		       closure->message->signature);
-		return -1;
-	}
-
-	size = serialize_closure(closure, buffer, buffer_size);
-	if (size < 0) {
-		free(buffer);
-		return -1;
-	}
-
-	result = wl_connection_write(connection, buffer, size);
-	free(buffer);
-
-	return result;
-}
-
-int
-wl_closure_queue(struct wl_closure *closure, struct wl_connection *connection)
-{
-	int size;
-	uint32_t buffer_size;
-	uint32_t *buffer;
-	int result;
-
-	if (copy_fds_to_connection(closure, connection))
-		return -1;
-
-	buffer_size = buffer_size_for_closure(closure);
-	buffer = malloc(buffer_size * sizeof buffer[0]);
-	if (buffer == NULL) {
-		wl_log("wl_closure_queue error: buffer allocation failure of "
-		       "size %d\n for %s (signature %s)",
-		       buffer_size * sizeof buffer[0], closure->message->name,
-		       closure->message->signature);
-		return -1;
-	}
-
-	size = serialize_closure(closure, buffer, buffer_size);
-	if (size < 0) {
-		free(buffer);
-		return -1;
-	}
-
-	result = wl_connection_queue(connection, buffer, size);
-	free(buffer);
-
-	return result;
-}
-
-bool
-wl_check_env_token(const char *env, const char *token)
+bool wl_check_env_token(const char *env, const char *token)
 {
 	const char *ptr = env;
 	size_t token_len;
 
-	if (env == NULL)
+	if (!env)
 		return false;
-
 	token_len = strlen(token);
-
-	// Scan the string for comma-separated tokens and look for a match.
-	while (true) {
+	for (;;) {
 		const char *end;
 		size_t len;
 
-		// Skip over any leading separators.
 		while (*ptr == ',')
 			ptr++;
-
 		if (*ptr == '\x00')
 			return false;
-
 		end = strchr(ptr + 1, ',');
-
-		// If there isn't another separarator, then the rest of the string
-		// is one token.
-		if (end == NULL)
-			return (strcmp(ptr, token) == 0);
-
+		if (!end)
+			return strcmp(ptr, token) == 0;
 		len = end - ptr;
-		if (len == token_len && memcmp(ptr, token, len) == 0) {
+		if (len == token_len && memcmp(ptr, token, len) == 0)
 			return true;
-		}
-
-		// Skip to the next token.
 		ptr += len;
 	}
-
-	return false;
 }
 
-void
-wl_closure_print(struct wl_closure *closure, struct wl_object *target,
-		 int send, int discarded, uint32_t (*n_parse)(union wl_argument *arg),
-		 const char *queue_name, int color)
+struct print_buffer {
+	size_t len;
+	char data[8192];
+};
+
+[[gnu::format(printf, 2, 3)]] static void buffer_print(struct print_buffer *b, const char *fmt, ...)
+{
+	va_list ap;
+	int n;
+
+	if (b->len >= sizeof(b->data))
+		return;
+	va_start(ap, fmt);
+	n = vsnprintf(b->data + b->len, sizeof(b->data) - b->len, fmt, ap);
+	va_end(ap);
+	if (n > 0)
+		b->len += n;
+}
+
+void wl_closure_print(const struct wl_closure *closure, const struct wl_object *target, bool send, bool discarded,
+		      uint32_t (*n_parse)(const union wl_argument *arg), bool color)
 {
 #if defined(HAVE_GETTID)
 	static int include_tid = -1;
-#endif // defined(HAVE_GETTID)
-	int i;
-	struct argument_details arg;
+#endif
 	const char *signature = closure->message->signature;
+	struct argument_details arg;
+	struct print_buffer b;
 	struct timespec tp;
 	uint32_t nval;
-	FILE *f;
-	char *buffer;
-	size_t buffer_length;
 
-	f = open_memstream(&buffer, &buffer_length);
-	if (f == NULL)
-		return;
-
+	b.len = 0;
 	clock_gettime(CLOCK_REALTIME, &tp);
-	fprintf(f, "%s[%02u:%02u:%02u.%06u] ",
-		color ? WL_DEBUG_COLOR_GREEN : "",
-		(unsigned) ((tp.tv_sec / 3600) % 24),
-		(unsigned) ((tp.tv_sec / 60) % 60),
-		(unsigned) (tp.tv_sec % 60),
-		(unsigned) (tp.tv_nsec / 1000));
-
+	buffer_print(&b, "%s[%02u:%02u:%02u.%06u] ", color ? WL_DEBUG_COLOR_GREEN : "", (unsigned)((tp.tv_sec / 3600) % 24),
+	      (unsigned)((tp.tv_sec / 60) % 60), (unsigned)(tp.tv_sec % 60), (unsigned)(tp.tv_nsec / 1000));
 #if defined(HAVE_GETTID)
-	if (include_tid < 0) {
+	if (include_tid < 0)
 		include_tid = wl_check_env_token(getenv("WAYLAND_DEBUG"), "thread_id");
-	}
-
-	if (include_tid) {
-		fprintf(f, "%sTID#%d ",
-			color ? WL_DEBUG_COLOR_CYAN : "",
-			(int) gettid());
-	}
+	if (include_tid)
+		buffer_print(&b, "%sTID#%d ", color ? WL_DEBUG_COLOR_CYAN : "", (int)gettid());
 #endif
-
-	if (queue_name) {
-		fprintf(f, "%s{%s} ",
-			color ? WL_DEBUG_COLOR_YELLOW : "",
-			queue_name);
-	}
-
-	fprintf(f, "%s%s%s%s%s%s%s#%u%s.%s%s(",
-		color ? WL_DEBUG_COLOR_RED : "",
-		discarded ? "discarded " : "",
-		color ? WL_DEBUG_COLOR_RESET : "",
-		send ? " -> " : "",
-		color ? WL_DEBUG_COLOR_BLUE : "",
-		target->interface->name,
-		color ? WL_DEBUG_COLOR_MAGENTA : "",
-		target->id,
-		color ? WL_DEBUG_COLOR_CYAN : "",
-		closure->message->name,
-		color ? WL_DEBUG_COLOR_RESET : "");
-
-	for (i = 0; i < closure->count; i++) {
+	buffer_print(&b, "%s%s%s%s%s%s%s#%u%s.%s%s(", color ? WL_DEBUG_COLOR_RED : "", discarded ? "discarded " : "",
+	      color ? WL_DEBUG_COLOR_RESET : "", send ? " -> " : "", color ? WL_DEBUG_COLOR_BLUE : "", target->interface->name,
+	      color ? WL_DEBUG_COLOR_MAGENTA : "", target->id, color ? WL_DEBUG_COLOR_CYAN : "", closure->message->name,
+	      color ? WL_DEBUG_COLOR_RESET : "");
+	for (int i = 0; i < closure->count; i++) {
 		signature = get_next_argument(signature, &arg);
 		if (i > 0)
-			fprintf(f, ", ");
-
+			buffer_print(&b, ", ");
 		switch (arg.type) {
 		case WL_ARG_UINT:
-			fprintf(f, "%u", closure->args[i].u);
+			buffer_print(&b, "%u", closure->args[i].u);
 			break;
 		case WL_ARG_INT:
-			fprintf(f, "%d", closure->args[i].i);
+			buffer_print(&b, "%d", closure->args[i].i);
 			break;
 		case WL_ARG_FIXED:
 			/* The magic number 390625 is 1e8 / 256 */
-			if (closure->args[i].f >= 0) {
-				fprintf(f, "%d.%08d",
-					closure->args[i].f / 256,
-					390625 * (closure->args[i].f % 256));
-			} else {
-
-				fprintf(f, "-%d.%08d",
-					closure->args[i].f / -256,
-					-390625 * (closure->args[i].f % 256));
-			}
+			if (closure->args[i].f >= 0)
+				buffer_print(&b, "%d.%08d", closure->args[i].f / 256, 390625 * (closure->args[i].f % 256));
+			else
+				buffer_print(&b, "-%d.%08d", closure->args[i].f / -256, -390625 * (closure->args[i].f % 256));
 			break;
 		case WL_ARG_STRING:
 			if (closure->args[i].s)
-				fprintf(f, "\"%s\"", closure->args[i].s);
+				buffer_print(&b, "\"%s\"", closure->args[i].s);
 			else
-				fprintf(f, "nil");
+				buffer_print(&b, "nil");
 			break;
 		case WL_ARG_OBJECT:
 			if (closure->args[i].o)
-				fprintf(f, "%s#%u",
-					closure->args[i].o->interface->name,
-					closure->args[i].o->id);
+				buffer_print(&b, "%s#%u", closure->args[i].o->interface->name, closure->args[i].o->id);
 			else
-				fprintf(f, "nil");
+				buffer_print(&b, "nil");
 			break;
 		case WL_ARG_NEW_ID:
-			if (n_parse)
-				nval = n_parse(&closure->args[i]);
+			nval = n_parse ? n_parse(&closure->args[i]) : closure->args[i].n;
+			buffer_print(&b, "new id %s#", closure->message->types[i] ? closure->message->types[i]->name : "[unknown]");
+			if (nval)
+				buffer_print(&b, "%u", nval);
 			else
-				nval = closure->args[i].n;
-
-			fprintf(f, "new id %s#",
-				(closure->message->types[i]) ?
-				 closure->message->types[i]->name :
-				  "[unknown]");
-			if (nval != 0)
-				fprintf(f, "%u", nval);
-			else
-				fprintf(f, "nil");
+				buffer_print(&b, "nil");
 			break;
 		case WL_ARG_ARRAY:
-			fprintf(f, "array[%zu]", closure->args[i].a->size);
+			buffer_print(&b, "array[%zu]", closure->args[i].a->size);
 			break;
 		case WL_ARG_FD:
-			fprintf(f, "fd %d", closure->args[i].h);
+			buffer_print(&b, "fd %d", closure->args[i].h);
 			break;
 		}
 	}
-
-	fprintf(f, ")%s\n", color ? WL_DEBUG_COLOR_RESET : "");
-
-	if (fclose(f) == 0) {
-		fprintf(stderr, "%s", buffer);
-		free(buffer);
-	}
-}
-
-static int
-wl_closure_close_fds(struct wl_closure *closure)
-{
-	int i;
-	struct argument_details arg;
-	const char *signature = closure->message->signature;
-
-	for (i = 0; i < closure->count; i++) {
-		signature = get_next_argument(signature, &arg);
-		if (arg.type == WL_ARG_FD && closure->args[i].h != -1)
-			close(closure->args[i].h);
-	}
-
-	return 0;
-}
-
-void
-wl_closure_destroy(struct wl_closure *closure)
-{
-	/* wl_closure_destroy has free() semantics */
-	if (!closure)
-		return;
-
-	wl_closure_close_fds(closure);
-	free(closure);
+	buffer_print(&b, ")%s\n", color ? WL_DEBUG_COLOR_RESET : "");
+	wl_log("%s", b.data);
 }

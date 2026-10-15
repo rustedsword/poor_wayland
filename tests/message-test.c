@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include <assert.h>
 
 #include "wayland-client.h"
@@ -46,45 +48,25 @@ TEST(message_version)
 		{ &wl_surface_interface.methods[WL_SURFACE_SET_BUFFER_SCALE], 3 },
 	};
 
-	for (i = 0; i < ARRAY_LENGTH(messages); ++i) {
+	for (i = 0; i < ARRAY_SIZE(messages); ++i) {
 		assert(wl_message_get_since(messages[i].message) ==
 		       messages[i].expected_version);
 	}
 }
 
-TEST(message_count_arrays)
+TEST(message_count_fds)
 {
-	unsigned int i;
-	struct wl_message fake_messages[] = {
-		{ "empty", "", NULL },
-		{ "non_present", "iufsonh", NULL },
-		{ "leading", "aiufsonh", NULL},
-		{ "trailing", "iufsonha", NULL },
-		{ "middle", "iufasonh", NULL },
-		{ "multiple", "aaiufaasonhaa", NULL },
-		{ "leading_version", "2aaiufaasonhaa", NULL },
-		{ "among_nullables", "iufsa?oa?sah", NULL },
-		{ "all_mixed", "2aiufas?oa?sa", NULL },
-	};
 	const struct {
-		const struct wl_message *message;
-		int expected_array_count;
+		struct wl_message message;
+		int expected_fd_count;
 	} messages[] = {
-		{ &wl_pointer_interface.events[WL_POINTER_ENTER], 0 },
-		{ &wl_keyboard_interface.events[WL_KEYBOARD_ENTER], 1 },
-		{ &fake_messages[0], 0 },
-		{ &fake_messages[1], 0 },
-		{ &fake_messages[2], 1 },
-		{ &fake_messages[3], 1 },
-		{ &fake_messages[4], 1 },
-		{ &fake_messages[5], 6 },
-		{ &fake_messages[6], 6 },
-		{ &fake_messages[7], 3 },
-		{ &fake_messages[8], 4 },
+		{ { "empty", "", nullptr }, 0 },
+		{ { "none", "iufsona", nullptr }, 0 },
+		{ { "one", "iufsonah", nullptr }, 1 },
+		{ { "versioned", "2hh?s", nullptr }, 2 },
 	};
 
-	for (i = 0; i < ARRAY_LENGTH(messages); ++i) {
-		assert(wl_message_count_arrays(messages[i].message) ==
-		       messages[i].expected_array_count);
-	}
+	for (unsigned i = 0; i < ARRAY_SIZE(messages); ++i)
+		assert(wl_message_count_fds(&messages[i].message) == messages[i].expected_fd_count);
+	assert(wl_message_count_fds(&wl_keyboard_interface.events[WL_KEYBOARD_KEYMAP]) == 1);
 }

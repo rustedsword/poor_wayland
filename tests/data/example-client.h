@@ -1007,14 +1007,10 @@ wl_display_get_version(struct wl_display *wl_display)
  * The callback_data passed in the callback is the event serial.
  */
 static inline struct wl_callback *
-wl_display_sync(struct wl_display *wl_display)
+wl_display_sync(struct wl_display *wl_display, struct wl_proxy *callback)
 {
-	struct wl_proxy *callback;
-
-	callback = wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
-			 WL_DISPLAY_SYNC, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, NULL);
-
-	return (struct wl_callback *) callback;
+	return (struct wl_callback *) wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
+			 WL_DISPLAY_SYNC, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, callback);
 }
 
 /**
@@ -1025,14 +1021,10 @@ wl_display_sync(struct wl_display *wl_display)
  * compositor.
  */
 static inline struct wl_registry *
-wl_display_get_registry(struct wl_display *wl_display)
+wl_display_get_registry(struct wl_display *wl_display, struct wl_proxy *registry)
 {
-	struct wl_proxy *registry;
-
-	registry = wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
-			 WL_DISPLAY_GET_REGISTRY, &wl_registry_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, NULL);
-
-	return (struct wl_registry *) registry;
+	return (struct wl_registry *) wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
+			 WL_DISPLAY_GET_REGISTRY, &wl_registry_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, registry);
 }
 
 /**
@@ -1138,14 +1130,10 @@ wl_registry_destroy(struct wl_registry *wl_registry)
  * specified name as the identifier.
  */
 static inline void *
-wl_registry_bind(struct wl_registry *wl_registry, uint32_t name, const struct wl_interface *interface, uint32_t version)
+wl_registry_bind(struct wl_registry *wl_registry, uint32_t name, const struct wl_interface *interface, uint32_t version, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_registry,
-			 WL_REGISTRY_BIND, interface, version, 0, name, interface->name, version, NULL);
-
-	return (void *) id;
+	return (void *) wl_proxy_marshal_flags((struct wl_proxy *) wl_registry,
+			 WL_REGISTRY_BIND, interface, version, 0, name, interface->name, version, id);
 }
 
 /**
@@ -1254,14 +1242,10 @@ wl_compositor_destroy(struct wl_compositor *wl_compositor)
  * Ask the compositor to create a new surface.
  */
 static inline struct wl_surface *
-wl_compositor_create_surface(struct wl_compositor *wl_compositor)
+wl_compositor_create_surface(struct wl_compositor *wl_compositor, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
-			 WL_COMPOSITOR_CREATE_SURFACE, &wl_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, NULL);
-
-	return (struct wl_surface *) id;
+	return (struct wl_surface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
+			 WL_COMPOSITOR_CREATE_SURFACE, &wl_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, id);
 }
 
 /**
@@ -1270,14 +1254,10 @@ wl_compositor_create_surface(struct wl_compositor *wl_compositor)
  * Ask the compositor to create a new region.
  */
 static inline struct wl_region *
-wl_compositor_create_region(struct wl_compositor *wl_compositor)
+wl_compositor_create_region(struct wl_compositor *wl_compositor, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
-			 WL_COMPOSITOR_CREATE_REGION, &wl_region_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, NULL);
-
-	return (struct wl_region *) id;
+	return (struct wl_region *) wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
+			 WL_COMPOSITOR_CREATE_REGION, &wl_region_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, id);
 }
 
 #define WL_SHM_POOL_CREATE_BUFFER 0
@@ -1334,14 +1314,10 @@ wl_shm_pool_get_version(struct wl_shm_pool *wl_shm_pool)
  * a buffer from it.
  */
 static inline struct wl_buffer *
-wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format)
+wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, struct wl_proxy *id, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_shm_pool,
-			 WL_SHM_POOL_CREATE_BUFFER, &wl_buffer_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm_pool), 0, NULL, offset, width, height, stride, format);
-
-	return (struct wl_buffer *) id;
+	return (struct wl_buffer *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shm_pool,
+			 WL_SHM_POOL_CREATE_BUFFER, &wl_buffer_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm_pool), 0, id, offset, width, height, stride, format);
 }
 
 /**
@@ -1728,14 +1704,10 @@ wl_shm_destroy(struct wl_shm *wl_shm)
  * descriptor, to use as backing memory for the pool.
  */
 static inline struct wl_shm_pool *
-wl_shm_create_pool(struct wl_shm *wl_shm, int32_t fd, int32_t size)
+wl_shm_create_pool(struct wl_shm *wl_shm, struct wl_proxy *id, int32_t fd, int32_t size)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_shm,
-			 WL_SHM_CREATE_POOL, &wl_shm_pool_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm), 0, NULL, fd, size);
-
-	return (struct wl_shm_pool *) id;
+	return (struct wl_shm_pool *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shm,
+			 WL_SHM_CREATE_POOL, &wl_shm_pool_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm), 0, id, fd, size);
 }
 
 /**
@@ -2733,14 +2705,10 @@ wl_data_device_manager_destroy(struct wl_data_device_manager *wl_data_device_man
  * Create a new data source.
  */
 static inline struct wl_data_source *
-wl_data_device_manager_create_data_source(struct wl_data_device_manager *wl_data_device_manager)
+wl_data_device_manager_create_data_source(struct wl_data_device_manager *wl_data_device_manager, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
-			 WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE, &wl_data_source_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, NULL);
-
-	return (struct wl_data_source *) id;
+	return (struct wl_data_source *) wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
+			 WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE, &wl_data_source_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, id);
 }
 
 /**
@@ -2749,14 +2717,10 @@ wl_data_device_manager_create_data_source(struct wl_data_device_manager *wl_data
  * Create a new data device for a given seat.
  */
 static inline struct wl_data_device *
-wl_data_device_manager_get_data_device(struct wl_data_device_manager *wl_data_device_manager, struct wl_seat *seat)
+wl_data_device_manager_get_data_device(struct wl_data_device_manager *wl_data_device_manager, struct wl_proxy *id, struct wl_seat *seat)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
-			 WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE, &wl_data_device_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, NULL, seat);
-
-	return (struct wl_data_device *) id;
+	return (struct wl_data_device *) wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
+			 WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE, &wl_data_device_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, id, seat);
 }
 
 #ifndef WL_SHELL_ERROR_ENUM
@@ -2814,14 +2778,10 @@ wl_shell_destroy(struct wl_shell *wl_shell)
  * Only one shell surface can be associated with a given surface.
  */
 static inline struct wl_shell_surface *
-wl_shell_get_shell_surface(struct wl_shell *wl_shell, struct wl_surface *surface)
+wl_shell_get_shell_surface(struct wl_shell *wl_shell, struct wl_proxy *id, struct wl_surface *surface)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_shell,
-			 WL_SHELL_GET_SHELL_SURFACE, &wl_shell_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_shell), 0, NULL, surface);
-
-	return (struct wl_shell_surface *) id;
+	return (struct wl_shell_surface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shell,
+			 WL_SHELL_GET_SHELL_SURFACE, &wl_shell_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_shell), 0, id, surface);
 }
 
 #ifndef WL_SHELL_SURFACE_RESIZE_ENUM
@@ -3570,14 +3530,10 @@ wl_surface_damage(struct wl_surface *wl_surface, int32_t x, int32_t y, int32_t w
  * milliseconds, with an undefined base.
  */
 static inline struct wl_callback *
-wl_surface_frame(struct wl_surface *wl_surface)
+wl_surface_frame(struct wl_surface *wl_surface, struct wl_proxy *callback)
 {
-	struct wl_proxy *callback;
-
-	callback = wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_FRAME, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, NULL);
-
-	return (struct wl_callback *) callback;
+	return (struct wl_callback *) wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
+			 WL_SURFACE_FRAME, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, callback);
 }
 
 /**
@@ -3951,14 +3907,10 @@ wl_seat_destroy(struct wl_seat *wl_seat)
  * never had the pointer capability.
  */
 static inline struct wl_pointer *
-wl_seat_get_pointer(struct wl_seat *wl_seat)
+wl_seat_get_pointer(struct wl_seat *wl_seat, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_POINTER, &wl_pointer_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, NULL);
-
-	return (struct wl_pointer *) id;
+	return (struct wl_pointer *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
+			 WL_SEAT_GET_POINTER, &wl_pointer_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
 }
 
 /**
@@ -3973,14 +3925,10 @@ wl_seat_get_pointer(struct wl_seat *wl_seat)
  * never had the keyboard capability.
  */
 static inline struct wl_keyboard *
-wl_seat_get_keyboard(struct wl_seat *wl_seat)
+wl_seat_get_keyboard(struct wl_seat *wl_seat, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_KEYBOARD, &wl_keyboard_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, NULL);
-
-	return (struct wl_keyboard *) id;
+	return (struct wl_keyboard *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
+			 WL_SEAT_GET_KEYBOARD, &wl_keyboard_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
 }
 
 /**
@@ -3995,14 +3943,10 @@ wl_seat_get_keyboard(struct wl_seat *wl_seat)
  * never had the touch capability.
  */
 static inline struct wl_touch *
-wl_seat_get_touch(struct wl_seat *wl_seat)
+wl_seat_get_touch(struct wl_seat *wl_seat, struct wl_proxy *id)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_TOUCH, &wl_touch_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, NULL);
-
-	return (struct wl_touch *) id;
+	return (struct wl_touch *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
+			 WL_SEAT_GET_TOUCH, &wl_touch_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
 }
 
 /**
@@ -5409,14 +5353,10 @@ wl_subcompositor_destroy(struct wl_subcompositor *wl_subcompositor)
  * error is raised.
  */
 static inline struct wl_subsurface *
-wl_subcompositor_get_subsurface(struct wl_subcompositor *wl_subcompositor, struct wl_surface *surface, struct wl_surface *parent)
+wl_subcompositor_get_subsurface(struct wl_subcompositor *wl_subcompositor, struct wl_proxy *id, struct wl_surface *surface, struct wl_surface *parent)
 {
-	struct wl_proxy *id;
-
-	id = wl_proxy_marshal_flags((struct wl_proxy *) wl_subcompositor,
-			 WL_SUBCOMPOSITOR_GET_SUBSURFACE, &wl_subsurface_interface, wl_proxy_get_version((struct wl_proxy *) wl_subcompositor), 0, NULL, surface, parent);
-
-	return (struct wl_subsurface *) id;
+	return (struct wl_subsurface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_subcompositor,
+			 WL_SUBCOMPOSITOR_GET_SUBSURFACE, &wl_subsurface_interface, wl_proxy_get_version((struct wl_proxy *) wl_subcompositor), 0, id, surface, parent);
 }
 
 #ifndef WL_SUBSURFACE_ERROR_ENUM

@@ -11,25 +11,22 @@ wayland_doxygen = configure_file(
 
 shared_files = files([
 	'../../src/wayland-util.h',
+	'../../src/wayland-connection.h',
 ])
 
 client_files = files([
 	'../../src/wayland-client.c',
 	'../../src/wayland-client.h',
 	'../../src/wayland-client-core.h',
+	'../../src/wayland-client-display.h',
 ])
 
 server_files = files([
-	'../../src/event-loop.c',
 	'../../src/wayland-server.c',
 	'../../src/wayland-server.h',
 	'../../src/wayland-server-core.h',
+	'../../src/wayland-server-display.h',
 	'../../src/wayland-shm.c',
-])
-
-cursor_files = files([
-	'../../cursor/wayland-cursor.c',
-	'../../cursor/wayland-cursor.h',
 ])
 
 extra_client_files = [
@@ -42,10 +39,6 @@ extra_server_files = [
 	wayland_server_protocol_h,
 ]
 
-extra_cursor_files = [
-	'mainpage.dox',
-]
-
 gen_doxygen = find_program('gen-doxygen.py')
 
 subdir('xml')
@@ -54,7 +47,6 @@ formats = {
 	'html': {
 		'Client': shared_files + client_files + extra_client_files,
 		'Server': shared_files + server_files + extra_server_files,
-		'Cursor': shared_files + cursor_files + extra_cursor_files,
 	},
 }
 
@@ -85,7 +77,7 @@ foreach f_name, sections: formats
 	endforeach
 endforeach
 
-man_files = shared_files + server_files + client_files + cursor_files
+man_files = shared_files + server_files + client_files
 stamp = join_paths(meson.current_build_dir(), 'man3.stamp')
 custom_target(
 	'man-pages-3',

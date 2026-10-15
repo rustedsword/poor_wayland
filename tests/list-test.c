@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -90,19 +92,19 @@ TEST(list_iterator)
 
 	i = 0;
 	wl_list_for_each(e, &list, link) {
-		assert(i < ARRAY_LENGTH(reference));
+		assert(i < ARRAY_SIZE(reference));
 		assert(e->i == reference[i]);
 		i++;
 	}
-	assert(i == ARRAY_LENGTH(reference));
+	assert(i == ARRAY_SIZE(reference));
 
 	i = 0;
 	wl_list_for_each_reverse(e, &list, link) {
-		assert(i < ARRAY_LENGTH(reference));
-		assert(e->i == reference[ARRAY_LENGTH(reference) - i - 1]);
+		assert(i < ARRAY_SIZE(reference));
+		assert(e->i == reference[ARRAY_SIZE(reference) - i - 1]);
 		i++;
 	}
-	assert(i == ARRAY_LENGTH(reference));
+	assert(i == ARRAY_SIZE(reference));
 }
 
 static int
@@ -140,10 +142,10 @@ TEST(list_remove)
 	wl_list_insert(&list, &e1.link);
 	wl_list_insert(list.prev, &e2.link);
 	wl_list_insert(list.prev, &e3.link);
-	assert(validate_list(&list, reference1, ARRAY_LENGTH(reference1)));
+	assert(validate_list(&list, reference1, ARRAY_SIZE(reference1)));
 
 	wl_list_remove(&e2.link);
-	assert(validate_list(&list, reference2, ARRAY_LENGTH(reference2)));
+	assert(validate_list(&list, reference2, ARRAY_SIZE(reference2)));
 }
 
 TEST(list_insert_list)
@@ -162,7 +164,7 @@ TEST(list_insert_list)
 	wl_list_insert(&list, &e1.link);
 	wl_list_insert(list.prev, &e2.link);
 	wl_list_insert(list.prev, &e3.link);
-	assert(validate_list(&list, reference1, ARRAY_LENGTH(reference1)));
+	assert(validate_list(&list, reference1, ARRAY_SIZE(reference1)));
 
 	e4.i = 76543;
 	e5.i = 1;
@@ -172,8 +174,8 @@ TEST(list_insert_list)
 	wl_list_insert(&other, &e4.link);
 	wl_list_insert(other.prev, &e5.link);
 	wl_list_insert(other.prev, &e6.link);
-	assert(validate_list(&other, reference2, ARRAY_LENGTH(reference2)));
+	assert(validate_list(&other, reference2, ARRAY_SIZE(reference2)));
 
 	wl_list_insert_list(list.next, &other);
-	assert(validate_list(&list, reference3, ARRAY_LENGTH(reference3)));
+	assert(validate_list(&list, reference3, ARRAY_SIZE(reference3)));
 }

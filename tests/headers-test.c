@@ -23,6 +23,8 @@
  * SOFTWARE.
  */
 
+#define _GNU_SOURCE
+
 #include "wayland-client-core.h"
 #include "wayland-server-core.h"
 

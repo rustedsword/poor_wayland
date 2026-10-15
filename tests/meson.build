@@ -7,18 +7,11 @@ test_runner = static_library(
 	sources: [
 		'test-runner.c',
 		'test-helpers.c',
-		'test-compositor.c'
 	],
 	include_directories: [ root_inc, src_inc ],
 	dependencies: [
 		cc.find_library('dl', required: false),
 		dependency('threads'),
-		epoll_dep,
-		ffi_dep,
-		wayland_util_dep,
-		wayland_private_dep,
-		wayland_client_dep,
-		wayland_server_dep
 	]
 )
 
@@ -40,7 +33,7 @@ tests_server_protocol_h = custom_target(
 	output: 'tests-server-protocol.h'
 )
 
-tests_client_protocol_c = custom_target(
+tests_client_protocol_h = custom_target(
 	'test client protocol header',
 	command: [ wayland_scanner_for_build, '-s', 'client-header', '@INPUT@', '@OUTPUT@' ],
 	input: tests_protocol_xml,
@@ -59,18 +52,6 @@ exec_fd_leak_checker = executable(
 	'exec-fd-leak-checker.c',
 	dependencies: test_runner_dep
 )
-
-if add_languages('cpp', native: false)
-	test(
-		'cpp-compile-test',
-		executable(
-			'cpp-compile-test',
-			'cpp-compile-test.cpp',
-			wayland_server_protocol_h,
-			include_directories: src_inc
-		)
-	)
-endif
 
 sed_path = find_program('sed').full_path()
 
@@ -95,84 +76,58 @@ if get_option('scanner')
 	)
 endif
 
+client_deps = [ wayland_client_dep, wayland_private_dep, wayland_util_dep, ffi_dep ]
+server_deps = [ wayland_server_dep, wayland_private_dep, wayland_util_dep, ffi_dep ]
+
 tests = {
-	'array-test': {},
-	'client-test': {
-		'extra_sources': [ wayland_server_protocol_h ],
+	'array-test': {
+		'deps': [ wayland_util_dep ],
 	},
-	'display-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-			tests_server_protocol_h,
-			tests_client_protocol_c,
-			tests_protocol_c,
-		],
+	'list-test': {
+		'deps': [ wayland_private_dep, wayland_util_dep ],
 	},
-	'connection-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
+	'map-test': {
+		'deps': [ wayland_private_dep, wayland_util_dep ],
 	},
-	'event-loop-test': {
-		'extra_sources': [ wayland_server_protocol_h ],
+	'fixed-test': {
+		'deps': [ wayland_private_dep, wayland_util_dep ],
 	},
-	'fixed-test': {},
 	'interface-test': {
 		'extra_sources': [ wayland_client_protocol_h ],
+		'deps': client_deps,
 	},
-	'list-test': {},
-	'map-test': {},
-	'sanity-test' : {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
-		'runtime_deps': [ exec_fd_leak_checker ],
+	'message-test': {
+		'extra_sources': [ wayland_client_protocol_h ],
+		'deps': client_deps,
 	},
-	'socket-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
-	},
-	'queue-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
+	'connection-test': {
+		'extra_sources': [ wayland_client_protocol_h ],
+		'deps': client_deps,
 	},
 	'signal-test': {
 		'extra_sources': [ wayland_server_protocol_h ],
+		'deps': server_deps,
 	},
 	'newsignal-test': {
 		'extra_sources': [
 			# wayland-server.c is needed here to access wl_priv_* functions
 			files('../src/wayland-server.c'),
 			wayland_server_protocol_h,
+			wayland_protocol_c,
 		],
+		'deps': [ wayland_private_dep, wayland_util_dep, ffi_dep, poor_loop_dep ],
 	},
-	'resources-test': {
-		'extra_sources': [ wayland_server_protocol_h ],
-	},
-	'message-test': {
+	'display-test': {
 		'extra_sources': [
+			'test-server.c',
 			wayland_client_protocol_h,
 			wayland_server_protocol_h,
+			tests_server_protocol_h,
+			tests_client_protocol_h,
+			tests_protocol_c,
 		],
-	},
-	'compositor-introspection-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
-	},
-	'protocol-logger-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
+		'deps': [ wayland_client_dep, wayland_server_dep ],
+		'runtime_deps': [ exec_fd_leak_checker ],
 	},
 	'headers-test': {
 		'extra_sources': [
@@ -183,32 +138,30 @@ tests = {
 			wayland_server_protocol_core_h,
 			'headers-protocol-core-test.c',
 		],
-	},
-	'os-wrappers-test': {
-		'runtime_deps': [ exec_fd_leak_checker ],
-	},
-	'proxy-test': {
-		'extra_sources': [
-			wayland_client_protocol_h,
-			wayland_server_protocol_h,
-		],
+		'deps': [ poor_loop_dep ],
 	},
 	'enum-validator-test': {},
 }
+
+# Tests that run io_uring run with each ring setup
+ring_tests = [ 'connection-test', 'display-test' ]
 
 foreach test_name, test_extras : tests
 	test_extra_sources = test_extras.get('extra_sources', [])
 	test_runtime_deps = test_extras.get('runtime_deps', [])
 	test_sources = [ test_name + '.c' ] + test_extra_sources
-	test_deps = [test_runner_dep, epoll_dep]
+	test_deps = [ test_runner_dep ] + test_extras.get('deps', [])
 	bin = executable(test_name, test_sources, dependencies: test_deps)
-	test(
-		test_name,
-		bin,
-		depends: test_runtime_deps,
-		env: [
-			'TEST_SRC_DIR=@0@'.format(meson.current_source_dir()),
-			'TEST_BUILD_DIR=@0@'.format(meson.current_build_dir()),
-		],
-	)
+	foreach ring : test_name in ring_tests ? [ 'default', 'coop', 'defer', 'sqpoll' ] : [ 'default' ]
+		test(
+			test_name in ring_tests ? test_name + '-' + ring : test_name,
+			bin,
+			depends: test_runtime_deps,
+			env: [
+				'TEST_SRC_DIR=@0@'.format(meson.current_source_dir()),
+				'TEST_BUILD_DIR=@0@'.format(meson.current_build_dir()),
+				'TEST_RING=' + ring,
+			],
+		)
+	endforeach
 endforeach

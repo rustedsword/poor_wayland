@@ -1,0 +1,6 @@
+[submodule "subprojects/poor_loop"]
+	path = subprojects/poor_loop
+	url = git@github.com:rustedsword/poor_loop.git
+[submodule "refs/wayland-protocols"]
+	path = refs/wayland-protocols
+	url = https://gitlab.freedesktop.org/wayland/wayland-protocols

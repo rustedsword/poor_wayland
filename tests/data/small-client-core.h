@@ -207,28 +207,20 @@ intf_A_get_version(struct intf_A *intf_A)
  * @ingroup iface_intf_A
  */
 static inline void *
-intf_A_rq1(struct intf_A *intf_A, const struct wl_interface *interface, uint32_t version)
+intf_A_rq1(struct intf_A *intf_A, const struct wl_interface *interface, uint32_t version, struct wl_proxy *untyped_new)
 {
-	struct wl_proxy *untyped_new;
-
-	untyped_new = wl_proxy_marshal_flags((struct wl_proxy *) intf_A,
-			 INTF_A_RQ1, interface, version, 0, interface->name, version, NULL);
-
-	return (void *) untyped_new;
+	return (void *) wl_proxy_marshal_flags((struct wl_proxy *) intf_A,
+			 INTF_A_RQ1, interface, version, 0, interface->name, version, untyped_new);
 }
 
 /**
  * @ingroup iface_intf_A
  */
 static inline struct intf_not_here *
-intf_A_rq2(struct intf_A *intf_A, const char *str, int32_t i, uint32_t u, wl_fixed_t f, int32_t fd, struct another_intf *obj)
+intf_A_rq2(struct intf_A *intf_A, struct wl_proxy *typed_new, const char *str, int32_t i, uint32_t u, wl_fixed_t f, int32_t fd, struct another_intf *obj)
 {
-	struct wl_proxy *typed_new;
-
-	typed_new = wl_proxy_marshal_flags((struct wl_proxy *) intf_A,
-			 INTF_A_RQ2, &intf_not_here_interface, wl_proxy_get_version((struct wl_proxy *) intf_A), 0, NULL, str, i, u, f, fd, obj);
-
-	return (struct intf_not_here *) typed_new;
+	return (struct intf_not_here *) wl_proxy_marshal_flags((struct wl_proxy *) intf_A,
+			 INTF_A_RQ2, &intf_not_here_interface, wl_proxy_get_version((struct wl_proxy *) intf_A), 0, typed_new, str, i, u, f, fd, obj);
 }
 
 /**

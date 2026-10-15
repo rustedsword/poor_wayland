@@ -21,8 +21,9 @@ wayland_util = static_library(
 	sources: 'wayland-util.c'
 )
 
+# Whole, so both libraries export the wl_list and wl_array functions
 wayland_util_dep = declare_dependency(
-	link_with: wayland_util,
+	link_whole: wayland_util,
 	include_directories: include_directories('.')
 )
 
@@ -96,14 +97,15 @@ if get_option('libraries')
 		'wayland-private',
 		sources: [
 			'connection.c',
-			'wayland-os.c'
+			'wayland-private.c',
 		],
-		dependencies: [ epoll_dep, ffi_dep, rt_dep ]
+		dependencies: [ ffi_dep, poor_loop_dep ]
 	)
 
 	wayland_private_dep = declare_dependency(
 		link_with: wayland_private,
-		include_directories: include_directories('.')
+		include_directories: include_directories('.'),
+		dependencies: [ poor_loop_dep ]
 	)
 
 	generated_headers = [
@@ -177,19 +179,17 @@ if get_option('libraries')
 			wayland_protocol_c,
 			'wayland-server.c',
 			'wayland-shm.c',
-			'event-loop.c'
 		],
 		# To avoid an unnecessary SONAME bump, wayland 1.x.y produces
 		# libwayland-server.so.0.x.y.
 		version: '.'.join(['0', wayland_version[1], wayland_version[2]]),
 		dependencies: [
-			epoll_dep,
 			ffi_dep,
 			wayland_private_dep,
 			wayland_util_dep,
 			mathlib_dep,
 			threads_dep,
-			rt_dep
+			poor_loop_dep,
 		],
 		include_directories: root_inc,
 		install: true
@@ -198,7 +198,7 @@ if get_option('libraries')
 	wayland_server_dep = declare_dependency(
 		link_with: wayland_server,
 		include_directories: [ root_inc, include_directories('.') ],
-		dependencies: [ epoll_dep, ffi_dep, mathlib_dep, threads_dep ],
+		dependencies: [ ffi_dep, mathlib_dep, threads_dep, poor_loop_dep ],
 		sources: [
 			wayland_server_protocol_core_h,
 			wayland_server_protocol_h
@@ -212,6 +212,7 @@ if get_option('libraries')
 		version: meson.project_version(),
 		filebase: 'wayland-server',
 		libraries: mathlib_dep,
+		requires: [ 'poor_loop', 'liburing' ],
 		variables: [
 			'datarootdir=' + join_paths('${prefix}', get_option('datadir')),
 			'pkgdatadir=' + join_paths('${pc_sysrootdir}${datarootdir}', meson.project_name())
@@ -232,12 +233,11 @@ if get_option('libraries')
 		# libwayland-client.so.0.x.y.
 		version: '.'.join(['0', wayland_version[1], wayland_version[2]]),
 		dependencies: [
-			epoll_dep,
 			ffi_dep,
 			wayland_private_dep,
 			wayland_util_dep,
 			mathlib_dep,
-			threads_dep
+			poor_loop_dep,
 		],
 		include_directories: root_inc,
 		install: true
@@ -250,6 +250,7 @@ if get_option('libraries')
 		version: meson.project_version(),
 		filebase: 'wayland-client',
 		libraries: mathlib_dep,
+		requires: [ 'poor_loop', 'liburing' ],
 		variables: [
 			'datarootdir=' + join_paths('${prefix}', get_option('datadir')),
 			'pkgdatadir=' + join_paths('${pc_sysrootdir}${datarootdir}', meson.project_name())
@@ -259,6 +260,7 @@ if get_option('libraries')
 	wayland_client_dep = declare_dependency(
 		link_with: wayland_client,
 		include_directories: [ root_inc, include_directories('.') ],
+		dependencies: [ poor_loop_dep ],
 		sources: [
 			wayland_client_protocol_core_h,
 			wayland_client_protocol_h
@@ -273,5 +275,8 @@ if get_option('libraries')
 		'wayland-server-core.h',
 		'wayland-client.h',
 		'wayland-client-core.h',
+		'wayland-client-display.h',
+		'wayland-server-display.h',
+		'wayland-connection.h',
 	])
 endif

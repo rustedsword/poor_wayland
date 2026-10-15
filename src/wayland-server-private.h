@@ -30,11 +30,6 @@
 
 #include "wayland-server-core.h"
 
-struct wl_priv_signal {
-	struct wl_list listener_list;
-	struct wl_list emit_list;
-};
-
 void
 wl_priv_signal_init(struct wl_priv_signal *signal);
 

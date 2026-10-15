@@ -23,38 +23,33 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <string.h>
-#include "wayland-util.h"
-#include "wayland-private.h"
+
 #include "test-runner.h"
+#include "wayland-util.h"
 
 TEST(array_init)
 {
 	struct wl_array array;
+	char storage[16];
 
-	/* fill with garbage to emulate uninitialized memory */
-	memset(&array, 0x57, sizeof array);
-
-	wl_array_init(&array);
+	wl_array_init(&array, storage, sizeof(storage));
 	assert(array.size == 0);
-	assert(array.alloc == 0);
-	assert(array.data == 0);
+	assert(array.alloc == sizeof(storage));
+	assert(array.data == storage);
 }
 
-TEST(array_release)
+TEST(array_init_macro)
 {
-	struct wl_array array;
-	void *ptr;
+	int storage[4];
+	struct wl_array array = WL_ARRAY_INIT(storage);
 
-	wl_array_init(&array);
-	ptr = wl_array_add(&array, 1);
-	assert(ptr != NULL);
-	assert(array.data != NULL);
-
-	wl_array_release(&array);
-	assert(array.data == WL_ARRAY_POISON_PTR);
+	assert(array.size == 0);
+	assert(array.alloc == sizeof(storage));
+	assert(array.data == storage);
 }
 
 TEST(array_add)
@@ -65,93 +60,88 @@ TEST(array_add)
 		double c;
 		double d;
 	};
+	constexpr unsigned iterations = 1321;
+	static struct mydata storage[iterations];
+	struct wl_array array = WL_ARRAY_INIT(storage);
 
-	const unsigned int iterations = 1321; /* this is arbitrary */
-	const int datasize = sizeof(struct mydata);
-	struct wl_array array;
-	size_t i;
+	for (unsigned i = 0; i < iterations; i++) {
+		struct mydata *ptr = wl_array_add(&array, sizeof(*ptr));
 
-	wl_array_init(&array);
-
-	/* add some data */
-	for (i = 0; i < iterations; i++) {
-		struct mydata* ptr = wl_array_add(&array, datasize);
-		assert(ptr);
-		assert((i + 1) * datasize == array.size);
-
+		assert(ptr == &storage[i]);
+		assert((i + 1) * sizeof(*ptr) == array.size);
 		ptr->a = i * 3;
 		ptr->b = 20000 - i;
-		ptr->c = (double)(i);
+		ptr->c = (double)i;
 		ptr->d = (double)(i / 2.);
 	}
-
-	/* verify the data */
-	for (i = 0; i < iterations; ++i) {
-		struct mydata* check = (struct mydata*)array.data + i;
+	for (unsigned i = 0; i < iterations; ++i) {
+		struct mydata *check = (struct mydata *)array.data + i;
 
 		assert(check->a == i * 3);
 		assert(check->b == 20000 - i);
-		assert(check->c == (double)(i));
-		assert(check->d == (double)(i/2.));
+		assert(check->c == (double)i);
+		assert(check->d == (double)(i / 2.));
 	}
+}
 
-	wl_array_release(&array);
+TEST(array_add_beyond_storage)
+{
+	char storage[10];
+	struct wl_array array = WL_ARRAY_INIT(storage);
+
+	assert(wl_array_add(&array, 6) == storage);
+	assert(!wl_array_add(&array, 5));
+	assert(array.size == 6);
+	assert(wl_array_add(&array, 4) == storage + 6);
+	assert(!wl_array_add(&array, 1));
+	assert(wl_array_add(&array, 0) == storage + 10);
 }
 
 TEST(array_copy)
 {
-	const int iterations = 1529; /* this is arbitrary */
-	struct wl_array source;
-	struct wl_array copy;
-	int i;
+	constexpr int iterations = 1529;
+	static int source_storage[iterations], copy_storage[iterations], small_storage[iterations - 1];
+	struct wl_array source = WL_ARRAY_INIT(source_storage);
+	struct wl_array copy = WL_ARRAY_INIT(copy_storage);
+	struct wl_array small = WL_ARRAY_INIT(small_storage);
 
-	wl_array_init(&source);
-
-	/* add some data */
-	for (i = 0; i < iterations; i++) {
+	for (int i = 0; i < iterations; i++) {
 		int *p = wl_array_add(&source, sizeof(int));
+
 		assert(p);
 		*p = i * 2 + i;
 	}
-
-	/* copy the array */
-	wl_array_init(&copy);
-	wl_array_copy(&copy, &source);
-
-	/* check the copy */
-	for (i = 0; i < iterations; i++) {
+	assert(wl_array_copy(&copy, &source) == 0);
+	assert(copy.size == source.size);
+	for (int i = 0; i < iterations; i++) {
 		int *s = (int *)source.data + i;
 		int *c = (int *)copy.data + i;
 
-		assert(*s == *c); /* verify the values are the same */
-		assert(s != c); /* ensure the addresses aren't the same */
-		assert(*s == i * 2 + i); /* sanity check */
+		assert(*s == *c);
+		assert(s != c);
+		assert(*s == i * 2 + i);
 	}
-
-	wl_array_release(&source);
-	wl_array_release(&copy);
+	assert(wl_array_copy(&small, &source) == -1);
+	assert(small.size == 0);
 }
 
 TEST(array_for_each)
 {
 	static const int elements[] = { 77, 12, 45192, 53280, 334455 };
-	struct wl_array array;
+	int storage[5];
+	struct wl_array array = WL_ARRAY_INIT(storage);
 	int *p;
 	int i;
 
-	wl_array_init(&array);
 	for (i = 0; i < 5; i++) {
-		p = wl_array_add(&array, sizeof *p);
+		p = wl_array_add(&array, sizeof(*p));
 		assert(p);
 		*p = elements[i];
 	}
-
 	i = 0;
 	wl_array_for_each(p, &array) {
 		assert(*p == elements[i]);
 		i++;
 	}
 	assert(i == 5);
-
-	wl_array_release(&array);
 }

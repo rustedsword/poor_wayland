@@ -17,6 +17,28 @@ protocol does not handle rendering, which is one of the features that
 makes wayland so simple.  All clients are expected to handle rendering
 themselves, typically through cairo or OpenGL.
 
+## poor_wayland
+
+The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
+
+- Nothing blocks. All I/O, closing fds included, goes through the loop.
+  Messages are sent when the loop iteration that queued them ends, events and
+  requests are dispatched as soon as they arrive. Connecting, listening and
+  destroying finish later, in callbacks.
+- The libraries don't allocate. Displays, clients, sockets, globals,
+  resources and proxies are structures of the caller, and so are the
+  connection buffers and object maps. Objects created for the peer, like
+  proxies of server-created objects or server-side registries, come from
+  callbacks.
+- A display is used from the thread of its loop only: there are no event
+  queues, roundtrips or prepare_read. A roundtrip is a wl_display.sync whose
+  callback continues the work.
+- Requests that create objects take the memory of the new proxy, e.g.
+  `wl_compositor_create_surface(compositor, &my_surface->proxy)`.
+
+It needs Linux 6.11 or newer, liburing 2.7 or newer and a C23 compiler.
+wayland-cursor is not built.
+
 Building the wayland libraries is fairly simple, aside from libffi,
 they don't have many dependencies:
 

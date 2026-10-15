@@ -26,27 +26,85 @@
     SOFTWARE.
   </copyright>
 
-  <interface name="fd_passer" version="2">
-    <description summary="Sends an event with an fd">
-      A trivial interface for fd passing tests.
+  <interface name="test_global" version="2">
+    <description summary="drives the test compositor">
+      Requests make the compositor answer with events, create objects or
+      fail the client.
     </description>
 
     <request name="destroy" type="destructor"/>
 
-    <event name="pre_fd"/>
+    <request name="echo">
+      <description summary="send the arguments back with an echoed event"/>
+      <arg name="i" type="int"/>
+      <arg name="u" type="uint"/>
+      <arg name="f" type="fixed"/>
+      <arg name="s" type="string"/>
+      <arg name="ns" type="string" allow-null="true"/>
+      <arg name="o" type="object" interface="test_global" allow-null="true"/>
+      <arg name="a" type="array"/>
+      <arg name="fd" type="fd"/>
+    </request>
 
-    <event name="fd">
-      <description summary="passes a file descriptor"/>
-      <arg name="fd" type="fd" summary="file descriptor"/>
+    <event name="echoed">
+      <arg name="i" type="int"/>
+      <arg name="u" type="uint"/>
+      <arg name="f" type="fixed"/>
+      <arg name="s" type="string"/>
+      <arg name="ns" type="string" allow-null="true"/>
+      <arg name="o" type="object" interface="test_global" allow-null="true"/>
+      <arg name="a" type="array"/>
+      <arg name="fd" type="fd"/>
     </event>
 
-    <!-- Version 2 additions -->
-    <request name="conjoin" since="2">
-      <description summary="register another fd passer with this one">
-	Tells this fd passer object about another one to send events
-	to for more complicated fd leak tests.
-      </description>
-      <arg name="passer" type="object" interface="fd_passer"/>
+    <request name="create_child">
+      <arg name="id" type="new_id" interface="test_child"/>
     </request>
+
+    <request name="spawn_child">
+      <description summary="create a child and announce it with child_spawned"/>
+    </request>
+
+    <event name="child_spawned">
+      <arg name="child" type="new_id" interface="test_child"/>
+    </event>
+
+    <request name="post_error">
+      <arg name="code" type="uint"/>
+    </request>
+
+    <request name="flood">
+      <description summary="send count data events of size bytes each"/>
+      <arg name="count" type="uint"/>
+      <arg name="size" type="uint"/>
+    </request>
+
+    <event name="data">
+      <arg name="payload" type="array"/>
+    </event>
+
+    <request name="disconnect">
+      <description summary="destroy the client"/>
+    </request>
+
+    <request name="read_buffer">
+      <description summary="read the first pixel of a wl_shm buffer"/>
+      <arg name="buffer" type="object" interface="wl_buffer"/>
+    </request>
+
+    <request name="since_two" since="2"/>
   </interface>
+
+  <interface name="test_child" version="2">
+    <request name="destroy" type="destructor"/>
+
+    <request name="ping">
+      <description summary="answer with a pong that carries a pipe"/>
+    </request>
+
+    <event name="pong">
+      <arg name="fd" type="fd"/>
+    </event>
+  </interface>
+
 </protocol>

@@ -63,14 +63,14 @@ static int timeouts_enabled = 1;
 /* set to one if the output goes to the terminal */
 static int is_atty = 0;
 
-extern const struct test __start_test_section, __stop_test_section;
+extern const struct test __start_test_section[], __stop_test_section[];
 
 static const struct test *
 find_test(const char *name)
 {
 	const struct test *t;
 
-	for (t = &__start_test_section; t < &__stop_test_section; t++)
+	for (t = __start_test_section; t < __stop_test_section; t++)
 		if (strcmp(t->name, name) == 0)
 			return t;
 
@@ -87,7 +87,7 @@ usage(const char *name, int status)
 		"only that test without forking.  Available tests:\n\n",
 		name);
 
-	for (t = &__start_test_section; t < &__stop_test_section; t++)
+	for (t = __start_test_section; t < __stop_test_section; t++)
 		fprintf(stderr, "  %s\n", t->name);
 
 	fprintf(stderr, "\n");
@@ -272,7 +272,8 @@ is_debugger_attached(void)
 
 		/* Wait until parent is ready */
 		close(pipefd[1]);  /* Close unused write end */
-		read(pipefd[0], &buf, 1);
+		if (read(pipefd[0], &buf, 1) != 1)
+			_exit(1);
 		close(pipefd[0]);
 		if (buf == '-')
 			_exit(1);
@@ -295,10 +296,10 @@ is_debugger_attached(void)
 			 * Then flag the error state to the client by sending '-'.
 			 */
 			perror("prctl");
-			write(pipefd[1], "-", 1);
+			(void)!write(pipefd[1], "-", 1);
 		} else {
 			/* Signal to client that parent is ready by passing '+' */
-			write(pipefd[1], "+", 1);
+			(void)!write(pipefd[1], "+", 1);
 		}
 		close(pipefd[1]);
 
@@ -356,7 +357,7 @@ int main(int argc, char *argv[])
 	set_xdg_runtime_dir();
 
 	pass = 0;
-	for (t = &__start_test_section; t < &__stop_test_section; t++) {
+	for (t = __start_test_section; t < __stop_test_section; t++) {
 		int success = 0;
 
 		pid = fork();
@@ -405,7 +406,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "----------------------------------------\n");
 	}
 
-	total = &__stop_test_section - &__start_test_section;
+	total = __stop_test_section - __start_test_section;
 	fprintf(stderr, "%d tests, %d pass, %d fail\n",
 		total, pass, total - pass);
 
