@@ -12,13 +12,14 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
+#include "example-log.h"
 #include "poor_wayland_client_display.h"
 #include "poor_wayland_client.h"
 #include "xdg-shell-client-protocol.h"
 
 /*
  * A window with an animated pattern, drawn into shared memory once per frame. It runs until its close button is
- * pressed or until SIGINT or SIGTERM. POOR_WAYLAND_DEBUG=client shows the protocol.
+ * pressed or until SIGINT or SIGTERM. WAYLAND_DEBUG=client shows the protocol.
  */
 constexpr int32_t DEFAULT_WIDTH = 640;
 constexpr int32_t DEFAULT_HEIGHT = 480;
@@ -69,87 +70,6 @@ struct app {
 };
 
 poor_loop_group_attach(signal_file, struct app, signals, signal_op, on_signal);
-
-/* Log lines go to stderr through the loop: one buffer fills while the other one is written */
-static struct {
-	struct poor_loop *loop;
-	struct poor_loop_op op;
-	size_t len[2], written;
-	unsigned fill;
-	char data[2][16384];
-} logger;
-
-/* Without a working ring there is no asynchronous way left to report anything */
-static struct io_uring_sqe *need_sqe(struct io_uring_sqe *sqe)
-{
-	if (!sqe) {
-		dprintf(STDERR_FILENO, "simple-shm: io_uring: %s\n", strerror(errno));
-		exit(1);
-	}
-	return sqe;
-}
-
-static void log_write(void)
-{
-	unsigned busy = logger.fill ^ 1;
-
-	io_uring_prep_write(need_sqe(poor_loop_get_sqe_or_submit(logger.loop, &logger.op)), STDERR_FILENO,
-			    logger.data[busy] + logger.written, logger.len[busy] - logger.written, -1);
-}
-
-static void log_flush(void)
-{
-	if (logger.op.pending || !logger.len[logger.fill])
-		return;
-	logger.fill ^= 1;
-	logger.written = 0;
-	log_write();
-}
-
-static void on_log_written(struct poor_loop *, struct poor_loop_op *, const struct io_uring_cqe *cqe)
-{
-	unsigned busy = logger.fill ^ 1;
-
-	if (cqe->res > 0 && (logger.written += cqe->res) < logger.len[busy]) {
-		log_write();
-		return;
-	}
-	logger.len[busy] = 0;
-	log_flush();
-}
-
-/* A line that doesn't fit the buffer is dropped */
-[[gnu::format(printf, 1, 0)]] static void log_vprintf(const char *fmt, va_list ap)
-{
-	size_t room = sizeof(logger.data[0]) - logger.len[logger.fill];
-	int n = vsnprintf(logger.data[logger.fill] + logger.len[logger.fill], room, fmt, ap);
-
-	if (n > 0 && (size_t)n < room)
-		logger.len[logger.fill] += n;
-	log_flush();
-}
-
-[[gnu::format(printf, 1, 2)]] static void log_printf(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	log_vprintf(fmt, ap);
-	va_end(ap);
-}
-
-static bool log_pending(void)
-{
-	return logger.op.pending || logger.len[logger.fill];
-}
-
-static void log_init(struct poor_loop *loop)
-{
-	logger.loop = loop;
-	poor_loop_op_init(&logger.op, on_log_written);
-	logger.len[0] = logger.len[1] = 0;
-	logger.fill = 0;
-}
 
 /* The truncate holds the memfd, so its completion closes it */
 static void app_quit(struct app *app, int status)
@@ -494,7 +414,7 @@ int main(void)
 		dprintf(STDERR_FILENO, "simple-shm: io_uring: %s\n", strerror(-ret));
 		return 1;
 	}
-	log_init(&app.loop);
+	log_init(&app.loop, "simple-shm");
 	poor_wl_log_set_handler_client(log_vprintf);
 	if (app_init(&app) < 0) {
 		app.status = 1;

@@ -264,6 +264,72 @@ if get_option('libraries')
 
 	meson.override_dependency('poor_wayland_client', wayland_client_dep)
 
+	linux_dmabuf_xml = meson.project_source_root() / 'refs/wayland-protocols/stable/linux-dmabuf/linux-dmabuf-v1.xml'
+	swapchain_option = get_option('swapchain').require(fs.is_file(linux_dmabuf_xml),
+		error_message: 'the swapchain needs the refs/wayland-protocols submodule')
+	gbm_dep = dependency('gbm', required: swapchain_option)
+	build_swapchain = gbm_dep.found()
+
+	if build_swapchain
+		linux_dmabuf_client_protocol_h = custom_target(
+			'linux-dmabuf client header',
+			command: [ wayland_scanner_for_build, '-s', 'client-header', '@INPUT@', '@OUTPUT@' ],
+			input: linux_dmabuf_xml,
+			output: 'poor_linux_dmabuf_v1_client_protocol.h',
+			install: true,
+			install_dir: get_option('includedir'),
+		)
+
+		linux_dmabuf_server_protocol_h = custom_target(
+			'linux-dmabuf server header',
+			command: [ wayland_scanner_for_build, '-s', 'server-header', '@INPUT@', '@OUTPUT@' ],
+			input: linux_dmabuf_xml,
+			output: 'poor_linux_dmabuf_v1_server_protocol.h',
+		)
+
+		linux_dmabuf_protocol_c = custom_target(
+			'linux-dmabuf protocol source',
+			command: [ wayland_scanner_for_build, '-s', 'public-code', '@INPUT@', '@OUTPUT@' ],
+			input: linux_dmabuf_xml,
+			output: 'poor_linux_dmabuf_v1_protocol.c',
+		)
+
+		wayland_swapchain = library(
+			'poor_wayland_swapchain',
+			sources: [
+				linux_dmabuf_client_protocol_h,
+				linux_dmabuf_protocol_c,
+				'swapchain.c',
+				'swapchain-gbm.c',
+			],
+			version: meson.project_version(),
+			soversion: '0',
+			dependencies: [ wayland_client_dep, wayland_private_dep, gbm_dep, poor_loop_dep ],
+			include_directories: root_inc,
+			install: true
+		)
+
+		wayland_swapchain_dep = declare_dependency(
+			link_with: wayland_swapchain,
+			include_directories: include_directories('.'),
+			dependencies: [ wayland_client_dep, gbm_dep ],
+			sources: [ linux_dmabuf_client_protocol_h ]
+		)
+
+		pkgconfig.generate(
+			wayland_swapchain,
+			name: 'poor_wayland_swapchain',
+			description: 'dmabuf swapchain for poor_wayland clients',
+			version: meson.project_version(),
+			filebase: 'poor_wayland_swapchain',
+			requires: [ 'poor_wayland_client', 'gbm' ]
+		)
+
+		meson.override_dependency('poor_wayland_swapchain', wayland_swapchain_dep)
+
+		install_headers('poor_wayland_swapchain.h')
+	endif
+
 	install_headers([
 		'poor_wayland_util.h',
 		'poor_wayland_connection.h',

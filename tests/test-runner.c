@@ -60,6 +60,14 @@ int fd_leak_check_enabled;
  * POOR_WAYLAND_TEST_NO_TIMEOUTS environment variable. */
 static int timeouts_enabled = 1;
 
+const char *__asan_default_options(void);
+
+/* Tests that link both libraries have the same tables of the core protocol, ASan sees them once for each library */
+[[gnu::visibility("default")]] const char *__asan_default_options(void)
+{
+	return "detect_odr_violation=1";
+}
+
 /* set to one if the output goes to the terminal */
 static int is_atty = 0;
 
