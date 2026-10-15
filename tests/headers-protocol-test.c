@@ -25,12 +25,12 @@
 
 #define _GNU_SOURCE
 
-#include "wayland-client-protocol.h"
-#include "wayland-server-protocol.h"
+#include "poor_wayland_client_protocol.h"
+#include "poor_wayland_server_protocol.h"
 
-#ifndef WAYLAND_CLIENT_H
-#error including wayland-client-protocol.h did not include wayland-client.h!
+#ifndef POOR_WAYLAND_CLIENT_H
+#error including poor_wayland_client_protocol.h did not include poor_wayland_client.h!
 #endif
-#ifndef WAYLAND_SERVER_H
-#error including wayland-server-protocol.h did not include wayland-server.h!
+#ifndef POOR_WAYLAND_SERVER_H
+#error including poor_wayland_server_protocol.h did not include poor_wayland_server.h!
 #endif

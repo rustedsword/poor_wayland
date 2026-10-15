@@ -1,45 +1,45 @@
 /* SCANNER TEST */
 
-#ifndef WAYLAND_SERVER_PROTOCOL_H
-#define WAYLAND_SERVER_PROTOCOL_H
+#ifndef POOR_WAYLAND_SERVER_PROTOCOL_H
+#define POOR_WAYLAND_SERVER_PROTOCOL_H
 
 #include <stdint.h>
 #include <stddef.h>
-#include "wayland-server.h"
+#include "poor_wayland_server.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-struct wl_client;
-struct wl_resource;
+struct poor_wl_client;
+struct poor_wl_resource;
 
 /**
- * @page page_wayland The wayland protocol
- * @section page_ifaces_wayland Interfaces
- * - @subpage page_iface_wl_display - core global object
- * - @subpage page_iface_wl_registry - global registry object
- * - @subpage page_iface_wl_callback - callback object
- * - @subpage page_iface_wl_compositor - the compositor singleton
- * - @subpage page_iface_wl_shm_pool - a shared memory pool
- * - @subpage page_iface_wl_shm - shared memory support
- * - @subpage page_iface_wl_buffer - content for a wl_surface
- * - @subpage page_iface_wl_data_offer - offer to transfer data
- * - @subpage page_iface_wl_data_source - offer to transfer data
- * - @subpage page_iface_wl_data_device - data transfer device
- * - @subpage page_iface_wl_data_device_manager - data transfer interface
- * - @subpage page_iface_wl_shell - create desktop-style surfaces
- * - @subpage page_iface_wl_shell_surface - desktop-style metadata interface
- * - @subpage page_iface_wl_surface - an onscreen surface
- * - @subpage page_iface_wl_seat - group of input devices
- * - @subpage page_iface_wl_pointer - pointer input device
- * - @subpage page_iface_wl_keyboard - keyboard input device
- * - @subpage page_iface_wl_touch - touchscreen input device
- * - @subpage page_iface_wl_output - compositor output region
- * - @subpage page_iface_wl_region - region interface
- * - @subpage page_iface_wl_subcompositor - sub-surface compositing
- * - @subpage page_iface_wl_subsurface - sub-surface interface to a wl_surface
- * @section page_copyright_wayland Copyright
+ * @page page_poor_wayland The poor_wayland protocol
+ * @section page_ifaces_poor_wayland Interfaces
+ * - @subpage page_iface_poor_wl_display - core global object
+ * - @subpage page_iface_poor_wl_registry - global registry object
+ * - @subpage page_iface_poor_wl_callback - callback object
+ * - @subpage page_iface_poor_wl_compositor - the compositor singleton
+ * - @subpage page_iface_poor_wl_shm_pool - a shared memory pool
+ * - @subpage page_iface_poor_wl_shm - shared memory support
+ * - @subpage page_iface_poor_wl_buffer - content for a wl_surface
+ * - @subpage page_iface_poor_wl_data_offer - offer to transfer data
+ * - @subpage page_iface_poor_wl_data_source - offer to transfer data
+ * - @subpage page_iface_poor_wl_data_device - data transfer device
+ * - @subpage page_iface_poor_wl_data_device_manager - data transfer interface
+ * - @subpage page_iface_poor_wl_shell - create desktop-style surfaces
+ * - @subpage page_iface_poor_wl_shell_surface - desktop-style metadata interface
+ * - @subpage page_iface_poor_wl_surface - an onscreen surface
+ * - @subpage page_iface_poor_wl_seat - group of input devices
+ * - @subpage page_iface_poor_wl_pointer - pointer input device
+ * - @subpage page_iface_poor_wl_keyboard - keyboard input device
+ * - @subpage page_iface_poor_wl_touch - touchscreen input device
+ * - @subpage page_iface_poor_wl_output - compositor output region
+ * - @subpage page_iface_poor_wl_region - region interface
+ * - @subpage page_iface_poor_wl_subcompositor - sub-surface compositing
+ * - @subpage page_iface_poor_wl_subsurface - sub-surface interface to a wl_surface
+ * @section page_copyright_poor_wayland Copyright
  * <pre>
  *
  * Copyright © 2008-2011 Kristian Høgsberg
@@ -68,53 +68,53 @@ struct wl_resource;
  * SOFTWARE.
  * </pre>
  */
-struct wl_buffer;
-struct wl_callback;
-struct wl_compositor;
-struct wl_data_device;
-struct wl_data_device_manager;
-struct wl_data_offer;
-struct wl_data_source;
-struct wl_display;
-struct wl_keyboard;
-struct wl_output;
-struct wl_pointer;
-struct wl_region;
-struct wl_registry;
-struct wl_seat;
-struct wl_shell;
-struct wl_shell_surface;
-struct wl_shm;
-struct wl_shm_pool;
-struct wl_subcompositor;
-struct wl_subsurface;
-struct wl_surface;
-struct wl_touch;
+struct poor_wl_buffer;
+struct poor_wl_callback;
+struct poor_wl_compositor;
+struct poor_wl_data_device;
+struct poor_wl_data_device_manager;
+struct poor_wl_data_offer;
+struct poor_wl_data_source;
+struct poor_wl_display;
+struct poor_wl_keyboard;
+struct poor_wl_output;
+struct poor_wl_pointer;
+struct poor_wl_region;
+struct poor_wl_registry;
+struct poor_wl_seat;
+struct poor_wl_shell;
+struct poor_wl_shell_surface;
+struct poor_wl_shm;
+struct poor_wl_shm_pool;
+struct poor_wl_subcompositor;
+struct poor_wl_subsurface;
+struct poor_wl_surface;
+struct poor_wl_touch;
 
-#ifndef WL_DISPLAY_INTERFACE
-#define WL_DISPLAY_INTERFACE
+#ifndef POOR_WL_DISPLAY_INTERFACE
+#define POOR_WL_DISPLAY_INTERFACE
 /**
- * @page page_iface_wl_display wl_display
- * @section page_iface_wl_display_desc Description
+ * @page page_iface_poor_wl_display poor_wl_display
+ * @section page_iface_poor_wl_display_desc Description
  *
  * The core global object.  This is a special singleton object.  It
  * is used for internal Wayland protocol features.
- * @section page_iface_wl_display_api API
- * See @ref iface_wl_display.
+ * @section page_iface_poor_wl_display_api API
+ * See @ref iface_poor_wl_display.
  */
 /**
- * @defgroup iface_wl_display The wl_display interface
+ * @defgroup iface_poor_wl_display The poor_wl_display interface
  *
  * The core global object.  This is a special singleton object.  It
  * is used for internal Wayland protocol features.
  */
-extern const struct wl_interface wl_display_interface;
+extern const struct poor_wl_interface poor_wl_display_interface;
 #endif
-#ifndef WL_REGISTRY_INTERFACE
-#define WL_REGISTRY_INTERFACE
+#ifndef POOR_WL_REGISTRY_INTERFACE
+#define POOR_WL_REGISTRY_INTERFACE
 /**
- * @page page_iface_wl_registry wl_registry
- * @section page_iface_wl_registry_desc Description
+ * @page page_iface_poor_wl_registry poor_wl_registry
+ * @section page_iface_poor_wl_registry_desc Description
  *
  * The singleton global registry object.  The server has a number of
  * global objects that are available to all clients.  These objects
@@ -136,11 +136,11 @@ extern const struct wl_interface wl_display_interface;
  * request.  This creates a client-side handle that lets the object
  * emit events to the client and lets the client invoke requests on
  * the object.
- * @section page_iface_wl_registry_api API
- * See @ref iface_wl_registry.
+ * @section page_iface_poor_wl_registry_api API
+ * See @ref iface_poor_wl_registry.
  */
 /**
- * @defgroup iface_wl_registry The wl_registry interface
+ * @defgroup iface_poor_wl_registry The poor_wl_registry interface
  *
  * The singleton global registry object.  The server has a number of
  * global objects that are available to all clients.  These objects
@@ -163,53 +163,53 @@ extern const struct wl_interface wl_display_interface;
  * emit events to the client and lets the client invoke requests on
  * the object.
  */
-extern const struct wl_interface wl_registry_interface;
+extern const struct poor_wl_interface poor_wl_registry_interface;
 #endif
-#ifndef WL_CALLBACK_INTERFACE
-#define WL_CALLBACK_INTERFACE
+#ifndef POOR_WL_CALLBACK_INTERFACE
+#define POOR_WL_CALLBACK_INTERFACE
 /**
- * @page page_iface_wl_callback wl_callback
- * @section page_iface_wl_callback_desc Description
+ * @page page_iface_poor_wl_callback poor_wl_callback
+ * @section page_iface_poor_wl_callback_desc Description
  *
  * Clients can handle the 'done' event to get notified when
  * the related request is done.
- * @section page_iface_wl_callback_api API
- * See @ref iface_wl_callback.
+ * @section page_iface_poor_wl_callback_api API
+ * See @ref iface_poor_wl_callback.
  */
 /**
- * @defgroup iface_wl_callback The wl_callback interface
+ * @defgroup iface_poor_wl_callback The poor_wl_callback interface
  *
  * Clients can handle the 'done' event to get notified when
  * the related request is done.
  */
-extern const struct wl_interface wl_callback_interface;
+extern const struct poor_wl_interface poor_wl_callback_interface;
 #endif
-#ifndef WL_COMPOSITOR_INTERFACE
-#define WL_COMPOSITOR_INTERFACE
+#ifndef POOR_WL_COMPOSITOR_INTERFACE
+#define POOR_WL_COMPOSITOR_INTERFACE
 /**
- * @page page_iface_wl_compositor wl_compositor
- * @section page_iface_wl_compositor_desc Description
+ * @page page_iface_poor_wl_compositor poor_wl_compositor
+ * @section page_iface_poor_wl_compositor_desc Description
  *
  * A compositor.  This object is a singleton global.  The
  * compositor is in charge of combining the contents of multiple
  * surfaces into one displayable output.
- * @section page_iface_wl_compositor_api API
- * See @ref iface_wl_compositor.
+ * @section page_iface_poor_wl_compositor_api API
+ * See @ref iface_poor_wl_compositor.
  */
 /**
- * @defgroup iface_wl_compositor The wl_compositor interface
+ * @defgroup iface_poor_wl_compositor The poor_wl_compositor interface
  *
  * A compositor.  This object is a singleton global.  The
  * compositor is in charge of combining the contents of multiple
  * surfaces into one displayable output.
  */
-extern const struct wl_interface wl_compositor_interface;
+extern const struct poor_wl_interface poor_wl_compositor_interface;
 #endif
-#ifndef WL_SHM_POOL_INTERFACE
-#define WL_SHM_POOL_INTERFACE
+#ifndef POOR_WL_SHM_POOL_INTERFACE
+#define POOR_WL_SHM_POOL_INTERFACE
 /**
- * @page page_iface_wl_shm_pool wl_shm_pool
- * @section page_iface_wl_shm_pool_desc Description
+ * @page page_iface_poor_wl_shm_pool poor_wl_shm_pool
+ * @section page_iface_poor_wl_shm_pool_desc Description
  *
  * The wl_shm_pool object encapsulates a piece of memory shared
  * between the compositor and client.  Through the wl_shm_pool
@@ -218,11 +218,11 @@ extern const struct wl_interface wl_compositor_interface;
  * underlying mapped memory. Reusing the mapped memory avoids the
  * setup/teardown overhead and is useful when interactively resizing
  * a surface or for many small buffers.
- * @section page_iface_wl_shm_pool_api API
- * See @ref iface_wl_shm_pool.
+ * @section page_iface_poor_wl_shm_pool_api API
+ * See @ref iface_poor_wl_shm_pool.
  */
 /**
- * @defgroup iface_wl_shm_pool The wl_shm_pool interface
+ * @defgroup iface_poor_wl_shm_pool The poor_wl_shm_pool interface
  *
  * The wl_shm_pool object encapsulates a piece of memory shared
  * between the compositor and client.  Through the wl_shm_pool
@@ -232,13 +232,13 @@ extern const struct wl_interface wl_compositor_interface;
  * setup/teardown overhead and is useful when interactively resizing
  * a surface or for many small buffers.
  */
-extern const struct wl_interface wl_shm_pool_interface;
+extern const struct poor_wl_interface poor_wl_shm_pool_interface;
 #endif
-#ifndef WL_SHM_INTERFACE
-#define WL_SHM_INTERFACE
+#ifndef POOR_WL_SHM_INTERFACE
+#define POOR_WL_SHM_INTERFACE
 /**
- * @page page_iface_wl_shm wl_shm
- * @section page_iface_wl_shm_desc Description
+ * @page page_iface_poor_wl_shm poor_wl_shm
+ * @section page_iface_poor_wl_shm_desc Description
  *
  * A singleton global object that provides support for shared
  * memory.
@@ -249,11 +249,11 @@ extern const struct wl_interface wl_shm_pool_interface;
  * At connection setup time, the wl_shm object emits one or more
  * format events to inform clients about the valid pixel formats
  * that can be used for buffers.
- * @section page_iface_wl_shm_api API
- * See @ref iface_wl_shm.
+ * @section page_iface_poor_wl_shm_api API
+ * See @ref iface_poor_wl_shm.
  */
 /**
- * @defgroup iface_wl_shm The wl_shm interface
+ * @defgroup iface_poor_wl_shm The poor_wl_shm interface
  *
  * A singleton global object that provides support for shared
  * memory.
@@ -265,24 +265,24 @@ extern const struct wl_interface wl_shm_pool_interface;
  * format events to inform clients about the valid pixel formats
  * that can be used for buffers.
  */
-extern const struct wl_interface wl_shm_interface;
+extern const struct poor_wl_interface poor_wl_shm_interface;
 #endif
-#ifndef WL_BUFFER_INTERFACE
-#define WL_BUFFER_INTERFACE
+#ifndef POOR_WL_BUFFER_INTERFACE
+#define POOR_WL_BUFFER_INTERFACE
 /**
- * @page page_iface_wl_buffer wl_buffer
- * @section page_iface_wl_buffer_desc Description
+ * @page page_iface_poor_wl_buffer poor_wl_buffer
+ * @section page_iface_poor_wl_buffer_desc Description
  *
  * A buffer provides the content for a wl_surface. Buffers are
  * created through factory interfaces such as wl_drm, wl_shm or
  * similar. It has a width and a height and can be attached to a
  * wl_surface, but the mechanism by which a client provides and
  * updates the contents is defined by the buffer factory interface.
- * @section page_iface_wl_buffer_api API
- * See @ref iface_wl_buffer.
+ * @section page_iface_poor_wl_buffer_api API
+ * See @ref iface_poor_wl_buffer.
  */
 /**
- * @defgroup iface_wl_buffer The wl_buffer interface
+ * @defgroup iface_poor_wl_buffer The poor_wl_buffer interface
  *
  * A buffer provides the content for a wl_surface. Buffers are
  * created through factory interfaces such as wl_drm, wl_shm or
@@ -290,13 +290,13 @@ extern const struct wl_interface wl_shm_interface;
  * wl_surface, but the mechanism by which a client provides and
  * updates the contents is defined by the buffer factory interface.
  */
-extern const struct wl_interface wl_buffer_interface;
+extern const struct poor_wl_interface poor_wl_buffer_interface;
 #endif
-#ifndef WL_DATA_OFFER_INTERFACE
-#define WL_DATA_OFFER_INTERFACE
+#ifndef POOR_WL_DATA_OFFER_INTERFACE
+#define POOR_WL_DATA_OFFER_INTERFACE
 /**
- * @page page_iface_wl_data_offer wl_data_offer
- * @section page_iface_wl_data_offer_desc Description
+ * @page page_iface_poor_wl_data_offer poor_wl_data_offer
+ * @section page_iface_poor_wl_data_offer_desc Description
  *
  * A wl_data_offer represents a piece of data offered for transfer
  * by another client (the source client).  It is used by the
@@ -304,11 +304,11 @@ extern const struct wl_interface wl_buffer_interface;
  * describes the different mime types that the data can be
  * converted to and provides the mechanism for transferring the
  * data directly from the source client.
- * @section page_iface_wl_data_offer_api API
- * See @ref iface_wl_data_offer.
+ * @section page_iface_poor_wl_data_offer_api API
+ * See @ref iface_poor_wl_data_offer.
  */
 /**
- * @defgroup iface_wl_data_offer The wl_data_offer interface
+ * @defgroup iface_poor_wl_data_offer The poor_wl_data_offer interface
  *
  * A wl_data_offer represents a piece of data offered for transfer
  * by another client (the source client).  It is used by the
@@ -317,47 +317,47 @@ extern const struct wl_interface wl_buffer_interface;
  * converted to and provides the mechanism for transferring the
  * data directly from the source client.
  */
-extern const struct wl_interface wl_data_offer_interface;
+extern const struct poor_wl_interface poor_wl_data_offer_interface;
 #endif
-#ifndef WL_DATA_SOURCE_INTERFACE
-#define WL_DATA_SOURCE_INTERFACE
+#ifndef POOR_WL_DATA_SOURCE_INTERFACE
+#define POOR_WL_DATA_SOURCE_INTERFACE
 /**
- * @page page_iface_wl_data_source wl_data_source
- * @section page_iface_wl_data_source_desc Description
+ * @page page_iface_poor_wl_data_source poor_wl_data_source
+ * @section page_iface_poor_wl_data_source_desc Description
  *
  * The wl_data_source object is the source side of a wl_data_offer.
  * It is created by the source client in a data transfer and
  * provides a way to describe the offered data and a way to respond
  * to requests to transfer the data.
- * @section page_iface_wl_data_source_api API
- * See @ref iface_wl_data_source.
+ * @section page_iface_poor_wl_data_source_api API
+ * See @ref iface_poor_wl_data_source.
  */
 /**
- * @defgroup iface_wl_data_source The wl_data_source interface
+ * @defgroup iface_poor_wl_data_source The poor_wl_data_source interface
  *
  * The wl_data_source object is the source side of a wl_data_offer.
  * It is created by the source client in a data transfer and
  * provides a way to describe the offered data and a way to respond
  * to requests to transfer the data.
  */
-extern const struct wl_interface wl_data_source_interface;
+extern const struct poor_wl_interface poor_wl_data_source_interface;
 #endif
-#ifndef WL_DATA_DEVICE_INTERFACE
-#define WL_DATA_DEVICE_INTERFACE
+#ifndef POOR_WL_DATA_DEVICE_INTERFACE
+#define POOR_WL_DATA_DEVICE_INTERFACE
 /**
- * @page page_iface_wl_data_device wl_data_device
- * @section page_iface_wl_data_device_desc Description
+ * @page page_iface_poor_wl_data_device poor_wl_data_device
+ * @section page_iface_poor_wl_data_device_desc Description
  *
  * There is one wl_data_device per seat which can be obtained
  * from the global wl_data_device_manager singleton.
  *
  * A wl_data_device provides access to inter-client data transfer
  * mechanisms such as copy-and-paste and drag-and-drop.
- * @section page_iface_wl_data_device_api API
- * See @ref iface_wl_data_device.
+ * @section page_iface_poor_wl_data_device_api API
+ * See @ref iface_poor_wl_data_device.
  */
 /**
- * @defgroup iface_wl_data_device The wl_data_device interface
+ * @defgroup iface_poor_wl_data_device The poor_wl_data_device interface
  *
  * There is one wl_data_device per seat which can be obtained
  * from the global wl_data_device_manager singleton.
@@ -365,13 +365,13 @@ extern const struct wl_interface wl_data_source_interface;
  * A wl_data_device provides access to inter-client data transfer
  * mechanisms such as copy-and-paste and drag-and-drop.
  */
-extern const struct wl_interface wl_data_device_interface;
+extern const struct poor_wl_interface poor_wl_data_device_interface;
 #endif
-#ifndef WL_DATA_DEVICE_MANAGER_INTERFACE
-#define WL_DATA_DEVICE_MANAGER_INTERFACE
+#ifndef POOR_WL_DATA_DEVICE_MANAGER_INTERFACE
+#define POOR_WL_DATA_DEVICE_MANAGER_INTERFACE
 /**
- * @page page_iface_wl_data_device_manager wl_data_device_manager
- * @section page_iface_wl_data_device_manager_desc Description
+ * @page page_iface_poor_wl_data_device_manager poor_wl_data_device_manager
+ * @section page_iface_poor_wl_data_device_manager_desc Description
  *
  * The wl_data_device_manager is a singleton global object that
  * provides access to inter-client data transfer mechanisms such as
@@ -383,11 +383,11 @@ extern const struct wl_interface wl_data_device_interface;
  * wl_data_device_manager object will have different requirements for
  * functioning properly. See wl_data_source.set_actions,
  * wl_data_offer.accept and wl_data_offer.finish for details.
- * @section page_iface_wl_data_device_manager_api API
- * See @ref iface_wl_data_device_manager.
+ * @section page_iface_poor_wl_data_device_manager_api API
+ * See @ref iface_poor_wl_data_device_manager.
  */
 /**
- * @defgroup iface_wl_data_device_manager The wl_data_device_manager interface
+ * @defgroup iface_poor_wl_data_device_manager The poor_wl_data_device_manager interface
  *
  * The wl_data_device_manager is a singleton global object that
  * provides access to inter-client data transfer mechanisms such as
@@ -400,24 +400,24 @@ extern const struct wl_interface wl_data_device_interface;
  * functioning properly. See wl_data_source.set_actions,
  * wl_data_offer.accept and wl_data_offer.finish for details.
  */
-extern const struct wl_interface wl_data_device_manager_interface;
+extern const struct poor_wl_interface poor_wl_data_device_manager_interface;
 #endif
-#ifndef WL_SHELL_INTERFACE
-#define WL_SHELL_INTERFACE
+#ifndef POOR_WL_SHELL_INTERFACE
+#define POOR_WL_SHELL_INTERFACE
 /**
- * @page page_iface_wl_shell wl_shell
- * @section page_iface_wl_shell_desc Description
+ * @page page_iface_poor_wl_shell poor_wl_shell
+ * @section page_iface_poor_wl_shell_desc Description
  *
  * This interface is implemented by servers that provide
  * desktop-style user interfaces.
  *
  * It allows clients to associate a wl_shell_surface with
  * a basic surface.
- * @section page_iface_wl_shell_api API
- * See @ref iface_wl_shell.
+ * @section page_iface_poor_wl_shell_api API
+ * See @ref iface_poor_wl_shell.
  */
 /**
- * @defgroup iface_wl_shell The wl_shell interface
+ * @defgroup iface_poor_wl_shell The poor_wl_shell interface
  *
  * This interface is implemented by servers that provide
  * desktop-style user interfaces.
@@ -425,13 +425,13 @@ extern const struct wl_interface wl_data_device_manager_interface;
  * It allows clients to associate a wl_shell_surface with
  * a basic surface.
  */
-extern const struct wl_interface wl_shell_interface;
+extern const struct poor_wl_interface poor_wl_shell_interface;
 #endif
-#ifndef WL_SHELL_SURFACE_INTERFACE
-#define WL_SHELL_SURFACE_INTERFACE
+#ifndef POOR_WL_SHELL_SURFACE_INTERFACE
+#define POOR_WL_SHELL_SURFACE_INTERFACE
 /**
- * @page page_iface_wl_shell_surface wl_shell_surface
- * @section page_iface_wl_shell_surface_desc Description
+ * @page page_iface_poor_wl_shell_surface poor_wl_shell_surface
+ * @section page_iface_poor_wl_shell_surface_desc Description
  *
  * An interface that may be implemented by a wl_surface, for
  * implementations that provide a desktop-style user interface.
@@ -444,11 +444,11 @@ extern const struct wl_interface wl_shell_interface;
  * the related wl_surface is destroyed. On the client side,
  * wl_shell_surface_destroy() must be called before destroying
  * the wl_surface object.
- * @section page_iface_wl_shell_surface_api API
- * See @ref iface_wl_shell_surface.
+ * @section page_iface_poor_wl_shell_surface_api API
+ * See @ref iface_poor_wl_shell_surface.
  */
 /**
- * @defgroup iface_wl_shell_surface The wl_shell_surface interface
+ * @defgroup iface_poor_wl_shell_surface The poor_wl_shell_surface interface
  *
  * An interface that may be implemented by a wl_surface, for
  * implementations that provide a desktop-style user interface.
@@ -462,13 +462,13 @@ extern const struct wl_interface wl_shell_interface;
  * wl_shell_surface_destroy() must be called before destroying
  * the wl_surface object.
  */
-extern const struct wl_interface wl_shell_surface_interface;
+extern const struct poor_wl_interface poor_wl_shell_surface_interface;
 #endif
-#ifndef WL_SURFACE_INTERFACE
-#define WL_SURFACE_INTERFACE
+#ifndef POOR_WL_SURFACE_INTERFACE
+#define POOR_WL_SURFACE_INTERFACE
 /**
- * @page page_iface_wl_surface wl_surface
- * @section page_iface_wl_surface_desc Description
+ * @page page_iface_poor_wl_surface poor_wl_surface
+ * @section page_iface_poor_wl_surface_desc Description
  *
  * A surface is a rectangular area that is displayed on the screen.
  * It has a location, size and pixel contents.
@@ -509,11 +509,11 @@ extern const struct wl_interface wl_shell_surface_interface;
  * wl_surface again, but it is not allowed to use the wl_surface as
  * a cursor (cursor is a different role than sub-surface, and role
  * switching is not allowed).
- * @section page_iface_wl_surface_api API
- * See @ref iface_wl_surface.
+ * @section page_iface_poor_wl_surface_api API
+ * See @ref iface_poor_wl_surface.
  */
 /**
- * @defgroup iface_wl_surface The wl_surface interface
+ * @defgroup iface_poor_wl_surface The poor_wl_surface interface
  *
  * A surface is a rectangular area that is displayed on the screen.
  * It has a location, size and pixel contents.
@@ -555,36 +555,36 @@ extern const struct wl_interface wl_shell_surface_interface;
  * a cursor (cursor is a different role than sub-surface, and role
  * switching is not allowed).
  */
-extern const struct wl_interface wl_surface_interface;
+extern const struct poor_wl_interface poor_wl_surface_interface;
 #endif
-#ifndef WL_SEAT_INTERFACE
-#define WL_SEAT_INTERFACE
+#ifndef POOR_WL_SEAT_INTERFACE
+#define POOR_WL_SEAT_INTERFACE
 /**
- * @page page_iface_wl_seat wl_seat
- * @section page_iface_wl_seat_desc Description
+ * @page page_iface_poor_wl_seat poor_wl_seat
+ * @section page_iface_poor_wl_seat_desc Description
  *
  * A seat is a group of keyboards, pointer and touch devices. This
  * object is published as a global during start up, or when such a
  * device is hot plugged.  A seat typically has a pointer and
  * maintains a keyboard focus and a pointer focus.
- * @section page_iface_wl_seat_api API
- * See @ref iface_wl_seat.
+ * @section page_iface_poor_wl_seat_api API
+ * See @ref iface_poor_wl_seat.
  */
 /**
- * @defgroup iface_wl_seat The wl_seat interface
+ * @defgroup iface_poor_wl_seat The poor_wl_seat interface
  *
  * A seat is a group of keyboards, pointer and touch devices. This
  * object is published as a global during start up, or when such a
  * device is hot plugged.  A seat typically has a pointer and
  * maintains a keyboard focus and a pointer focus.
  */
-extern const struct wl_interface wl_seat_interface;
+extern const struct poor_wl_interface poor_wl_seat_interface;
 #endif
-#ifndef WL_POINTER_INTERFACE
-#define WL_POINTER_INTERFACE
+#ifndef POOR_WL_POINTER_INTERFACE
+#define POOR_WL_POINTER_INTERFACE
 /**
- * @page page_iface_wl_pointer wl_pointer
- * @section page_iface_wl_pointer_desc Description
+ * @page page_iface_poor_wl_pointer poor_wl_pointer
+ * @section page_iface_poor_wl_pointer_desc Description
  *
  * The wl_pointer interface represents one or more input devices,
  * such as mice, which control the pointer location and pointer_focus
@@ -594,11 +594,11 @@ extern const struct wl_interface wl_seat_interface;
  * events for the surfaces that the pointer is located over,
  * and button and axis events for button presses, button releases
  * and scrolling.
- * @section page_iface_wl_pointer_api API
- * See @ref iface_wl_pointer.
+ * @section page_iface_poor_wl_pointer_api API
+ * See @ref iface_poor_wl_pointer.
  */
 /**
- * @defgroup iface_wl_pointer The wl_pointer interface
+ * @defgroup iface_poor_wl_pointer The poor_wl_pointer interface
  *
  * The wl_pointer interface represents one or more input devices,
  * such as mice, which control the pointer location and pointer_focus
@@ -609,32 +609,32 @@ extern const struct wl_interface wl_seat_interface;
  * and button and axis events for button presses, button releases
  * and scrolling.
  */
-extern const struct wl_interface wl_pointer_interface;
+extern const struct poor_wl_interface poor_wl_pointer_interface;
 #endif
-#ifndef WL_KEYBOARD_INTERFACE
-#define WL_KEYBOARD_INTERFACE
+#ifndef POOR_WL_KEYBOARD_INTERFACE
+#define POOR_WL_KEYBOARD_INTERFACE
 /**
- * @page page_iface_wl_keyboard wl_keyboard
- * @section page_iface_wl_keyboard_desc Description
+ * @page page_iface_poor_wl_keyboard poor_wl_keyboard
+ * @section page_iface_poor_wl_keyboard_desc Description
  *
  * The wl_keyboard interface represents one or more keyboards
  * associated with a seat.
- * @section page_iface_wl_keyboard_api API
- * See @ref iface_wl_keyboard.
+ * @section page_iface_poor_wl_keyboard_api API
+ * See @ref iface_poor_wl_keyboard.
  */
 /**
- * @defgroup iface_wl_keyboard The wl_keyboard interface
+ * @defgroup iface_poor_wl_keyboard The poor_wl_keyboard interface
  *
  * The wl_keyboard interface represents one or more keyboards
  * associated with a seat.
  */
-extern const struct wl_interface wl_keyboard_interface;
+extern const struct poor_wl_interface poor_wl_keyboard_interface;
 #endif
-#ifndef WL_TOUCH_INTERFACE
-#define WL_TOUCH_INTERFACE
+#ifndef POOR_WL_TOUCH_INTERFACE
+#define POOR_WL_TOUCH_INTERFACE
 /**
- * @page page_iface_wl_touch wl_touch
- * @section page_iface_wl_touch_desc Description
+ * @page page_iface_poor_wl_touch poor_wl_touch
+ * @section page_iface_poor_wl_touch_desc Description
  *
  * The wl_touch interface represents a touchscreen
  * associated with a seat.
@@ -644,11 +644,11 @@ extern const struct wl_interface wl_keyboard_interface;
  * with a down event, followed by zero or more motion events,
  * and ending with an up event. Events relating to the same
  * contact point can be identified by the ID of the sequence.
- * @section page_iface_wl_touch_api API
- * See @ref iface_wl_touch.
+ * @section page_iface_poor_wl_touch_api API
+ * See @ref iface_poor_wl_touch.
  */
 /**
- * @defgroup iface_wl_touch The wl_touch interface
+ * @defgroup iface_poor_wl_touch The poor_wl_touch interface
  *
  * The wl_touch interface represents a touchscreen
  * associated with a seat.
@@ -659,13 +659,13 @@ extern const struct wl_interface wl_keyboard_interface;
  * and ending with an up event. Events relating to the same
  * contact point can be identified by the ID of the sequence.
  */
-extern const struct wl_interface wl_touch_interface;
+extern const struct poor_wl_interface poor_wl_touch_interface;
 #endif
-#ifndef WL_OUTPUT_INTERFACE
-#define WL_OUTPUT_INTERFACE
+#ifndef POOR_WL_OUTPUT_INTERFACE
+#define POOR_WL_OUTPUT_INTERFACE
 /**
- * @page page_iface_wl_output wl_output
- * @section page_iface_wl_output_desc Description
+ * @page page_iface_poor_wl_output poor_wl_output
+ * @section page_iface_poor_wl_output_desc Description
  *
  * An output describes part of the compositor geometry.  The
  * compositor works in the 'compositor coordinate system' and an
@@ -673,11 +673,11 @@ extern const struct wl_interface wl_touch_interface;
  * actually visible.  This typically corresponds to a monitor that
  * displays part of the compositor space.  This object is published
  * as global during start up, or when a monitor is hotplugged.
- * @section page_iface_wl_output_api API
- * See @ref iface_wl_output.
+ * @section page_iface_poor_wl_output_api API
+ * See @ref iface_poor_wl_output.
  */
 /**
- * @defgroup iface_wl_output The wl_output interface
+ * @defgroup iface_poor_wl_output The poor_wl_output interface
  *
  * An output describes part of the compositor geometry.  The
  * compositor works in the 'compositor coordinate system' and an
@@ -686,36 +686,36 @@ extern const struct wl_interface wl_touch_interface;
  * displays part of the compositor space.  This object is published
  * as global during start up, or when a monitor is hotplugged.
  */
-extern const struct wl_interface wl_output_interface;
+extern const struct poor_wl_interface poor_wl_output_interface;
 #endif
-#ifndef WL_REGION_INTERFACE
-#define WL_REGION_INTERFACE
+#ifndef POOR_WL_REGION_INTERFACE
+#define POOR_WL_REGION_INTERFACE
 /**
- * @page page_iface_wl_region wl_region
- * @section page_iface_wl_region_desc Description
+ * @page page_iface_poor_wl_region poor_wl_region
+ * @section page_iface_poor_wl_region_desc Description
  *
  * A region object describes an area.
  *
  * Region objects are used to describe the opaque and input
  * regions of a surface.
- * @section page_iface_wl_region_api API
- * See @ref iface_wl_region.
+ * @section page_iface_poor_wl_region_api API
+ * See @ref iface_poor_wl_region.
  */
 /**
- * @defgroup iface_wl_region The wl_region interface
+ * @defgroup iface_poor_wl_region The poor_wl_region interface
  *
  * A region object describes an area.
  *
  * Region objects are used to describe the opaque and input
  * regions of a surface.
  */
-extern const struct wl_interface wl_region_interface;
+extern const struct poor_wl_interface poor_wl_region_interface;
 #endif
-#ifndef WL_SUBCOMPOSITOR_INTERFACE
-#define WL_SUBCOMPOSITOR_INTERFACE
+#ifndef POOR_WL_SUBCOMPOSITOR_INTERFACE
+#define POOR_WL_SUBCOMPOSITOR_INTERFACE
 /**
- * @page page_iface_wl_subcompositor wl_subcompositor
- * @section page_iface_wl_subcompositor_desc Description
+ * @page page_iface_poor_wl_subcompositor poor_wl_subcompositor
+ * @section page_iface_poor_wl_subcompositor_desc Description
  *
  * The global interface exposing sub-surface compositing capabilities.
  * A wl_surface, that has sub-surfaces associated, is called the
@@ -736,11 +736,11 @@ extern const struct wl_interface wl_region_interface;
  * a video player with decorations and video in separate wl_surface
  * objects. This should allow the compositor to pass YUV video buffer
  * processing to dedicated overlay hardware when possible.
- * @section page_iface_wl_subcompositor_api API
- * See @ref iface_wl_subcompositor.
+ * @section page_iface_poor_wl_subcompositor_api API
+ * See @ref iface_poor_wl_subcompositor.
  */
 /**
- * @defgroup iface_wl_subcompositor The wl_subcompositor interface
+ * @defgroup iface_poor_wl_subcompositor The poor_wl_subcompositor interface
  *
  * The global interface exposing sub-surface compositing capabilities.
  * A wl_surface, that has sub-surfaces associated, is called the
@@ -762,13 +762,13 @@ extern const struct wl_interface wl_region_interface;
  * objects. This should allow the compositor to pass YUV video buffer
  * processing to dedicated overlay hardware when possible.
  */
-extern const struct wl_interface wl_subcompositor_interface;
+extern const struct poor_wl_interface poor_wl_subcompositor_interface;
 #endif
-#ifndef WL_SUBSURFACE_INTERFACE
-#define WL_SUBSURFACE_INTERFACE
+#ifndef POOR_WL_SUBSURFACE_INTERFACE
+#define POOR_WL_SUBSURFACE_INTERFACE
 /**
- * @page page_iface_wl_subsurface wl_subsurface
- * @section page_iface_wl_subsurface_desc Description
+ * @page page_iface_poor_wl_subsurface poor_wl_subsurface
+ * @section page_iface_poor_wl_subsurface_desc Description
  *
  * An additional interface to a wl_surface object, which has been
  * made a sub-surface. A sub-surface has one parent surface. A
@@ -819,11 +819,11 @@ extern const struct wl_interface wl_subcompositor_interface;
  *
  * If the parent wl_surface object is destroyed, the sub-surface is
  * unmapped.
- * @section page_iface_wl_subsurface_api API
- * See @ref iface_wl_subsurface.
+ * @section page_iface_poor_wl_subsurface_api API
+ * See @ref iface_poor_wl_subsurface.
  */
 /**
- * @defgroup iface_wl_subsurface The wl_subsurface interface
+ * @defgroup iface_poor_wl_subsurface The poor_wl_subsurface interface
  *
  * An additional interface to a wl_surface object, which has been
  * made a sub-surface. A sub-surface has one parent surface. A
@@ -875,63 +875,63 @@ extern const struct wl_interface wl_subcompositor_interface;
  * If the parent wl_surface object is destroyed, the sub-surface is
  * unmapped.
  */
-extern const struct wl_interface wl_subsurface_interface;
+extern const struct poor_wl_interface poor_wl_subsurface_interface;
 #endif
 
-#ifndef WL_DISPLAY_ERROR_ENUM
-#define WL_DISPLAY_ERROR_ENUM
+#ifndef POOR_WL_DISPLAY_ERROR_ENUM
+#define POOR_WL_DISPLAY_ERROR_ENUM
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  * global error values
  *
  * These errors are global and can be emitted in response to any
  * server request.
  */
-enum wl_display_error {
+enum poor_wl_display_error {
 	/**
 	 * server couldn't find object
 	 */
-	WL_DISPLAY_ERROR_INVALID_OBJECT = 0,
+	POOR_WL_DISPLAY_ERROR_INVALID_OBJECT = 0,
 	/**
 	 * method doesn't exist on the specified interface
 	 */
-	WL_DISPLAY_ERROR_INVALID_METHOD = 1,
+	POOR_WL_DISPLAY_ERROR_INVALID_METHOD = 1,
 	/**
 	 * server is out of memory
 	 */
-	WL_DISPLAY_ERROR_NO_MEMORY = 2,
+	POOR_WL_DISPLAY_ERROR_NO_MEMORY = 2,
 };
-#endif /* WL_DISPLAY_ERROR_ENUM */
+#endif /* POOR_WL_DISPLAY_ERROR_ENUM */
 
-#ifndef WL_DISPLAY_ERROR_ENUM_IS_VALID
-#define WL_DISPLAY_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_DISPLAY_ERROR_ENUM_IS_VALID
+#define POOR_WL_DISPLAY_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_display
- * Validate a wl_display error value.
+ * @ingroup iface_poor_wl_display
+ * Validate a poor_wl_display error value.
  *
  * @return true on success, false on error.
- * @ref wl_display_error
+ * @ref poor_wl_display_error
  */
 static inline bool
-wl_display_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_display_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_DISPLAY_ERROR_INVALID_OBJECT:
+	case POOR_WL_DISPLAY_ERROR_INVALID_OBJECT:
 		return version >= 1;
-	case WL_DISPLAY_ERROR_INVALID_METHOD:
+	case POOR_WL_DISPLAY_ERROR_INVALID_METHOD:
 		return version >= 1;
-	case WL_DISPLAY_ERROR_NO_MEMORY:
+	case POOR_WL_DISPLAY_ERROR_NO_MEMORY:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_DISPLAY_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_DISPLAY_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_display
- * @struct wl_display_interface
+ * @ingroup iface_poor_wl_display
+ * @struct poor_wl_display_interface
  */
-struct wl_display_interface {
+struct poor_wl_display_interface {
 	/**
 	 * asynchronous roundtrip
 	 *
@@ -948,8 +948,8 @@ struct wl_display_interface {
 	 * The callback_data passed in the callback is the event serial.
 	 * @param callback callback object for the sync request
 	 */
-	void (*sync)(struct wl_client *client,
-		     struct wl_resource *resource,
+	void (*sync)(struct poor_wl_client *client,
+		     struct poor_wl_resource *resource,
 		     uint32_t callback);
 	/**
 	 * get global registry object
@@ -959,37 +959,37 @@ struct wl_display_interface {
 	 * compositor.
 	 * @param registry global registry object
 	 */
-	void (*get_registry)(struct wl_client *client,
-			     struct wl_resource *resource,
+	void (*get_registry)(struct poor_wl_client *client,
+			     struct poor_wl_resource *resource,
 			     uint32_t registry);
 };
 
-#define WL_DISPLAY_ERROR 0
-#define WL_DISPLAY_DELETE_ID 1
+#define POOR_WL_DISPLAY_ERROR 0
+#define POOR_WL_DISPLAY_DELETE_ID 1
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_ERROR_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_ERROR_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_DELETE_ID_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_DELETE_ID_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_SYNC_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_SYNC_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_GET_REGISTRY_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_GET_REGISTRY_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_registry
- * @struct wl_registry_interface
+ * @ingroup iface_poor_wl_registry
+ * @struct poor_wl_registry_interface
  */
-struct wl_registry_interface {
+struct poor_wl_registry_interface {
 	/**
 	 * bind an object to the display
 	 *
@@ -1000,31 +1000,31 @@ struct wl_registry_interface {
 	 * @param version version of the objects interface
 	 * @param id bounded object
 	 */
-	void (*bind)(struct wl_client *client,
-		     struct wl_resource *resource,
+	void (*bind)(struct poor_wl_client *client,
+		     struct poor_wl_resource *resource,
 		     uint32_t name,
 		     const char *interface, uint32_t version, uint32_t id);
 };
 
-#define WL_REGISTRY_GLOBAL 0
-#define WL_REGISTRY_GLOBAL_REMOVE 1
+#define POOR_WL_REGISTRY_GLOBAL 0
+#define POOR_WL_REGISTRY_GLOBAL_REMOVE 1
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_GLOBAL_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_GLOBAL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_GLOBAL_REMOVE_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_GLOBAL_REMOVE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_BIND_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_BIND_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  * Sends an global event to the client owning the resource.
  * @param resource_ The client's resource
  * @param name numeric name of the global object
@@ -1032,56 +1032,56 @@ struct wl_registry_interface {
  * @param version interface version
  */
 static inline void
-wl_registry_send_global(struct wl_resource *resource_, uint32_t name, const char *interface, uint32_t version)
+poor_wl_registry_send_global(struct poor_wl_resource *resource_, uint32_t name, const char *interface, uint32_t version)
 {
-	wl_resource_post_event(resource_, WL_REGISTRY_GLOBAL, name, interface, version);
+	poor_wl_resource_post_event(resource_, POOR_WL_REGISTRY_GLOBAL, name, interface, version);
 }
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  * Sends an global_remove event to the client owning the resource.
  * @param resource_ The client's resource
  * @param name numeric name of the global object
  */
 static inline void
-wl_registry_send_global_remove(struct wl_resource *resource_, uint32_t name)
+poor_wl_registry_send_global_remove(struct poor_wl_resource *resource_, uint32_t name)
 {
-	wl_resource_post_event(resource_, WL_REGISTRY_GLOBAL_REMOVE, name);
+	poor_wl_resource_post_event(resource_, POOR_WL_REGISTRY_GLOBAL_REMOVE, name);
 }
 
-#define WL_CALLBACK_DONE 0
+#define POOR_WL_CALLBACK_DONE 0
 
 /**
- * @ingroup iface_wl_callback
+ * @ingroup iface_poor_wl_callback
  */
-#define WL_CALLBACK_DONE_SINCE_VERSION 1
+#define POOR_WL_CALLBACK_DONE_SINCE_VERSION 1
 
 
 /**
- * @ingroup iface_wl_callback
+ * @ingroup iface_poor_wl_callback
  * Sends an done event to the client owning the resource.
  * @param resource_ The client's resource
  * @param callback_data request-specific data for the callback
  */
 static inline void
-wl_callback_send_done(struct wl_resource *resource_, uint32_t callback_data)
+poor_wl_callback_send_done(struct poor_wl_resource *resource_, uint32_t callback_data)
 {
-	wl_resource_post_event(resource_, WL_CALLBACK_DONE, callback_data);
+	poor_wl_resource_post_event(resource_, POOR_WL_CALLBACK_DONE, callback_data);
 }
 
 /**
- * @ingroup iface_wl_compositor
- * @struct wl_compositor_interface
+ * @ingroup iface_poor_wl_compositor
+ * @struct poor_wl_compositor_interface
  */
-struct wl_compositor_interface {
+struct poor_wl_compositor_interface {
 	/**
 	 * create new surface
 	 *
 	 * Ask the compositor to create a new surface.
 	 * @param id the new surface
 	 */
-	void (*create_surface)(struct wl_client *client,
-			       struct wl_resource *resource,
+	void (*create_surface)(struct poor_wl_client *client,
+			       struct poor_wl_resource *resource,
 			       uint32_t id);
 	/**
 	 * create new region
@@ -1089,26 +1089,26 @@ struct wl_compositor_interface {
 	 * Ask the compositor to create a new region.
 	 * @param id the new region
 	 */
-	void (*create_region)(struct wl_client *client,
-			      struct wl_resource *resource,
+	void (*create_region)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
 			      uint32_t id);
 };
 
 
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  */
-#define WL_COMPOSITOR_CREATE_SURFACE_SINCE_VERSION 1
+#define POOR_WL_COMPOSITOR_CREATE_SURFACE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  */
-#define WL_COMPOSITOR_CREATE_REGION_SINCE_VERSION 1
+#define POOR_WL_COMPOSITOR_CREATE_REGION_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shm_pool
- * @struct wl_shm_pool_interface
+ * @ingroup iface_poor_wl_shm_pool
+ * @struct poor_wl_shm_pool_interface
  */
-struct wl_shm_pool_interface {
+struct poor_wl_shm_pool_interface {
 	/**
 	 * create a buffer from the pool
 	 *
@@ -1130,8 +1130,8 @@ struct wl_shm_pool_interface {
 	 * @param stride number of bytes from the beginning of one row to the beginning of the next row
 	 * @param format buffer pixel format
 	 */
-	void (*create_buffer)(struct wl_client *client,
-			      struct wl_resource *resource,
+	void (*create_buffer)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
 			      uint32_t id,
 			      int32_t offset,
 			      int32_t width,
@@ -1146,8 +1146,8 @@ struct wl_shm_pool_interface {
 	 * The mmapped memory will be released when all buffers that have
 	 * been created from this pool are gone.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * change the size of the pool mapping
 	 *
@@ -1157,77 +1157,77 @@ struct wl_shm_pool_interface {
 	 * to make the pool bigger.
 	 * @param size new size of the pool, in bytes
 	 */
-	void (*resize)(struct wl_client *client,
-		       struct wl_resource *resource,
+	void (*resize)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource,
 		       int32_t size);
 };
 
 
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_CREATE_BUFFER_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_CREATE_BUFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_RESIZE_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_RESIZE_SINCE_VERSION 1
 
-#ifndef WL_SHM_ERROR_ENUM
-#define WL_SHM_ERROR_ENUM
+#ifndef POOR_WL_SHM_ERROR_ENUM
+#define POOR_WL_SHM_ERROR_ENUM
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  * wl_shm error values
  *
  * These errors can be emitted in response to wl_shm requests.
  */
-enum wl_shm_error {
+enum poor_wl_shm_error {
 	/**
 	 * buffer format is not known
 	 */
-	WL_SHM_ERROR_INVALID_FORMAT = 0,
+	POOR_WL_SHM_ERROR_INVALID_FORMAT = 0,
 	/**
 	 * invalid size or stride during pool or buffer creation
 	 */
-	WL_SHM_ERROR_INVALID_STRIDE = 1,
+	POOR_WL_SHM_ERROR_INVALID_STRIDE = 1,
 	/**
 	 * mmapping the file descriptor failed
 	 */
-	WL_SHM_ERROR_INVALID_FD = 2,
+	POOR_WL_SHM_ERROR_INVALID_FD = 2,
 };
-#endif /* WL_SHM_ERROR_ENUM */
+#endif /* POOR_WL_SHM_ERROR_ENUM */
 
-#ifndef WL_SHM_ERROR_ENUM_IS_VALID
-#define WL_SHM_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_SHM_ERROR_ENUM_IS_VALID
+#define POOR_WL_SHM_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shm
- * Validate a wl_shm error value.
+ * @ingroup iface_poor_wl_shm
+ * Validate a poor_wl_shm error value.
  *
  * @return true on success, false on error.
- * @ref wl_shm_error
+ * @ref poor_wl_shm_error
  */
 static inline bool
-wl_shm_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shm_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SHM_ERROR_INVALID_FORMAT:
+	case POOR_WL_SHM_ERROR_INVALID_FORMAT:
 		return version >= 1;
-	case WL_SHM_ERROR_INVALID_STRIDE:
+	case POOR_WL_SHM_ERROR_INVALID_STRIDE:
 		return version >= 1;
-	case WL_SHM_ERROR_INVALID_FD:
+	case POOR_WL_SHM_ERROR_INVALID_FD:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SHM_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_SHM_ERROR_ENUM_IS_VALID */
 
-#ifndef WL_SHM_FORMAT_ENUM
-#define WL_SHM_FORMAT_ENUM
+#ifndef POOR_WL_SHM_FORMAT_ENUM
+#define POOR_WL_SHM_FORMAT_ENUM
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  * pixel formats
  *
  * This describes the memory layout of an individual pixel.
@@ -1240,381 +1240,381 @@ wl_shm_error_is_valid(uint32_t value, uint32_t version) {
  * The formats actually supported by the compositor will be
  * reported by the format event.
  */
-enum wl_shm_format {
+enum poor_wl_shm_format {
 	/**
 	 * 32-bit ARGB format, [31:0] A:R:G:B 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_ARGB8888 = 0,
+	POOR_WL_SHM_FORMAT_ARGB8888 = 0,
 	/**
 	 * 32-bit RGB format, [31:0] x:R:G:B 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_XRGB8888 = 1,
+	POOR_WL_SHM_FORMAT_XRGB8888 = 1,
 	/**
 	 * 8-bit color index format, [7:0] C
 	 */
-	WL_SHM_FORMAT_C8 = 0x20203843,
+	POOR_WL_SHM_FORMAT_C8 = 0x20203843,
 	/**
 	 * 8-bit RGB format, [7:0] R:G:B 3:3:2
 	 */
-	WL_SHM_FORMAT_RGB332 = 0x38424752,
+	POOR_WL_SHM_FORMAT_RGB332 = 0x38424752,
 	/**
 	 * 8-bit BGR format, [7:0] B:G:R 2:3:3
 	 */
-	WL_SHM_FORMAT_BGR233 = 0x38524742,
+	POOR_WL_SHM_FORMAT_BGR233 = 0x38524742,
 	/**
 	 * 16-bit xRGB format, [15:0] x:R:G:B 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_XRGB4444 = 0x32315258,
+	POOR_WL_SHM_FORMAT_XRGB4444 = 0x32315258,
 	/**
 	 * 16-bit xBGR format, [15:0] x:B:G:R 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_XBGR4444 = 0x32314258,
+	POOR_WL_SHM_FORMAT_XBGR4444 = 0x32314258,
 	/**
 	 * 16-bit RGBx format, [15:0] R:G:B:x 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_RGBX4444 = 0x32315852,
+	POOR_WL_SHM_FORMAT_RGBX4444 = 0x32315852,
 	/**
 	 * 16-bit BGRx format, [15:0] B:G:R:x 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_BGRX4444 = 0x32315842,
+	POOR_WL_SHM_FORMAT_BGRX4444 = 0x32315842,
 	/**
 	 * 16-bit ARGB format, [15:0] A:R:G:B 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_ARGB4444 = 0x32315241,
+	POOR_WL_SHM_FORMAT_ARGB4444 = 0x32315241,
 	/**
 	 * 16-bit ABGR format, [15:0] A:B:G:R 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_ABGR4444 = 0x32314241,
+	POOR_WL_SHM_FORMAT_ABGR4444 = 0x32314241,
 	/**
 	 * 16-bit RBGA format, [15:0] R:G:B:A 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_RGBA4444 = 0x32314152,
+	POOR_WL_SHM_FORMAT_RGBA4444 = 0x32314152,
 	/**
 	 * 16-bit BGRA format, [15:0] B:G:R:A 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_BGRA4444 = 0x32314142,
+	POOR_WL_SHM_FORMAT_BGRA4444 = 0x32314142,
 	/**
 	 * 16-bit xRGB format, [15:0] x:R:G:B 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_XRGB1555 = 0x35315258,
+	POOR_WL_SHM_FORMAT_XRGB1555 = 0x35315258,
 	/**
 	 * 16-bit xBGR 1555 format, [15:0] x:B:G:R 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_XBGR1555 = 0x35314258,
+	POOR_WL_SHM_FORMAT_XBGR1555 = 0x35314258,
 	/**
 	 * 16-bit RGBx 5551 format, [15:0] R:G:B:x 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_RGBX5551 = 0x35315852,
+	POOR_WL_SHM_FORMAT_RGBX5551 = 0x35315852,
 	/**
 	 * 16-bit BGRx 5551 format, [15:0] B:G:R:x 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_BGRX5551 = 0x35315842,
+	POOR_WL_SHM_FORMAT_BGRX5551 = 0x35315842,
 	/**
 	 * 16-bit ARGB 1555 format, [15:0] A:R:G:B 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_ARGB1555 = 0x35315241,
+	POOR_WL_SHM_FORMAT_ARGB1555 = 0x35315241,
 	/**
 	 * 16-bit ABGR 1555 format, [15:0] A:B:G:R 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_ABGR1555 = 0x35314241,
+	POOR_WL_SHM_FORMAT_ABGR1555 = 0x35314241,
 	/**
 	 * 16-bit RGBA 5551 format, [15:0] R:G:B:A 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_RGBA5551 = 0x35314152,
+	POOR_WL_SHM_FORMAT_RGBA5551 = 0x35314152,
 	/**
 	 * 16-bit BGRA 5551 format, [15:0] B:G:R:A 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_BGRA5551 = 0x35314142,
+	POOR_WL_SHM_FORMAT_BGRA5551 = 0x35314142,
 	/**
 	 * 16-bit RGB 565 format, [15:0] R:G:B 5:6:5 little endian
 	 */
-	WL_SHM_FORMAT_RGB565 = 0x36314752,
+	POOR_WL_SHM_FORMAT_RGB565 = 0x36314752,
 	/**
 	 * 16-bit BGR 565 format, [15:0] B:G:R 5:6:5 little endian
 	 */
-	WL_SHM_FORMAT_BGR565 = 0x36314742,
+	POOR_WL_SHM_FORMAT_BGR565 = 0x36314742,
 	/**
 	 * 24-bit RGB format, [23:0] R:G:B little endian
 	 */
-	WL_SHM_FORMAT_RGB888 = 0x34324752,
+	POOR_WL_SHM_FORMAT_RGB888 = 0x34324752,
 	/**
 	 * 24-bit BGR format, [23:0] B:G:R little endian
 	 */
-	WL_SHM_FORMAT_BGR888 = 0x34324742,
+	POOR_WL_SHM_FORMAT_BGR888 = 0x34324742,
 	/**
 	 * 32-bit xBGR format, [31:0] x:B:G:R 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_XBGR8888 = 0x34324258,
+	POOR_WL_SHM_FORMAT_XBGR8888 = 0x34324258,
 	/**
 	 * 32-bit RGBx format, [31:0] R:G:B:x 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_RGBX8888 = 0x34325852,
+	POOR_WL_SHM_FORMAT_RGBX8888 = 0x34325852,
 	/**
 	 * 32-bit BGRx format, [31:0] B:G:R:x 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_BGRX8888 = 0x34325842,
+	POOR_WL_SHM_FORMAT_BGRX8888 = 0x34325842,
 	/**
 	 * 32-bit ABGR format, [31:0] A:B:G:R 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_ABGR8888 = 0x34324241,
+	POOR_WL_SHM_FORMAT_ABGR8888 = 0x34324241,
 	/**
 	 * 32-bit RGBA format, [31:0] R:G:B:A 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_RGBA8888 = 0x34324152,
+	POOR_WL_SHM_FORMAT_RGBA8888 = 0x34324152,
 	/**
 	 * 32-bit BGRA format, [31:0] B:G:R:A 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_BGRA8888 = 0x34324142,
+	POOR_WL_SHM_FORMAT_BGRA8888 = 0x34324142,
 	/**
 	 * 32-bit xRGB format, [31:0] x:R:G:B 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_XRGB2101010 = 0x30335258,
+	POOR_WL_SHM_FORMAT_XRGB2101010 = 0x30335258,
 	/**
 	 * 32-bit xBGR format, [31:0] x:B:G:R 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_XBGR2101010 = 0x30334258,
+	POOR_WL_SHM_FORMAT_XBGR2101010 = 0x30334258,
 	/**
 	 * 32-bit RGBx format, [31:0] R:G:B:x 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_RGBX1010102 = 0x30335852,
+	POOR_WL_SHM_FORMAT_RGBX1010102 = 0x30335852,
 	/**
 	 * 32-bit BGRx format, [31:0] B:G:R:x 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_BGRX1010102 = 0x30335842,
+	POOR_WL_SHM_FORMAT_BGRX1010102 = 0x30335842,
 	/**
 	 * 32-bit ARGB format, [31:0] A:R:G:B 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_ARGB2101010 = 0x30335241,
+	POOR_WL_SHM_FORMAT_ARGB2101010 = 0x30335241,
 	/**
 	 * 32-bit ABGR format, [31:0] A:B:G:R 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_ABGR2101010 = 0x30334241,
+	POOR_WL_SHM_FORMAT_ABGR2101010 = 0x30334241,
 	/**
 	 * 32-bit RGBA format, [31:0] R:G:B:A 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_RGBA1010102 = 0x30334152,
+	POOR_WL_SHM_FORMAT_RGBA1010102 = 0x30334152,
 	/**
 	 * 32-bit BGRA format, [31:0] B:G:R:A 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_BGRA1010102 = 0x30334142,
+	POOR_WL_SHM_FORMAT_BGRA1010102 = 0x30334142,
 	/**
 	 * packed YCbCr format, [31:0] Cr0:Y1:Cb0:Y0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_YUYV = 0x56595559,
+	POOR_WL_SHM_FORMAT_YUYV = 0x56595559,
 	/**
 	 * packed YCbCr format, [31:0] Cb0:Y1:Cr0:Y0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_YVYU = 0x55595659,
+	POOR_WL_SHM_FORMAT_YVYU = 0x55595659,
 	/**
 	 * packed YCbCr format, [31:0] Y1:Cr0:Y0:Cb0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_UYVY = 0x59565955,
+	POOR_WL_SHM_FORMAT_UYVY = 0x59565955,
 	/**
 	 * packed YCbCr format, [31:0] Y1:Cb0:Y0:Cr0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_VYUY = 0x59555956,
+	POOR_WL_SHM_FORMAT_VYUY = 0x59555956,
 	/**
 	 * packed AYCbCr format, [31:0] A:Y:Cb:Cr 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_AYUV = 0x56555941,
+	POOR_WL_SHM_FORMAT_AYUV = 0x56555941,
 	/**
 	 * 2 plane YCbCr Cr:Cb format, 2x2 subsampled Cr:Cb plane
 	 */
-	WL_SHM_FORMAT_NV12 = 0x3231564e,
+	POOR_WL_SHM_FORMAT_NV12 = 0x3231564e,
 	/**
 	 * 2 plane YCbCr Cb:Cr format, 2x2 subsampled Cb:Cr plane
 	 */
-	WL_SHM_FORMAT_NV21 = 0x3132564e,
+	POOR_WL_SHM_FORMAT_NV21 = 0x3132564e,
 	/**
 	 * 2 plane YCbCr Cr:Cb format, 2x1 subsampled Cr:Cb plane
 	 */
-	WL_SHM_FORMAT_NV16 = 0x3631564e,
+	POOR_WL_SHM_FORMAT_NV16 = 0x3631564e,
 	/**
 	 * 2 plane YCbCr Cb:Cr format, 2x1 subsampled Cb:Cr plane
 	 */
-	WL_SHM_FORMAT_NV61 = 0x3136564e,
+	POOR_WL_SHM_FORMAT_NV61 = 0x3136564e,
 	/**
 	 * 3 plane YCbCr format, 4x4 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV410 = 0x39565559,
+	POOR_WL_SHM_FORMAT_YUV410 = 0x39565559,
 	/**
 	 * 3 plane YCbCr format, 4x4 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU410 = 0x39555659,
+	POOR_WL_SHM_FORMAT_YVU410 = 0x39555659,
 	/**
 	 * 3 plane YCbCr format, 4x1 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV411 = 0x31315559,
+	POOR_WL_SHM_FORMAT_YUV411 = 0x31315559,
 	/**
 	 * 3 plane YCbCr format, 4x1 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU411 = 0x31315659,
+	POOR_WL_SHM_FORMAT_YVU411 = 0x31315659,
 	/**
 	 * 3 plane YCbCr format, 2x2 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV420 = 0x32315559,
+	POOR_WL_SHM_FORMAT_YUV420 = 0x32315559,
 	/**
 	 * 3 plane YCbCr format, 2x2 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU420 = 0x32315659,
+	POOR_WL_SHM_FORMAT_YVU420 = 0x32315659,
 	/**
 	 * 3 plane YCbCr format, 2x1 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV422 = 0x36315559,
+	POOR_WL_SHM_FORMAT_YUV422 = 0x36315559,
 	/**
 	 * 3 plane YCbCr format, 2x1 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU422 = 0x36315659,
+	POOR_WL_SHM_FORMAT_YVU422 = 0x36315659,
 	/**
 	 * 3 plane YCbCr format, non-subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV444 = 0x34325559,
+	POOR_WL_SHM_FORMAT_YUV444 = 0x34325559,
 	/**
 	 * 3 plane YCbCr format, non-subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU444 = 0x34325659,
+	POOR_WL_SHM_FORMAT_YVU444 = 0x34325659,
 };
-#endif /* WL_SHM_FORMAT_ENUM */
+#endif /* POOR_WL_SHM_FORMAT_ENUM */
 
-#ifndef WL_SHM_FORMAT_ENUM_IS_VALID
-#define WL_SHM_FORMAT_ENUM_IS_VALID
+#ifndef POOR_WL_SHM_FORMAT_ENUM_IS_VALID
+#define POOR_WL_SHM_FORMAT_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shm
- * Validate a wl_shm format value.
+ * @ingroup iface_poor_wl_shm
+ * Validate a poor_wl_shm format value.
  *
  * @return true on success, false on error.
- * @ref wl_shm_format
+ * @ref poor_wl_shm_format
  */
 static inline bool
-wl_shm_format_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shm_format_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SHM_FORMAT_ARGB8888:
+	case POOR_WL_SHM_FORMAT_ARGB8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_XRGB8888:
+	case POOR_WL_SHM_FORMAT_XRGB8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_C8:
+	case POOR_WL_SHM_FORMAT_C8:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGB332:
+	case POOR_WL_SHM_FORMAT_RGB332:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGR233:
+	case POOR_WL_SHM_FORMAT_BGR233:
 		return version >= 1;
-	case WL_SHM_FORMAT_XRGB4444:
+	case POOR_WL_SHM_FORMAT_XRGB4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_XBGR4444:
+	case POOR_WL_SHM_FORMAT_XBGR4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBX4444:
+	case POOR_WL_SHM_FORMAT_RGBX4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRX4444:
+	case POOR_WL_SHM_FORMAT_BGRX4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_ARGB4444:
+	case POOR_WL_SHM_FORMAT_ARGB4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_ABGR4444:
+	case POOR_WL_SHM_FORMAT_ABGR4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBA4444:
+	case POOR_WL_SHM_FORMAT_RGBA4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRA4444:
+	case POOR_WL_SHM_FORMAT_BGRA4444:
 		return version >= 1;
-	case WL_SHM_FORMAT_XRGB1555:
+	case POOR_WL_SHM_FORMAT_XRGB1555:
 		return version >= 1;
-	case WL_SHM_FORMAT_XBGR1555:
+	case POOR_WL_SHM_FORMAT_XBGR1555:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBX5551:
+	case POOR_WL_SHM_FORMAT_RGBX5551:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRX5551:
+	case POOR_WL_SHM_FORMAT_BGRX5551:
 		return version >= 1;
-	case WL_SHM_FORMAT_ARGB1555:
+	case POOR_WL_SHM_FORMAT_ARGB1555:
 		return version >= 1;
-	case WL_SHM_FORMAT_ABGR1555:
+	case POOR_WL_SHM_FORMAT_ABGR1555:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBA5551:
+	case POOR_WL_SHM_FORMAT_RGBA5551:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRA5551:
+	case POOR_WL_SHM_FORMAT_BGRA5551:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGB565:
+	case POOR_WL_SHM_FORMAT_RGB565:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGR565:
+	case POOR_WL_SHM_FORMAT_BGR565:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGB888:
+	case POOR_WL_SHM_FORMAT_RGB888:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGR888:
+	case POOR_WL_SHM_FORMAT_BGR888:
 		return version >= 1;
-	case WL_SHM_FORMAT_XBGR8888:
+	case POOR_WL_SHM_FORMAT_XBGR8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBX8888:
+	case POOR_WL_SHM_FORMAT_RGBX8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRX8888:
+	case POOR_WL_SHM_FORMAT_BGRX8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_ABGR8888:
+	case POOR_WL_SHM_FORMAT_ABGR8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBA8888:
+	case POOR_WL_SHM_FORMAT_RGBA8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRA8888:
+	case POOR_WL_SHM_FORMAT_BGRA8888:
 		return version >= 1;
-	case WL_SHM_FORMAT_XRGB2101010:
+	case POOR_WL_SHM_FORMAT_XRGB2101010:
 		return version >= 1;
-	case WL_SHM_FORMAT_XBGR2101010:
+	case POOR_WL_SHM_FORMAT_XBGR2101010:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBX1010102:
+	case POOR_WL_SHM_FORMAT_RGBX1010102:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRX1010102:
+	case POOR_WL_SHM_FORMAT_BGRX1010102:
 		return version >= 1;
-	case WL_SHM_FORMAT_ARGB2101010:
+	case POOR_WL_SHM_FORMAT_ARGB2101010:
 		return version >= 1;
-	case WL_SHM_FORMAT_ABGR2101010:
+	case POOR_WL_SHM_FORMAT_ABGR2101010:
 		return version >= 1;
-	case WL_SHM_FORMAT_RGBA1010102:
+	case POOR_WL_SHM_FORMAT_RGBA1010102:
 		return version >= 1;
-	case WL_SHM_FORMAT_BGRA1010102:
+	case POOR_WL_SHM_FORMAT_BGRA1010102:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUYV:
+	case POOR_WL_SHM_FORMAT_YUYV:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVYU:
+	case POOR_WL_SHM_FORMAT_YVYU:
 		return version >= 1;
-	case WL_SHM_FORMAT_UYVY:
+	case POOR_WL_SHM_FORMAT_UYVY:
 		return version >= 1;
-	case WL_SHM_FORMAT_VYUY:
+	case POOR_WL_SHM_FORMAT_VYUY:
 		return version >= 1;
-	case WL_SHM_FORMAT_AYUV:
+	case POOR_WL_SHM_FORMAT_AYUV:
 		return version >= 1;
-	case WL_SHM_FORMAT_NV12:
+	case POOR_WL_SHM_FORMAT_NV12:
 		return version >= 1;
-	case WL_SHM_FORMAT_NV21:
+	case POOR_WL_SHM_FORMAT_NV21:
 		return version >= 1;
-	case WL_SHM_FORMAT_NV16:
+	case POOR_WL_SHM_FORMAT_NV16:
 		return version >= 1;
-	case WL_SHM_FORMAT_NV61:
+	case POOR_WL_SHM_FORMAT_NV61:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUV410:
+	case POOR_WL_SHM_FORMAT_YUV410:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVU410:
+	case POOR_WL_SHM_FORMAT_YVU410:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUV411:
+	case POOR_WL_SHM_FORMAT_YUV411:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVU411:
+	case POOR_WL_SHM_FORMAT_YVU411:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUV420:
+	case POOR_WL_SHM_FORMAT_YUV420:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVU420:
+	case POOR_WL_SHM_FORMAT_YVU420:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUV422:
+	case POOR_WL_SHM_FORMAT_YUV422:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVU422:
+	case POOR_WL_SHM_FORMAT_YVU422:
 		return version >= 1;
-	case WL_SHM_FORMAT_YUV444:
+	case POOR_WL_SHM_FORMAT_YUV444:
 		return version >= 1;
-	case WL_SHM_FORMAT_YVU444:
+	case POOR_WL_SHM_FORMAT_YVU444:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SHM_FORMAT_ENUM_IS_VALID */
+#endif /* POOR_WL_SHM_FORMAT_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_shm
- * @struct wl_shm_interface
+ * @ingroup iface_poor_wl_shm
+ * @struct poor_wl_shm_interface
  */
-struct wl_shm_interface {
+struct poor_wl_shm_interface {
 	/**
 	 * create a shm pool
 	 *
@@ -1627,42 +1627,42 @@ struct wl_shm_interface {
 	 * @param fd file descriptor for the pool
 	 * @param size pool size, in bytes
 	 */
-	void (*create_pool)(struct wl_client *client,
-			    struct wl_resource *resource,
+	void (*create_pool)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
 			    uint32_t id,
 			    int32_t fd,
 			    int32_t size);
 };
 
-#define WL_SHM_FORMAT 0
+#define POOR_WL_SHM_FORMAT 0
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  */
-#define WL_SHM_FORMAT_SINCE_VERSION 1
+#define POOR_WL_SHM_FORMAT_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  */
-#define WL_SHM_CREATE_POOL_SINCE_VERSION 1
+#define POOR_WL_SHM_CREATE_POOL_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  * Sends an format event to the client owning the resource.
  * @param resource_ The client's resource
  * @param format buffer pixel format
  */
 static inline void
-wl_shm_send_format(struct wl_resource *resource_, uint32_t format)
+poor_wl_shm_send_format(struct poor_wl_resource *resource_, uint32_t format)
 {
-	wl_resource_post_event(resource_, WL_SHM_FORMAT, format);
+	poor_wl_resource_post_event(resource_, POOR_WL_SHM_FORMAT, format);
 }
 
 /**
- * @ingroup iface_wl_buffer
- * @struct wl_buffer_interface
+ * @ingroup iface_poor_wl_buffer
+ * @struct poor_wl_buffer_interface
  */
-struct wl_buffer_interface {
+struct poor_wl_buffer_interface {
 	/**
 	 * destroy a buffer
 	 *
@@ -1671,86 +1671,86 @@ struct wl_buffer_interface {
 	 *
 	 * For possible side-effects to a surface, see wl_surface.attach.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_BUFFER_RELEASE 0
+#define POOR_WL_BUFFER_RELEASE 0
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  */
-#define WL_BUFFER_RELEASE_SINCE_VERSION 1
+#define POOR_WL_BUFFER_RELEASE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  */
-#define WL_BUFFER_DESTROY_SINCE_VERSION 1
+#define POOR_WL_BUFFER_DESTROY_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  * Sends an release event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_buffer_send_release(struct wl_resource *resource_)
+poor_wl_buffer_send_release(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_BUFFER_RELEASE);
+	poor_wl_resource_post_event(resource_, POOR_WL_BUFFER_RELEASE);
 }
 
-#ifndef WL_DATA_OFFER_ERROR_ENUM
-#define WL_DATA_OFFER_ERROR_ENUM
-enum wl_data_offer_error {
+#ifndef POOR_WL_DATA_OFFER_ERROR_ENUM
+#define POOR_WL_DATA_OFFER_ERROR_ENUM
+enum poor_wl_data_offer_error {
 	/**
 	 * finish request was called untimely
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_FINISH = 0,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_FINISH = 0,
 	/**
 	 * action mask contains invalid values
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK = 1,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK = 1,
 	/**
 	 * action argument has an invalid value
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_ACTION = 2,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION = 2,
 	/**
 	 * offer doesn't accept this request
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_OFFER = 3,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_OFFER = 3,
 };
-#endif /* WL_DATA_OFFER_ERROR_ENUM */
+#endif /* POOR_WL_DATA_OFFER_ERROR_ENUM */
 
-#ifndef WL_DATA_OFFER_ERROR_ENUM_IS_VALID
-#define WL_DATA_OFFER_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_DATA_OFFER_ERROR_ENUM_IS_VALID
+#define POOR_WL_DATA_OFFER_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_data_offer
- * Validate a wl_data_offer error value.
+ * @ingroup iface_poor_wl_data_offer
+ * Validate a poor_wl_data_offer error value.
  *
  * @return true on success, false on error.
- * @ref wl_data_offer_error
+ * @ref poor_wl_data_offer_error
  */
 static inline bool
-wl_data_offer_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_data_offer_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_DATA_OFFER_ERROR_INVALID_FINISH:
+	case POOR_WL_DATA_OFFER_ERROR_INVALID_FINISH:
 		return version >= 1;
-	case WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK:
+	case POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK:
 		return version >= 1;
-	case WL_DATA_OFFER_ERROR_INVALID_ACTION:
+	case POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION:
 		return version >= 1;
-	case WL_DATA_OFFER_ERROR_INVALID_OFFER:
+	case POOR_WL_DATA_OFFER_ERROR_INVALID_OFFER:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_DATA_OFFER_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_DATA_OFFER_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_data_offer
- * @struct wl_data_offer_interface
+ * @ingroup iface_poor_wl_data_offer
+ * @struct poor_wl_data_offer_interface
  */
-struct wl_data_offer_interface {
+struct poor_wl_data_offer_interface {
 	/**
 	 * accept one of the offered mime types
 	 *
@@ -1771,8 +1771,8 @@ struct wl_data_offer_interface {
 	 * @param serial serial number of the accept request
 	 * @param mime_type mime type accepted by the client
 	 */
-	void (*accept)(struct wl_client *client,
-		       struct wl_resource *resource,
+	void (*accept)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource,
 		       uint32_t serial,
 		       const char *mime_type);
 	/**
@@ -1796,8 +1796,8 @@ struct wl_data_offer_interface {
 	 * @param mime_type mime type desired by receiver
 	 * @param fd file descriptor for data transfer
 	 */
-	void (*receive)(struct wl_client *client,
-			struct wl_resource *resource,
+	void (*receive)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource,
 			const char *mime_type,
 			int32_t fd);
 	/**
@@ -1805,8 +1805,8 @@ struct wl_data_offer_interface {
 	 *
 	 * Destroy the data offer.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * the offer will no longer be used
 	 *
@@ -1823,8 +1823,8 @@ struct wl_data_offer_interface {
 	 * wl_data_offer.action.
 	 * @since 3
 	 */
-	void (*finish)(struct wl_client *client,
-		       struct wl_resource *resource);
+	void (*finish)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource);
 	/**
 	 * set the available/preferred drag-and-drop actions
 	 *
@@ -1864,127 +1864,127 @@ struct wl_data_offer_interface {
 	 * @param preferred_action action preferred by the destination client
 	 * @since 3
 	 */
-	void (*set_actions)(struct wl_client *client,
-			    struct wl_resource *resource,
+	void (*set_actions)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
 			    uint32_t dnd_actions,
 			    uint32_t preferred_action);
 };
 
-#define WL_DATA_OFFER_OFFER 0
-#define WL_DATA_OFFER_SOURCE_ACTIONS 1
-#define WL_DATA_OFFER_ACTION 2
+#define POOR_WL_DATA_OFFER_OFFER 0
+#define POOR_WL_DATA_OFFER_SOURCE_ACTIONS 1
+#define POOR_WL_DATA_OFFER_ACTION 2
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_SOURCE_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_SOURCE_ACTIONS_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_ACTION_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_ACTION_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_ACCEPT_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_ACCEPT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_RECEIVE_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_RECEIVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_DESTROY_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_FINISH_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_FINISH_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_SET_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_SET_ACTIONS_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  * Sends an offer event to the client owning the resource.
  * @param resource_ The client's resource
  * @param mime_type offered mime type
  */
 static inline void
-wl_data_offer_send_offer(struct wl_resource *resource_, const char *mime_type)
+poor_wl_data_offer_send_offer(struct poor_wl_resource *resource_, const char *mime_type)
 {
-	wl_resource_post_event(resource_, WL_DATA_OFFER_OFFER, mime_type);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_OFFER, mime_type);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  * Sends an source_actions event to the client owning the resource.
  * @param resource_ The client's resource
  * @param source_actions actions offered by the data source
  */
 static inline void
-wl_data_offer_send_source_actions(struct wl_resource *resource_, uint32_t source_actions)
+poor_wl_data_offer_send_source_actions(struct poor_wl_resource *resource_, uint32_t source_actions)
 {
-	wl_resource_post_event(resource_, WL_DATA_OFFER_SOURCE_ACTIONS, source_actions);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_SOURCE_ACTIONS, source_actions);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  * Sends an action event to the client owning the resource.
  * @param resource_ The client's resource
  * @param dnd_action action selected by the compositor
  */
 static inline void
-wl_data_offer_send_action(struct wl_resource *resource_, uint32_t dnd_action)
+poor_wl_data_offer_send_action(struct poor_wl_resource *resource_, uint32_t dnd_action)
 {
-	wl_resource_post_event(resource_, WL_DATA_OFFER_ACTION, dnd_action);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_OFFER_ACTION, dnd_action);
 }
 
-#ifndef WL_DATA_SOURCE_ERROR_ENUM
-#define WL_DATA_SOURCE_ERROR_ENUM
-enum wl_data_source_error {
+#ifndef POOR_WL_DATA_SOURCE_ERROR_ENUM
+#define POOR_WL_DATA_SOURCE_ERROR_ENUM
+enum poor_wl_data_source_error {
 	/**
 	 * action mask contains invalid values
 	 */
-	WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK = 0,
+	POOR_WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK = 0,
 	/**
 	 * source doesn't accept this request
 	 */
-	WL_DATA_SOURCE_ERROR_INVALID_SOURCE = 1,
+	POOR_WL_DATA_SOURCE_ERROR_INVALID_SOURCE = 1,
 };
-#endif /* WL_DATA_SOURCE_ERROR_ENUM */
+#endif /* POOR_WL_DATA_SOURCE_ERROR_ENUM */
 
-#ifndef WL_DATA_SOURCE_ERROR_ENUM_IS_VALID
-#define WL_DATA_SOURCE_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_DATA_SOURCE_ERROR_ENUM_IS_VALID
+#define POOR_WL_DATA_SOURCE_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_data_source
- * Validate a wl_data_source error value.
+ * @ingroup iface_poor_wl_data_source
+ * Validate a poor_wl_data_source error value.
  *
  * @return true on success, false on error.
- * @ref wl_data_source_error
+ * @ref poor_wl_data_source_error
  */
 static inline bool
-wl_data_source_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_data_source_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK:
+	case POOR_WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK:
 		return version >= 1;
-	case WL_DATA_SOURCE_ERROR_INVALID_SOURCE:
+	case POOR_WL_DATA_SOURCE_ERROR_INVALID_SOURCE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_DATA_SOURCE_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_DATA_SOURCE_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_data_source
- * @struct wl_data_source_interface
+ * @ingroup iface_poor_wl_data_source
+ * @struct poor_wl_data_source_interface
  */
-struct wl_data_source_interface {
+struct poor_wl_data_source_interface {
 	/**
 	 * add an offered mime type
 	 *
@@ -1993,16 +1993,16 @@ struct wl_data_source_interface {
 	 * multiple types.
 	 * @param mime_type mime type offered by the data source
 	 */
-	void (*offer)(struct wl_client *client,
-		      struct wl_resource *resource,
+	void (*offer)(struct poor_wl_client *client,
+		      struct poor_wl_resource *resource,
 		      const char *mime_type);
 	/**
 	 * destroy the data source
 	 *
 	 * Destroy the data source.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * set the available drag-and-drop actions
 	 *
@@ -2022,161 +2022,161 @@ struct wl_data_source_interface {
 	 * @param dnd_actions actions supported by the data source
 	 * @since 3
 	 */
-	void (*set_actions)(struct wl_client *client,
-			    struct wl_resource *resource,
+	void (*set_actions)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
 			    uint32_t dnd_actions);
 };
 
-#define WL_DATA_SOURCE_TARGET 0
-#define WL_DATA_SOURCE_SEND 1
-#define WL_DATA_SOURCE_CANCELLED 2
-#define WL_DATA_SOURCE_DND_DROP_PERFORMED 3
-#define WL_DATA_SOURCE_DND_FINISHED 4
-#define WL_DATA_SOURCE_ACTION 5
+#define POOR_WL_DATA_SOURCE_TARGET 0
+#define POOR_WL_DATA_SOURCE_SEND 1
+#define POOR_WL_DATA_SOURCE_CANCELLED 2
+#define POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED 3
+#define POOR_WL_DATA_SOURCE_DND_FINISHED 4
+#define POOR_WL_DATA_SOURCE_ACTION 5
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_TARGET_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_TARGET_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_SEND_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_SEND_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_CANCELLED_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_CANCELLED_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DND_DROP_PERFORMED_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DND_FINISHED_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_DND_FINISHED_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_ACTION_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_ACTION_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DESTROY_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_SET_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_SET_ACTIONS_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an target event to the client owning the resource.
  * @param resource_ The client's resource
  * @param mime_type mime type accepted by the target
  */
 static inline void
-wl_data_source_send_target(struct wl_resource *resource_, const char *mime_type)
+poor_wl_data_source_send_target(struct poor_wl_resource *resource_, const char *mime_type)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_TARGET, mime_type);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_TARGET, mime_type);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an send event to the client owning the resource.
  * @param resource_ The client's resource
  * @param mime_type mime type for the data
  * @param fd file descriptor for the data
  */
 static inline void
-wl_data_source_send_send(struct wl_resource *resource_, const char *mime_type, int32_t fd)
+poor_wl_data_source_send_send(struct poor_wl_resource *resource_, const char *mime_type, int32_t fd)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_SEND, mime_type, fd);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_SEND, mime_type, fd);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an cancelled event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_data_source_send_cancelled(struct wl_resource *resource_)
+poor_wl_data_source_send_cancelled(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_CANCELLED);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_CANCELLED);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an dnd_drop_performed event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_data_source_send_dnd_drop_performed(struct wl_resource *resource_)
+poor_wl_data_source_send_dnd_drop_performed(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_DND_DROP_PERFORMED);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an dnd_finished event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_data_source_send_dnd_finished(struct wl_resource *resource_)
+poor_wl_data_source_send_dnd_finished(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_DND_FINISHED);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_DND_FINISHED);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  * Sends an action event to the client owning the resource.
  * @param resource_ The client's resource
  * @param dnd_action action selected by the compositor
  */
 static inline void
-wl_data_source_send_action(struct wl_resource *resource_, uint32_t dnd_action)
+poor_wl_data_source_send_action(struct poor_wl_resource *resource_, uint32_t dnd_action)
 {
-	wl_resource_post_event(resource_, WL_DATA_SOURCE_ACTION, dnd_action);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_SOURCE_ACTION, dnd_action);
 }
 
-#ifndef WL_DATA_DEVICE_ERROR_ENUM
-#define WL_DATA_DEVICE_ERROR_ENUM
-enum wl_data_device_error {
+#ifndef POOR_WL_DATA_DEVICE_ERROR_ENUM
+#define POOR_WL_DATA_DEVICE_ERROR_ENUM
+enum poor_wl_data_device_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_DATA_DEVICE_ERROR_ROLE = 0,
+	POOR_WL_DATA_DEVICE_ERROR_ROLE = 0,
 };
-#endif /* WL_DATA_DEVICE_ERROR_ENUM */
+#endif /* POOR_WL_DATA_DEVICE_ERROR_ENUM */
 
-#ifndef WL_DATA_DEVICE_ERROR_ENUM_IS_VALID
-#define WL_DATA_DEVICE_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_DATA_DEVICE_ERROR_ENUM_IS_VALID
+#define POOR_WL_DATA_DEVICE_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_data_device
- * Validate a wl_data_device error value.
+ * @ingroup iface_poor_wl_data_device
+ * Validate a poor_wl_data_device error value.
  *
  * @return true on success, false on error.
- * @ref wl_data_device_error
+ * @ref poor_wl_data_device_error
  */
 static inline bool
-wl_data_device_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_data_device_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_DATA_DEVICE_ERROR_ROLE:
+	case POOR_WL_DATA_DEVICE_ERROR_ROLE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_DATA_DEVICE_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_DATA_DEVICE_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_data_device
- * @struct wl_data_device_interface
+ * @ingroup iface_poor_wl_data_device
+ * @struct poor_wl_data_device_interface
  */
-struct wl_data_device_interface {
+struct poor_wl_data_device_interface {
 	/**
 	 * start drag-and-drop operation
 	 *
@@ -2212,11 +2212,11 @@ struct wl_data_device_interface {
 	 * @param icon drag-and-drop icon surface
 	 * @param serial serial number of the implicit grab on the origin
 	 */
-	void (*start_drag)(struct wl_client *client,
-			   struct wl_resource *resource,
-			   struct wl_resource *source,
-			   struct wl_resource *origin,
-			   struct wl_resource *icon,
+	void (*start_drag)(struct poor_wl_client *client,
+			   struct poor_wl_resource *resource,
+			   struct poor_wl_resource *source,
+			   struct poor_wl_resource *origin,
+			   struct poor_wl_resource *icon,
 			   uint32_t serial);
 	/**
 	 * copy data to the selection
@@ -2228,9 +2228,9 @@ struct wl_data_device_interface {
 	 * @param source data source for the selection
 	 * @param serial serial number of the event that triggered this request
 	 */
-	void (*set_selection)(struct wl_client *client,
-			      struct wl_resource *resource,
-			      struct wl_resource *source,
+	void (*set_selection)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
+			      struct poor_wl_resource *source,
 			      uint32_t serial);
 	/**
 	 * destroy data device
@@ -2238,69 +2238,69 @@ struct wl_data_device_interface {
 	 * This request destroys the data device.
 	 * @since 2
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_DATA_DEVICE_DATA_OFFER 0
-#define WL_DATA_DEVICE_ENTER 1
-#define WL_DATA_DEVICE_LEAVE 2
-#define WL_DATA_DEVICE_MOTION 3
-#define WL_DATA_DEVICE_DROP 4
-#define WL_DATA_DEVICE_SELECTION 5
+#define POOR_WL_DATA_DEVICE_DATA_OFFER 0
+#define POOR_WL_DATA_DEVICE_ENTER 1
+#define POOR_WL_DATA_DEVICE_LEAVE 2
+#define POOR_WL_DATA_DEVICE_MOTION 3
+#define POOR_WL_DATA_DEVICE_DROP 4
+#define POOR_WL_DATA_DEVICE_SELECTION 5
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_DATA_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_DATA_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_ENTER_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_LEAVE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_MOTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_DROP_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_DROP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_SELECTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_SELECTION_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_START_DRAG_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_START_DRAG_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_SET_SELECTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_SET_SELECTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_RELEASE_SINCE_VERSION 2
+#define POOR_WL_DATA_DEVICE_RELEASE_SINCE_VERSION 2
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an data_offer event to the client owning the resource.
  * @param resource_ The client's resource
  * @param id the new data_offer object
  */
 static inline void
-wl_data_device_send_data_offer(struct wl_resource *resource_, struct wl_resource *id)
+poor_wl_data_device_send_data_offer(struct poor_wl_resource *resource_, struct poor_wl_resource *id)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_DATA_OFFER, id);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_DATA_OFFER, id);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an enter event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the enter event
@@ -2310,24 +2310,24 @@ wl_data_device_send_data_offer(struct wl_resource *resource_, struct wl_resource
  * @param id source data_offer object
  */
 static inline void
-wl_data_device_send_enter(struct wl_resource *resource_, uint32_t serial, struct wl_resource *surface, wl_fixed_t x, wl_fixed_t y, struct wl_resource *id)
+poor_wl_data_device_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, poor_wl_fixed_t x, poor_wl_fixed_t y, struct poor_wl_resource *id)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_ENTER, serial, surface, x, y, id);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_ENTER, serial, surface, x, y, id);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an leave event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_data_device_send_leave(struct wl_resource *resource_)
+poor_wl_data_device_send_leave(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_LEAVE);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_LEAVE);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an motion event to the client owning the resource.
  * @param resource_ The client's resource
  * @param time timestamp with millisecond granularity
@@ -2335,38 +2335,38 @@ wl_data_device_send_leave(struct wl_resource *resource_)
  * @param y surface-local y coordinate
  */
 static inline void
-wl_data_device_send_motion(struct wl_resource *resource_, uint32_t time, wl_fixed_t x, wl_fixed_t y)
+poor_wl_data_device_send_motion(struct poor_wl_resource *resource_, uint32_t time, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_MOTION, time, x, y);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_MOTION, time, x, y);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an drop event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_data_device_send_drop(struct wl_resource *resource_)
+poor_wl_data_device_send_drop(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_DROP);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_DROP);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  * Sends an selection event to the client owning the resource.
  * @param resource_ The client's resource
  * @param id selection data_offer object
  */
 static inline void
-wl_data_device_send_selection(struct wl_resource *resource_, struct wl_resource *id)
+poor_wl_data_device_send_selection(struct poor_wl_resource *resource_, struct poor_wl_resource *id)
 {
-	wl_resource_post_event(resource_, WL_DATA_DEVICE_SELECTION, id);
+	poor_wl_resource_post_event(resource_, POOR_WL_DATA_DEVICE_SELECTION, id);
 }
 
-#ifndef WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
-#define WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
+#ifndef POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
+#define POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  * drag and drop actions
  *
  * This is a bitmask of the available/preferred actions in a
@@ -2393,63 +2393,63 @@ wl_data_device_send_selection(struct wl_resource *resource_, struct wl_resource 
  * or drags initiated with other buttons than BTN_LEFT to specific
  * actions (e.g. "ask").
  */
-enum wl_data_device_manager_dnd_action {
+enum poor_wl_data_device_manager_dnd_action {
 	/**
 	 * no action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE = 0,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE = 0,
 	/**
 	 * copy action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY = 1,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY = 1,
 	/**
 	 * move action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE = 2,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE = 2,
 	/**
 	 * ask action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK = 4,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK = 4,
 };
-#endif /* WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM */
+#endif /* POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM */
 
-#ifndef WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID
-#define WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID
+#ifndef POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID
+#define POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_data_device_manager
- * Validate a wl_data_device_manager dnd_action value.
+ * @ingroup iface_poor_wl_data_device_manager
+ * Validate a poor_wl_data_device_manager dnd_action value.
  *
  * @return true on success, false on error.
- * @ref wl_data_device_manager_dnd_action
+ * @ref poor_wl_data_device_manager_dnd_action
  */
 static inline bool
-wl_data_device_manager_dnd_action_is_valid(uint32_t value, uint32_t version) {
+poor_wl_data_device_manager_dnd_action_is_valid(uint32_t value, uint32_t version) {
 	uint32_t valid = 0;
 	if (version >= 1)
-		valid |= WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
+		valid |= POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
 	if (version >= 1)
-		valid |= WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY;
+		valid |= POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY;
 	if (version >= 1)
-		valid |= WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE;
+		valid |= POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE;
 	if (version >= 1)
-		valid |= WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK;
+		valid |= POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK;
 	return (value & ~valid) == 0;
 }
-#endif /* WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID */
+#endif /* POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_data_device_manager
- * @struct wl_data_device_manager_interface
+ * @ingroup iface_poor_wl_data_device_manager
+ * @struct poor_wl_data_device_manager_interface
  */
-struct wl_data_device_manager_interface {
+struct poor_wl_data_device_manager_interface {
 	/**
 	 * create a new data source
 	 *
 	 * Create a new data source.
 	 * @param id data source to create
 	 */
-	void (*create_data_source)(struct wl_client *client,
-				   struct wl_resource *resource,
+	void (*create_data_source)(struct poor_wl_client *client,
+				   struct poor_wl_resource *resource,
 				   uint32_t id);
 	/**
 	 * create a new data device
@@ -2458,57 +2458,57 @@ struct wl_data_device_manager_interface {
 	 * @param id data device to create
 	 * @param seat seat associated with the data device
 	 */
-	void (*get_data_device)(struct wl_client *client,
-				struct wl_resource *resource,
+	void (*get_data_device)(struct poor_wl_client *client,
+				struct poor_wl_resource *resource,
 				uint32_t id,
-				struct wl_resource *seat);
+				struct poor_wl_resource *seat);
 };
 
 
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  */
-#define WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  */
-#define WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE_SINCE_VERSION 1
 
-#ifndef WL_SHELL_ERROR_ENUM
-#define WL_SHELL_ERROR_ENUM
-enum wl_shell_error {
+#ifndef POOR_WL_SHELL_ERROR_ENUM
+#define POOR_WL_SHELL_ERROR_ENUM
+enum poor_wl_shell_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_SHELL_ERROR_ROLE = 0,
+	POOR_WL_SHELL_ERROR_ROLE = 0,
 };
-#endif /* WL_SHELL_ERROR_ENUM */
+#endif /* POOR_WL_SHELL_ERROR_ENUM */
 
-#ifndef WL_SHELL_ERROR_ENUM_IS_VALID
-#define WL_SHELL_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_SHELL_ERROR_ENUM_IS_VALID
+#define POOR_WL_SHELL_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shell
- * Validate a wl_shell error value.
+ * @ingroup iface_poor_wl_shell
+ * Validate a poor_wl_shell error value.
  *
  * @return true on success, false on error.
- * @ref wl_shell_error
+ * @ref poor_wl_shell_error
  */
 static inline bool
-wl_shell_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shell_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SHELL_ERROR_ROLE:
+	case POOR_WL_SHELL_ERROR_ROLE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SHELL_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_SHELL_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_shell
- * @struct wl_shell_interface
+ * @ingroup iface_poor_wl_shell
+ * @struct poor_wl_shell_interface
  */
-struct wl_shell_interface {
+struct poor_wl_shell_interface {
 	/**
 	 * create a shell surface from a surface
 	 *
@@ -2520,22 +2520,22 @@ struct wl_shell_interface {
 	 * @param id shell surface to create
 	 * @param surface surface to be given the shell surface role
 	 */
-	void (*get_shell_surface)(struct wl_client *client,
-				  struct wl_resource *resource,
+	void (*get_shell_surface)(struct poor_wl_client *client,
+				  struct poor_wl_resource *resource,
 				  uint32_t id,
-				  struct wl_resource *surface);
+				  struct poor_wl_resource *surface);
 };
 
 
 /**
- * @ingroup iface_wl_shell
+ * @ingroup iface_poor_wl_shell
  */
-#define WL_SHELL_GET_SHELL_SURFACE_SINCE_VERSION 1
+#define POOR_WL_SHELL_GET_SHELL_SURFACE_SINCE_VERSION 1
 
-#ifndef WL_SHELL_SURFACE_RESIZE_ENUM
-#define WL_SHELL_SURFACE_RESIZE_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_RESIZE_ENUM
+#define POOR_WL_SHELL_SURFACE_RESIZE_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * edge values for resizing
  *
  * These values are used to indicate which edge of a surface
@@ -2543,176 +2543,176 @@ struct wl_shell_interface {
  * use this information to adapt its behavior, e.g. choose
  * an appropriate cursor image.
  */
-enum wl_shell_surface_resize {
+enum poor_wl_shell_surface_resize {
 	/**
 	 * no edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_NONE = 0,
+	POOR_WL_SHELL_SURFACE_RESIZE_NONE = 0,
 	/**
 	 * top edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP = 1,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP = 1,
 	/**
 	 * bottom edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM = 2,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM = 2,
 	/**
 	 * left edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_LEFT = 4,
+	POOR_WL_SHELL_SURFACE_RESIZE_LEFT = 4,
 	/**
 	 * top and left edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP_LEFT = 5,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP_LEFT = 5,
 	/**
 	 * bottom and left edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT = 6,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT = 6,
 	/**
 	 * right edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_RIGHT = 8,
+	POOR_WL_SHELL_SURFACE_RESIZE_RIGHT = 8,
 	/**
 	 * top and right edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP_RIGHT = 9,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP_RIGHT = 9,
 	/**
 	 * bottom and right edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT = 10,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT = 10,
 };
-#endif /* WL_SHELL_SURFACE_RESIZE_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_RESIZE_ENUM */
 
-#ifndef WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID
-#define WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID
+#ifndef POOR_WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID
+#define POOR_WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shell_surface
- * Validate a wl_shell_surface resize value.
+ * @ingroup iface_poor_wl_shell_surface
+ * Validate a poor_wl_shell_surface resize value.
  *
  * @return true on success, false on error.
- * @ref wl_shell_surface_resize
+ * @ref poor_wl_shell_surface_resize
  */
 static inline bool
-wl_shell_surface_resize_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shell_surface_resize_is_valid(uint32_t value, uint32_t version) {
 	uint32_t valid = 0;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_NONE;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_NONE;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_TOP;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_TOP;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_BOTTOM;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_LEFT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_LEFT;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_TOP_LEFT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_TOP_LEFT;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_RIGHT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_RIGHT;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_TOP_RIGHT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_TOP_RIGHT;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT;
+		valid |= POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT;
 	return (value & ~valid) == 0;
 }
-#endif /* WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID */
+#endif /* POOR_WL_SHELL_SURFACE_RESIZE_ENUM_IS_VALID */
 
-#ifndef WL_SHELL_SURFACE_TRANSIENT_ENUM
-#define WL_SHELL_SURFACE_TRANSIENT_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM
+#define POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * details of transient behaviour
  *
  * These flags specify details of the expected behaviour
  * of transient surfaces. Used in the set_transient request.
  */
-enum wl_shell_surface_transient {
+enum poor_wl_shell_surface_transient {
 	/**
 	 * do not set keyboard focus
 	 */
-	WL_SHELL_SURFACE_TRANSIENT_INACTIVE = 0x1,
+	POOR_WL_SHELL_SURFACE_TRANSIENT_INACTIVE = 0x1,
 };
-#endif /* WL_SHELL_SURFACE_TRANSIENT_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM */
 
-#ifndef WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID
-#define WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID
+#ifndef POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID
+#define POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shell_surface
- * Validate a wl_shell_surface transient value.
+ * @ingroup iface_poor_wl_shell_surface
+ * Validate a poor_wl_shell_surface transient value.
  *
  * @return true on success, false on error.
- * @ref wl_shell_surface_transient
+ * @ref poor_wl_shell_surface_transient
  */
 static inline bool
-wl_shell_surface_transient_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shell_surface_transient_is_valid(uint32_t value, uint32_t version) {
 	uint32_t valid = 0;
 	if (version >= 1)
-		valid |= WL_SHELL_SURFACE_TRANSIENT_INACTIVE;
+		valid |= POOR_WL_SHELL_SURFACE_TRANSIENT_INACTIVE;
 	return (value & ~valid) == 0;
 }
-#endif /* WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID */
+#endif /* POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM_IS_VALID */
 
-#ifndef WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
-#define WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
+#define POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * different method to set the surface fullscreen
  *
  * Hints to indicate to the compositor how to deal with a conflict
  * between the dimensions of the surface and the dimensions of the
  * output. The compositor is free to ignore this parameter.
  */
-enum wl_shell_surface_fullscreen_method {
+enum poor_wl_shell_surface_fullscreen_method {
 	/**
 	 * no preference, apply default policy
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT = 0,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT = 0,
 	/**
 	 * scale, preserve the surface's aspect ratio and center on output
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE = 1,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE = 1,
 	/**
 	 * switch output mode to the smallest mode that can fit the surface, add black borders to compensate size mismatch
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER = 2,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER = 2,
 	/**
 	 * no upscaling, center on output and add black borders to compensate size mismatch
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL = 3,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL = 3,
 };
-#endif /* WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM */
 
-#ifndef WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID
-#define WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID
+#ifndef POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID
+#define POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_shell_surface
- * Validate a wl_shell_surface fullscreen_method value.
+ * @ingroup iface_poor_wl_shell_surface
+ * Validate a poor_wl_shell_surface fullscreen_method value.
  *
  * @return true on success, false on error.
- * @ref wl_shell_surface_fullscreen_method
+ * @ref poor_wl_shell_surface_fullscreen_method
  */
 static inline bool
-wl_shell_surface_fullscreen_method_is_valid(uint32_t value, uint32_t version) {
+poor_wl_shell_surface_fullscreen_method_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT:
+	case POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT:
 		return version >= 1;
-	case WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE:
+	case POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE:
 		return version >= 1;
-	case WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER:
+	case POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER:
 		return version >= 1;
-	case WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL:
+	case POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID */
+#endif /* POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_shell_surface
- * @struct wl_shell_surface_interface
+ * @ingroup iface_poor_wl_shell_surface
+ * @struct poor_wl_shell_surface_interface
  */
-struct wl_shell_surface_interface {
+struct poor_wl_shell_surface_interface {
 	/**
 	 * respond to a ping event
 	 *
@@ -2720,8 +2720,8 @@ struct wl_shell_surface_interface {
 	 * the client may be deemed unresponsive.
 	 * @param serial serial number of the ping event
 	 */
-	void (*pong)(struct wl_client *client,
-		     struct wl_resource *resource,
+	void (*pong)(struct poor_wl_client *client,
+		     struct poor_wl_resource *resource,
 		     uint32_t serial);
 	/**
 	 * start an interactive move
@@ -2734,9 +2734,9 @@ struct wl_shell_surface_interface {
 	 * @param seat seat whose pointer is used
 	 * @param serial serial number of the implicit grab on the pointer
 	 */
-	void (*move)(struct wl_client *client,
-		     struct wl_resource *resource,
-		     struct wl_resource *seat,
+	void (*move)(struct poor_wl_client *client,
+		     struct poor_wl_resource *resource,
+		     struct poor_wl_resource *seat,
 		     uint32_t serial);
 	/**
 	 * start an interactive resize
@@ -2750,9 +2750,9 @@ struct wl_shell_surface_interface {
 	 * @param serial serial number of the implicit grab on the pointer
 	 * @param edges which edge or corner is being dragged
 	 */
-	void (*resize)(struct wl_client *client,
-		       struct wl_resource *resource,
-		       struct wl_resource *seat,
+	void (*resize)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource,
+		       struct poor_wl_resource *seat,
 		       uint32_t serial,
 		       uint32_t edges);
 	/**
@@ -2762,8 +2762,8 @@ struct wl_shell_surface_interface {
 	 *
 	 * A toplevel surface is not fullscreen, maximized or transient.
 	 */
-	void (*set_toplevel)(struct wl_client *client,
-			     struct wl_resource *resource);
+	void (*set_toplevel)(struct poor_wl_client *client,
+			     struct poor_wl_resource *resource);
 	/**
 	 * make the surface a transient surface
 	 *
@@ -2779,9 +2779,9 @@ struct wl_shell_surface_interface {
 	 * @param y surface-local y coordinate
 	 * @param flags transient surface behavior
 	 */
-	void (*set_transient)(struct wl_client *client,
-			      struct wl_resource *resource,
-			      struct wl_resource *parent,
+	void (*set_transient)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
+			      struct poor_wl_resource *parent,
 			      int32_t x,
 			      int32_t y,
 			      uint32_t flags);
@@ -2826,11 +2826,11 @@ struct wl_shell_surface_interface {
 	 * @param framerate framerate in mHz
 	 * @param output output on which the surface is to be fullscreen
 	 */
-	void (*set_fullscreen)(struct wl_client *client,
-			       struct wl_resource *resource,
+	void (*set_fullscreen)(struct poor_wl_client *client,
+			       struct poor_wl_resource *resource,
 			       uint32_t method,
 			       uint32_t framerate,
-			       struct wl_resource *output);
+			       struct poor_wl_resource *output);
 	/**
 	 * make the surface a popup surface
 	 *
@@ -2860,11 +2860,11 @@ struct wl_shell_surface_interface {
 	 * @param y surface-local y coordinate
 	 * @param flags transient surface behavior
 	 */
-	void (*set_popup)(struct wl_client *client,
-			  struct wl_resource *resource,
-			  struct wl_resource *seat,
+	void (*set_popup)(struct poor_wl_client *client,
+			  struct poor_wl_resource *resource,
+			  struct poor_wl_resource *seat,
 			  uint32_t serial,
-			  struct wl_resource *parent,
+			  struct poor_wl_resource *parent,
 			  int32_t x,
 			  int32_t y,
 			  uint32_t flags);
@@ -2891,9 +2891,9 @@ struct wl_shell_surface_interface {
 	 * The details depend on the compositor implementation.
 	 * @param output output on which the surface is to be maximized
 	 */
-	void (*set_maximized)(struct wl_client *client,
-			      struct wl_resource *resource,
-			      struct wl_resource *output);
+	void (*set_maximized)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
+			      struct poor_wl_resource *output);
 	/**
 	 * set surface title
 	 *
@@ -2906,8 +2906,8 @@ struct wl_shell_surface_interface {
 	 * The string must be encoded in UTF-8.
 	 * @param title surface title
 	 */
-	void (*set_title)(struct wl_client *client,
-			  struct wl_resource *resource,
+	void (*set_title)(struct poor_wl_client *client,
+			  struct poor_wl_resource *resource,
 			  const char *title);
 	/**
 	 * set surface class
@@ -2920,83 +2920,83 @@ struct wl_shell_surface_interface {
 	 * the application's .desktop file as the class.
 	 * @param class_ surface class
 	 */
-	void (*set_class)(struct wl_client *client,
-			  struct wl_resource *resource,
+	void (*set_class)(struct poor_wl_client *client,
+			  struct poor_wl_resource *resource,
 			  const char *class_);
 };
 
-#define WL_SHELL_SURFACE_PING 0
-#define WL_SHELL_SURFACE_CONFIGURE 1
-#define WL_SHELL_SURFACE_POPUP_DONE 2
+#define POOR_WL_SHELL_SURFACE_PING 0
+#define POOR_WL_SHELL_SURFACE_CONFIGURE 1
+#define POOR_WL_SHELL_SURFACE_POPUP_DONE 2
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_PING_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_PING_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_CONFIGURE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_CONFIGURE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_POPUP_DONE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_POPUP_DONE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_PONG_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_PONG_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_MOVE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_MOVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_RESIZE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_RESIZE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TOPLEVEL_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TOPLEVEL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TRANSIENT_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TRANSIENT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_FULLSCREEN_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_FULLSCREEN_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_POPUP_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_POPUP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_MAXIMIZED_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_MAXIMIZED_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TITLE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TITLE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_CLASS_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_CLASS_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * Sends an ping event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the ping
  */
 static inline void
-wl_shell_surface_send_ping(struct wl_resource *resource_, uint32_t serial)
+poor_wl_shell_surface_send_ping(struct poor_wl_resource *resource_, uint32_t serial)
 {
-	wl_resource_post_event(resource_, WL_SHELL_SURFACE_PING, serial);
+	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_PING, serial);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * Sends an configure event to the client owning the resource.
  * @param resource_ The client's resource
  * @param edges how the surface was resized
@@ -3004,76 +3004,76 @@ wl_shell_surface_send_ping(struct wl_resource *resource_, uint32_t serial)
  * @param height new height of the surface
  */
 static inline void
-wl_shell_surface_send_configure(struct wl_resource *resource_, uint32_t edges, int32_t width, int32_t height)
+poor_wl_shell_surface_send_configure(struct poor_wl_resource *resource_, uint32_t edges, int32_t width, int32_t height)
 {
-	wl_resource_post_event(resource_, WL_SHELL_SURFACE_CONFIGURE, edges, width, height);
+	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_CONFIGURE, edges, width, height);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * Sends an popup_done event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_shell_surface_send_popup_done(struct wl_resource *resource_)
+poor_wl_shell_surface_send_popup_done(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_SHELL_SURFACE_POPUP_DONE);
+	poor_wl_resource_post_event(resource_, POOR_WL_SHELL_SURFACE_POPUP_DONE);
 }
 
-#ifndef WL_SURFACE_ERROR_ENUM
-#define WL_SURFACE_ERROR_ENUM
+#ifndef POOR_WL_SURFACE_ERROR_ENUM
+#define POOR_WL_SURFACE_ERROR_ENUM
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  * wl_surface error values
  *
  * These errors can be emitted in response to wl_surface requests.
  */
-enum wl_surface_error {
+enum poor_wl_surface_error {
 	/**
 	 * buffer scale value is invalid
 	 */
-	WL_SURFACE_ERROR_INVALID_SCALE = 0,
+	POOR_WL_SURFACE_ERROR_INVALID_SCALE = 0,
 	/**
 	 * buffer transform value is invalid
 	 */
-	WL_SURFACE_ERROR_INVALID_TRANSFORM = 1,
+	POOR_WL_SURFACE_ERROR_INVALID_TRANSFORM = 1,
 };
-#endif /* WL_SURFACE_ERROR_ENUM */
+#endif /* POOR_WL_SURFACE_ERROR_ENUM */
 
-#ifndef WL_SURFACE_ERROR_ENUM_IS_VALID
-#define WL_SURFACE_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_SURFACE_ERROR_ENUM_IS_VALID
+#define POOR_WL_SURFACE_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_surface
- * Validate a wl_surface error value.
+ * @ingroup iface_poor_wl_surface
+ * Validate a poor_wl_surface error value.
  *
  * @return true on success, false on error.
- * @ref wl_surface_error
+ * @ref poor_wl_surface_error
  */
 static inline bool
-wl_surface_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_surface_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SURFACE_ERROR_INVALID_SCALE:
+	case POOR_WL_SURFACE_ERROR_INVALID_SCALE:
 		return version >= 1;
-	case WL_SURFACE_ERROR_INVALID_TRANSFORM:
+	case POOR_WL_SURFACE_ERROR_INVALID_TRANSFORM:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SURFACE_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_SURFACE_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_surface
- * @struct wl_surface_interface
+ * @ingroup iface_poor_wl_surface
+ * @struct poor_wl_surface_interface
  */
-struct wl_surface_interface {
+struct poor_wl_surface_interface {
 	/**
 	 * delete surface
 	 *
 	 * Deletes the surface and invalidates its object ID.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * set the surface contents
 	 *
@@ -3121,9 +3121,9 @@ struct wl_surface_interface {
 	 * @param x surface-local x coordinate
 	 * @param y surface-local y coordinate
 	 */
-	void (*attach)(struct wl_client *client,
-		       struct wl_resource *resource,
-		       struct wl_resource *buffer,
+	void (*attach)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource,
+		       struct poor_wl_resource *buffer,
 		       int32_t x,
 		       int32_t y);
 	/**
@@ -3158,8 +3158,8 @@ struct wl_surface_interface {
 	 * @param width width of damage rectangle
 	 * @param height height of damage rectangle
 	 */
-	void (*damage)(struct wl_client *client,
-		       struct wl_resource *resource,
+	void (*damage)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource,
 		       int32_t x,
 		       int32_t y,
 		       int32_t width,
@@ -3203,8 +3203,8 @@ struct wl_surface_interface {
 	 * milliseconds, with an undefined base.
 	 * @param callback callback object for the frame request
 	 */
-	void (*frame)(struct wl_client *client,
-		      struct wl_resource *resource,
+	void (*frame)(struct poor_wl_client *client,
+		      struct poor_wl_resource *resource,
 		      uint32_t callback);
 	/**
 	 * set opaque region
@@ -3236,9 +3236,9 @@ struct wl_surface_interface {
 	 * pending opaque region to be set to empty.
 	 * @param region opaque region of the surface
 	 */
-	void (*set_opaque_region)(struct wl_client *client,
-				  struct wl_resource *resource,
-				  struct wl_resource *region);
+	void (*set_opaque_region)(struct poor_wl_client *client,
+				  struct poor_wl_resource *resource,
+				  struct poor_wl_resource *region);
 	/**
 	 * set input region
 	 *
@@ -3266,9 +3266,9 @@ struct wl_surface_interface {
 	 * to be set to infinite.
 	 * @param region input region of the surface
 	 */
-	void (*set_input_region)(struct wl_client *client,
-				 struct wl_resource *resource,
-				 struct wl_resource *region);
+	void (*set_input_region)(struct poor_wl_client *client,
+				 struct poor_wl_resource *resource,
+				 struct poor_wl_resource *region);
 	/**
 	 * commit pending surface state
 	 *
@@ -3290,8 +3290,8 @@ struct wl_surface_interface {
 	 *
 	 * Other interfaces may add further double-buffered surface state.
 	 */
-	void (*commit)(struct wl_client *client,
-		       struct wl_resource *resource);
+	void (*commit)(struct poor_wl_client *client,
+		       struct poor_wl_resource *resource);
 	/**
 	 * sets the buffer transformation
 	 *
@@ -3330,8 +3330,8 @@ struct wl_surface_interface {
 	 * @param transform transform for interpreting buffer contents
 	 * @since 2
 	 */
-	void (*set_buffer_transform)(struct wl_client *client,
-				     struct wl_resource *resource,
+	void (*set_buffer_transform)(struct poor_wl_client *client,
+				     struct poor_wl_resource *resource,
 				     int32_t transform);
 	/**
 	 * sets the buffer scaling factor
@@ -3365,8 +3365,8 @@ struct wl_surface_interface {
 	 * @param scale positive scale for interpreting buffer contents
 	 * @since 3
 	 */
-	void (*set_buffer_scale)(struct wl_client *client,
-				 struct wl_resource *resource,
+	void (*set_buffer_scale)(struct poor_wl_client *client,
+				 struct poor_wl_resource *resource,
 				 int32_t scale);
 	/**
 	 * mark part of the surface damaged using buffer coordinates
@@ -3411,143 +3411,143 @@ struct wl_surface_interface {
 	 * @param height height of damage rectangle
 	 * @since 4
 	 */
-	void (*damage_buffer)(struct wl_client *client,
-			      struct wl_resource *resource,
+	void (*damage_buffer)(struct poor_wl_client *client,
+			      struct poor_wl_resource *resource,
 			      int32_t x,
 			      int32_t y,
 			      int32_t width,
 			      int32_t height);
 };
 
-#define WL_SURFACE_ENTER 0
-#define WL_SURFACE_LEAVE 1
+#define POOR_WL_SURFACE_ENTER 0
+#define POOR_WL_SURFACE_LEAVE 1
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_ENTER_SINCE_VERSION 1
+#define POOR_WL_SURFACE_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_LEAVE_SINCE_VERSION 1
+#define POOR_WL_SURFACE_LEAVE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SURFACE_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_ATTACH_SINCE_VERSION 1
+#define POOR_WL_SURFACE_ATTACH_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DAMAGE_SINCE_VERSION 1
+#define POOR_WL_SURFACE_DAMAGE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_FRAME_SINCE_VERSION 1
+#define POOR_WL_SURFACE_FRAME_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_OPAQUE_REGION_SINCE_VERSION 1
+#define POOR_WL_SURFACE_SET_OPAQUE_REGION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_INPUT_REGION_SINCE_VERSION 1
+#define POOR_WL_SURFACE_SET_INPUT_REGION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_COMMIT_SINCE_VERSION 1
+#define POOR_WL_SURFACE_COMMIT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION 2
+#define POOR_WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION 2
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION 3
+#define POOR_WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION 4
+#define POOR_WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION 4
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  * Sends an enter event to the client owning the resource.
  * @param resource_ The client's resource
  * @param output output entered by the surface
  */
 static inline void
-wl_surface_send_enter(struct wl_resource *resource_, struct wl_resource *output)
+poor_wl_surface_send_enter(struct poor_wl_resource *resource_, struct poor_wl_resource *output)
 {
-	wl_resource_post_event(resource_, WL_SURFACE_ENTER, output);
+	poor_wl_resource_post_event(resource_, POOR_WL_SURFACE_ENTER, output);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  * Sends an leave event to the client owning the resource.
  * @param resource_ The client's resource
  * @param output output left by the surface
  */
 static inline void
-wl_surface_send_leave(struct wl_resource *resource_, struct wl_resource *output)
+poor_wl_surface_send_leave(struct poor_wl_resource *resource_, struct poor_wl_resource *output)
 {
-	wl_resource_post_event(resource_, WL_SURFACE_LEAVE, output);
+	poor_wl_resource_post_event(resource_, POOR_WL_SURFACE_LEAVE, output);
 }
 
-#ifndef WL_SEAT_CAPABILITY_ENUM
-#define WL_SEAT_CAPABILITY_ENUM
+#ifndef POOR_WL_SEAT_CAPABILITY_ENUM
+#define POOR_WL_SEAT_CAPABILITY_ENUM
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  * seat capability bitmask
  *
  * This is a bitmask of capabilities this seat has; if a member is
  * set, then it is present on the seat.
  */
-enum wl_seat_capability {
+enum poor_wl_seat_capability {
 	/**
 	 * the seat has pointer devices
 	 */
-	WL_SEAT_CAPABILITY_POINTER = 1,
+	POOR_WL_SEAT_CAPABILITY_POINTER = 1,
 	/**
 	 * the seat has one or more keyboards
 	 */
-	WL_SEAT_CAPABILITY_KEYBOARD = 2,
+	POOR_WL_SEAT_CAPABILITY_KEYBOARD = 2,
 	/**
 	 * the seat has touch devices
 	 */
-	WL_SEAT_CAPABILITY_TOUCH = 4,
+	POOR_WL_SEAT_CAPABILITY_TOUCH = 4,
 };
-#endif /* WL_SEAT_CAPABILITY_ENUM */
+#endif /* POOR_WL_SEAT_CAPABILITY_ENUM */
 
-#ifndef WL_SEAT_CAPABILITY_ENUM_IS_VALID
-#define WL_SEAT_CAPABILITY_ENUM_IS_VALID
+#ifndef POOR_WL_SEAT_CAPABILITY_ENUM_IS_VALID
+#define POOR_WL_SEAT_CAPABILITY_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_seat
- * Validate a wl_seat capability value.
+ * @ingroup iface_poor_wl_seat
+ * Validate a poor_wl_seat capability value.
  *
  * @return true on success, false on error.
- * @ref wl_seat_capability
+ * @ref poor_wl_seat_capability
  */
 static inline bool
-wl_seat_capability_is_valid(uint32_t value, uint32_t version) {
+poor_wl_seat_capability_is_valid(uint32_t value, uint32_t version) {
 	uint32_t valid = 0;
 	if (version >= 1)
-		valid |= WL_SEAT_CAPABILITY_POINTER;
+		valid |= POOR_WL_SEAT_CAPABILITY_POINTER;
 	if (version >= 1)
-		valid |= WL_SEAT_CAPABILITY_KEYBOARD;
+		valid |= POOR_WL_SEAT_CAPABILITY_KEYBOARD;
 	if (version >= 1)
-		valid |= WL_SEAT_CAPABILITY_TOUCH;
+		valid |= POOR_WL_SEAT_CAPABILITY_TOUCH;
 	return (value & ~valid) == 0;
 }
-#endif /* WL_SEAT_CAPABILITY_ENUM_IS_VALID */
+#endif /* POOR_WL_SEAT_CAPABILITY_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_seat
- * @struct wl_seat_interface
+ * @ingroup iface_poor_wl_seat
+ * @struct poor_wl_seat_interface
  */
-struct wl_seat_interface {
+struct poor_wl_seat_interface {
 	/**
 	 * return pointer object
 	 *
@@ -3560,8 +3560,8 @@ struct wl_seat_interface {
 	 * never had the pointer capability.
 	 * @param id seat pointer
 	 */
-	void (*get_pointer)(struct wl_client *client,
-			    struct wl_resource *resource,
+	void (*get_pointer)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
 			    uint32_t id);
 	/**
 	 * return keyboard object
@@ -3575,8 +3575,8 @@ struct wl_seat_interface {
 	 * never had the keyboard capability.
 	 * @param id seat keyboard
 	 */
-	void (*get_keyboard)(struct wl_client *client,
-			     struct wl_resource *resource,
+	void (*get_keyboard)(struct poor_wl_client *client,
+			     struct poor_wl_resource *resource,
 			     uint32_t id);
 	/**
 	 * return touch object
@@ -3590,8 +3590,8 @@ struct wl_seat_interface {
 	 * never had the touch capability.
 	 * @param id seat touch interface
 	 */
-	void (*get_touch)(struct wl_client *client,
-			  struct wl_resource *resource,
+	void (*get_touch)(struct poor_wl_client *client,
+			  struct poor_wl_resource *resource,
 			  uint32_t id);
 	/**
 	 * release the seat object
@@ -3600,182 +3600,182 @@ struct wl_seat_interface {
 	 * going to use the seat object anymore.
 	 * @since 5
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_SEAT_CAPABILITIES 0
-#define WL_SEAT_NAME 1
+#define POOR_WL_SEAT_CAPABILITIES 0
+#define POOR_WL_SEAT_NAME 1
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_CAPABILITIES_SINCE_VERSION 1
+#define POOR_WL_SEAT_CAPABILITIES_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_NAME_SINCE_VERSION 2
+#define POOR_WL_SEAT_NAME_SINCE_VERSION 2
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_POINTER_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_POINTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_KEYBOARD_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_KEYBOARD_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_TOUCH_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_TOUCH_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_RELEASE_SINCE_VERSION 5
+#define POOR_WL_SEAT_RELEASE_SINCE_VERSION 5
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  * Sends an capabilities event to the client owning the resource.
  * @param resource_ The client's resource
  * @param capabilities capabilities of the seat
  */
 static inline void
-wl_seat_send_capabilities(struct wl_resource *resource_, uint32_t capabilities)
+poor_wl_seat_send_capabilities(struct poor_wl_resource *resource_, uint32_t capabilities)
 {
-	wl_resource_post_event(resource_, WL_SEAT_CAPABILITIES, capabilities);
+	poor_wl_resource_post_event(resource_, POOR_WL_SEAT_CAPABILITIES, capabilities);
 }
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  * Sends an name event to the client owning the resource.
  * @param resource_ The client's resource
  * @param name seat identifier
  */
 static inline void
-wl_seat_send_name(struct wl_resource *resource_, const char *name)
+poor_wl_seat_send_name(struct poor_wl_resource *resource_, const char *name)
 {
-	wl_resource_post_event(resource_, WL_SEAT_NAME, name);
+	poor_wl_resource_post_event(resource_, POOR_WL_SEAT_NAME, name);
 }
 
-#ifndef WL_POINTER_ERROR_ENUM
-#define WL_POINTER_ERROR_ENUM
-enum wl_pointer_error {
+#ifndef POOR_WL_POINTER_ERROR_ENUM
+#define POOR_WL_POINTER_ERROR_ENUM
+enum poor_wl_pointer_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_POINTER_ERROR_ROLE = 0,
+	POOR_WL_POINTER_ERROR_ROLE = 0,
 };
-#endif /* WL_POINTER_ERROR_ENUM */
+#endif /* POOR_WL_POINTER_ERROR_ENUM */
 
-#ifndef WL_POINTER_ERROR_ENUM_IS_VALID
-#define WL_POINTER_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_POINTER_ERROR_ENUM_IS_VALID
+#define POOR_WL_POINTER_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_pointer
- * Validate a wl_pointer error value.
+ * @ingroup iface_poor_wl_pointer
+ * Validate a poor_wl_pointer error value.
  *
  * @return true on success, false on error.
- * @ref wl_pointer_error
+ * @ref poor_wl_pointer_error
  */
 static inline bool
-wl_pointer_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_pointer_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_POINTER_ERROR_ROLE:
+	case POOR_WL_POINTER_ERROR_ROLE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_POINTER_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_POINTER_ERROR_ENUM_IS_VALID */
 
-#ifndef WL_POINTER_BUTTON_STATE_ENUM
-#define WL_POINTER_BUTTON_STATE_ENUM
+#ifndef POOR_WL_POINTER_BUTTON_STATE_ENUM
+#define POOR_WL_POINTER_BUTTON_STATE_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * physical button state
  *
  * Describes the physical state of a button that produced the button
  * event.
  */
-enum wl_pointer_button_state {
+enum poor_wl_pointer_button_state {
 	/**
 	 * the button is not pressed
 	 */
-	WL_POINTER_BUTTON_STATE_RELEASED = 0,
+	POOR_WL_POINTER_BUTTON_STATE_RELEASED = 0,
 	/**
 	 * the button is pressed
 	 */
-	WL_POINTER_BUTTON_STATE_PRESSED = 1,
+	POOR_WL_POINTER_BUTTON_STATE_PRESSED = 1,
 };
-#endif /* WL_POINTER_BUTTON_STATE_ENUM */
+#endif /* POOR_WL_POINTER_BUTTON_STATE_ENUM */
 
-#ifndef WL_POINTER_BUTTON_STATE_ENUM_IS_VALID
-#define WL_POINTER_BUTTON_STATE_ENUM_IS_VALID
+#ifndef POOR_WL_POINTER_BUTTON_STATE_ENUM_IS_VALID
+#define POOR_WL_POINTER_BUTTON_STATE_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_pointer
- * Validate a wl_pointer button_state value.
+ * @ingroup iface_poor_wl_pointer
+ * Validate a poor_wl_pointer button_state value.
  *
  * @return true on success, false on error.
- * @ref wl_pointer_button_state
+ * @ref poor_wl_pointer_button_state
  */
 static inline bool
-wl_pointer_button_state_is_valid(uint32_t value, uint32_t version) {
+poor_wl_pointer_button_state_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_POINTER_BUTTON_STATE_RELEASED:
+	case POOR_WL_POINTER_BUTTON_STATE_RELEASED:
 		return version >= 1;
-	case WL_POINTER_BUTTON_STATE_PRESSED:
+	case POOR_WL_POINTER_BUTTON_STATE_PRESSED:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_POINTER_BUTTON_STATE_ENUM_IS_VALID */
+#endif /* POOR_WL_POINTER_BUTTON_STATE_ENUM_IS_VALID */
 
-#ifndef WL_POINTER_AXIS_ENUM
-#define WL_POINTER_AXIS_ENUM
+#ifndef POOR_WL_POINTER_AXIS_ENUM
+#define POOR_WL_POINTER_AXIS_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * axis types
  *
  * Describes the axis types of scroll events.
  */
-enum wl_pointer_axis {
+enum poor_wl_pointer_axis {
 	/**
 	 * vertical axis
 	 */
-	WL_POINTER_AXIS_VERTICAL_SCROLL = 0,
+	POOR_WL_POINTER_AXIS_VERTICAL_SCROLL = 0,
 	/**
 	 * horizontal axis
 	 */
-	WL_POINTER_AXIS_HORIZONTAL_SCROLL = 1,
+	POOR_WL_POINTER_AXIS_HORIZONTAL_SCROLL = 1,
 };
-#endif /* WL_POINTER_AXIS_ENUM */
+#endif /* POOR_WL_POINTER_AXIS_ENUM */
 
-#ifndef WL_POINTER_AXIS_ENUM_IS_VALID
-#define WL_POINTER_AXIS_ENUM_IS_VALID
+#ifndef POOR_WL_POINTER_AXIS_ENUM_IS_VALID
+#define POOR_WL_POINTER_AXIS_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_pointer
- * Validate a wl_pointer axis value.
+ * @ingroup iface_poor_wl_pointer
+ * Validate a poor_wl_pointer axis value.
  *
  * @return true on success, false on error.
- * @ref wl_pointer_axis
+ * @ref poor_wl_pointer_axis
  */
 static inline bool
-wl_pointer_axis_is_valid(uint32_t value, uint32_t version) {
+poor_wl_pointer_axis_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_POINTER_AXIS_VERTICAL_SCROLL:
+	case POOR_WL_POINTER_AXIS_VERTICAL_SCROLL:
 		return version >= 1;
-	case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
+	case POOR_WL_POINTER_AXIS_HORIZONTAL_SCROLL:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_POINTER_AXIS_ENUM_IS_VALID */
+#endif /* POOR_WL_POINTER_AXIS_ENUM_IS_VALID */
 
-#ifndef WL_POINTER_AXIS_SOURCE_ENUM
-#define WL_POINTER_AXIS_SOURCE_ENUM
+#ifndef POOR_WL_POINTER_AXIS_SOURCE_ENUM
+#define POOR_WL_POINTER_AXIS_SOURCE_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * axis source types
  *
  * Describes the source types for axis events. This indicates to the
@@ -3785,15 +3785,15 @@ wl_pointer_axis_is_valid(uint32_t value, uint32_t version) {
  * kinetic scrolling whereas a "wheel" source may be in discrete steps
  * of a number of lines.
  */
-enum wl_pointer_axis_source {
+enum poor_wl_pointer_axis_source {
 	/**
 	 * a physical wheel rotation
 	 */
-	WL_POINTER_AXIS_SOURCE_WHEEL = 0,
+	POOR_WL_POINTER_AXIS_SOURCE_WHEEL = 0,
 	/**
 	 * finger on a touch surface
 	 */
-	WL_POINTER_AXIS_SOURCE_FINGER = 1,
+	POOR_WL_POINTER_AXIS_SOURCE_FINGER = 1,
 	/**
 	 * continuous coordinate space
 	 *
@@ -3803,7 +3803,7 @@ enum wl_pointer_axis_source {
 	 * device is converted to scroll events while a button is held
 	 * down.
 	 */
-	WL_POINTER_AXIS_SOURCE_CONTINUOUS = 2,
+	POOR_WL_POINTER_AXIS_SOURCE_CONTINUOUS = 2,
 	/**
 	 * a physical wheel tilt
 	 *
@@ -3812,45 +3812,45 @@ enum wl_pointer_axis_source {
 	 * of the wheel.
 	 * @since 6
 	 */
-	WL_POINTER_AXIS_SOURCE_WHEEL_TILT = 3,
+	POOR_WL_POINTER_AXIS_SOURCE_WHEEL_TILT = 3,
 };
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SOURCE_WHEEL_TILT_SINCE_VERSION 6
-#endif /* WL_POINTER_AXIS_SOURCE_ENUM */
+#define POOR_WL_POINTER_AXIS_SOURCE_WHEEL_TILT_SINCE_VERSION 6
+#endif /* POOR_WL_POINTER_AXIS_SOURCE_ENUM */
 
-#ifndef WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID
-#define WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID
+#ifndef POOR_WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID
+#define POOR_WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_pointer
- * Validate a wl_pointer axis_source value.
+ * @ingroup iface_poor_wl_pointer
+ * Validate a poor_wl_pointer axis_source value.
  *
  * @return true on success, false on error.
- * @ref wl_pointer_axis_source
+ * @ref poor_wl_pointer_axis_source
  */
 static inline bool
-wl_pointer_axis_source_is_valid(uint32_t value, uint32_t version) {
+poor_wl_pointer_axis_source_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_POINTER_AXIS_SOURCE_WHEEL:
+	case POOR_WL_POINTER_AXIS_SOURCE_WHEEL:
 		return version >= 1;
-	case WL_POINTER_AXIS_SOURCE_FINGER:
+	case POOR_WL_POINTER_AXIS_SOURCE_FINGER:
 		return version >= 1;
-	case WL_POINTER_AXIS_SOURCE_CONTINUOUS:
+	case POOR_WL_POINTER_AXIS_SOURCE_CONTINUOUS:
 		return version >= 1;
-	case WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
+	case POOR_WL_POINTER_AXIS_SOURCE_WHEEL_TILT:
 		return version >= 6;
 	default:
 		return false;
 	}
 }
-#endif /* WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID */
+#endif /* POOR_WL_POINTER_AXIS_SOURCE_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_pointer
- * @struct wl_pointer_interface
+ * @ingroup iface_poor_wl_pointer
+ * @struct poor_wl_pointer_interface
  */
-struct wl_pointer_interface {
+struct poor_wl_pointer_interface {
 	/**
 	 * set the pointer surface
 	 *
@@ -3890,10 +3890,10 @@ struct wl_pointer_interface {
 	 * @param hotspot_x surface-local x coordinate
 	 * @param hotspot_y surface-local y coordinate
 	 */
-	void (*set_cursor)(struct wl_client *client,
-			   struct wl_resource *resource,
+	void (*set_cursor)(struct poor_wl_client *client,
+			   struct poor_wl_resource *resource,
 			   uint32_t serial,
-			   struct wl_resource *surface,
+			   struct poor_wl_resource *surface,
 			   int32_t hotspot_x,
 			   int32_t hotspot_y);
 	/**
@@ -3906,68 +3906,68 @@ struct wl_pointer_interface {
 	 * not call wl_pointer_destroy() after using this request.
 	 * @since 3
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_POINTER_ENTER 0
-#define WL_POINTER_LEAVE 1
-#define WL_POINTER_MOTION 2
-#define WL_POINTER_BUTTON 3
-#define WL_POINTER_AXIS 4
-#define WL_POINTER_FRAME 5
-#define WL_POINTER_AXIS_SOURCE 6
-#define WL_POINTER_AXIS_STOP 7
-#define WL_POINTER_AXIS_DISCRETE 8
+#define POOR_WL_POINTER_ENTER 0
+#define POOR_WL_POINTER_LEAVE 1
+#define POOR_WL_POINTER_MOTION 2
+#define POOR_WL_POINTER_BUTTON 3
+#define POOR_WL_POINTER_AXIS 4
+#define POOR_WL_POINTER_FRAME 5
+#define POOR_WL_POINTER_AXIS_SOURCE 6
+#define POOR_WL_POINTER_AXIS_STOP 7
+#define POOR_WL_POINTER_AXIS_DISCRETE 8
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_ENTER_SINCE_VERSION 1
+#define POOR_WL_POINTER_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_LEAVE_SINCE_VERSION 1
+#define POOR_WL_POINTER_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_MOTION_SINCE_VERSION 1
+#define POOR_WL_POINTER_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_BUTTON_SINCE_VERSION 1
+#define POOR_WL_POINTER_BUTTON_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SINCE_VERSION 1
+#define POOR_WL_POINTER_AXIS_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_FRAME_SINCE_VERSION 5
+#define POOR_WL_POINTER_FRAME_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SOURCE_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_SOURCE_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_STOP_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_STOP_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_DISCRETE_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_DISCRETE_SINCE_VERSION 5
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_SET_CURSOR_SINCE_VERSION 1
+#define POOR_WL_POINTER_SET_CURSOR_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_RELEASE_SINCE_VERSION 3
+#define POOR_WL_POINTER_RELEASE_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an enter event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the enter event
@@ -3976,26 +3976,26 @@ struct wl_pointer_interface {
  * @param surface_y surface-local y coordinate
  */
 static inline void
-wl_pointer_send_enter(struct wl_resource *resource_, uint32_t serial, struct wl_resource *surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
+poor_wl_pointer_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
 {
-	wl_resource_post_event(resource_, WL_POINTER_ENTER, serial, surface, surface_x, surface_y);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_ENTER, serial, surface, surface_x, surface_y);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an leave event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the leave event
  * @param surface surface left by the pointer
  */
 static inline void
-wl_pointer_send_leave(struct wl_resource *resource_, uint32_t serial, struct wl_resource *surface)
+poor_wl_pointer_send_leave(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface)
 {
-	wl_resource_post_event(resource_, WL_POINTER_LEAVE, serial, surface);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_LEAVE, serial, surface);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an motion event to the client owning the resource.
  * @param resource_ The client's resource
  * @param time timestamp with millisecond granularity
@@ -4003,13 +4003,13 @@ wl_pointer_send_leave(struct wl_resource *resource_, uint32_t serial, struct wl_
  * @param surface_y surface-local y coordinate
  */
 static inline void
-wl_pointer_send_motion(struct wl_resource *resource_, uint32_t time, wl_fixed_t surface_x, wl_fixed_t surface_y)
+poor_wl_pointer_send_motion(struct poor_wl_resource *resource_, uint32_t time, poor_wl_fixed_t surface_x, poor_wl_fixed_t surface_y)
 {
-	wl_resource_post_event(resource_, WL_POINTER_MOTION, time, surface_x, surface_y);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_MOTION, time, surface_x, surface_y);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an button event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the button event
@@ -4018,13 +4018,13 @@ wl_pointer_send_motion(struct wl_resource *resource_, uint32_t time, wl_fixed_t 
  * @param state physical state of the button
  */
 static inline void
-wl_pointer_send_button(struct wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
+poor_wl_pointer_send_button(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
 {
-	wl_resource_post_event(resource_, WL_POINTER_BUTTON, serial, time, button, state);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_BUTTON, serial, time, button, state);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an axis event to the client owning the resource.
  * @param resource_ The client's resource
  * @param time timestamp with millisecond granularity
@@ -4032,199 +4032,199 @@ wl_pointer_send_button(struct wl_resource *resource_, uint32_t serial, uint32_t 
  * @param value length of vector in surface-local coordinate space
  */
 static inline void
-wl_pointer_send_axis(struct wl_resource *resource_, uint32_t time, uint32_t axis, wl_fixed_t value)
+poor_wl_pointer_send_axis(struct poor_wl_resource *resource_, uint32_t time, uint32_t axis, poor_wl_fixed_t value)
 {
-	wl_resource_post_event(resource_, WL_POINTER_AXIS, time, axis, value);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS, time, axis, value);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an frame event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_pointer_send_frame(struct wl_resource *resource_)
+poor_wl_pointer_send_frame(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_POINTER_FRAME);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_FRAME);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an axis_source event to the client owning the resource.
  * @param resource_ The client's resource
  * @param axis_source source of the axis event
  */
 static inline void
-wl_pointer_send_axis_source(struct wl_resource *resource_, uint32_t axis_source)
+poor_wl_pointer_send_axis_source(struct poor_wl_resource *resource_, uint32_t axis_source)
 {
-	wl_resource_post_event(resource_, WL_POINTER_AXIS_SOURCE, axis_source);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_SOURCE, axis_source);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an axis_stop event to the client owning the resource.
  * @param resource_ The client's resource
  * @param time timestamp with millisecond granularity
  * @param axis the axis stopped with this event
  */
 static inline void
-wl_pointer_send_axis_stop(struct wl_resource *resource_, uint32_t time, uint32_t axis)
+poor_wl_pointer_send_axis_stop(struct poor_wl_resource *resource_, uint32_t time, uint32_t axis)
 {
-	wl_resource_post_event(resource_, WL_POINTER_AXIS_STOP, time, axis);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_STOP, time, axis);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * Sends an axis_discrete event to the client owning the resource.
  * @param resource_ The client's resource
  * @param axis axis type
  * @param discrete number of steps
  */
 static inline void
-wl_pointer_send_axis_discrete(struct wl_resource *resource_, uint32_t axis, int32_t discrete)
+poor_wl_pointer_send_axis_discrete(struct poor_wl_resource *resource_, uint32_t axis, int32_t discrete)
 {
-	wl_resource_post_event(resource_, WL_POINTER_AXIS_DISCRETE, axis, discrete);
+	poor_wl_resource_post_event(resource_, POOR_WL_POINTER_AXIS_DISCRETE, axis, discrete);
 }
 
-#ifndef WL_KEYBOARD_KEYMAP_FORMAT_ENUM
-#define WL_KEYBOARD_KEYMAP_FORMAT_ENUM
+#ifndef POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM
+#define POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * keyboard mapping format
  *
  * This specifies the format of the keymap provided to the
  * client with the wl_keyboard.keymap event.
  */
-enum wl_keyboard_keymap_format {
+enum poor_wl_keyboard_keymap_format {
 	/**
 	 * no keymap; client must understand how to interpret the raw keycode
 	 */
-	WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP = 0,
+	POOR_WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP = 0,
 	/**
 	 * libxkbcommon compatible; to determine the xkb keycode, clients must add 8 to the key event keycode
 	 */
-	WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1 = 1,
+	POOR_WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1 = 1,
 };
-#endif /* WL_KEYBOARD_KEYMAP_FORMAT_ENUM */
+#endif /* POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM */
 
-#ifndef WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID
-#define WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID
+#ifndef POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID
+#define POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_keyboard
- * Validate a wl_keyboard keymap_format value.
+ * @ingroup iface_poor_wl_keyboard
+ * Validate a poor_wl_keyboard keymap_format value.
  *
  * @return true on success, false on error.
- * @ref wl_keyboard_keymap_format
+ * @ref poor_wl_keyboard_keymap_format
  */
 static inline bool
-wl_keyboard_keymap_format_is_valid(uint32_t value, uint32_t version) {
+poor_wl_keyboard_keymap_format_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP:
+	case POOR_WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP:
 		return version >= 1;
-	case WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1:
+	case POOR_WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID */
+#endif /* POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM_IS_VALID */
 
-#ifndef WL_KEYBOARD_KEY_STATE_ENUM
-#define WL_KEYBOARD_KEY_STATE_ENUM
+#ifndef POOR_WL_KEYBOARD_KEY_STATE_ENUM
+#define POOR_WL_KEYBOARD_KEY_STATE_ENUM
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * physical key state
  *
  * Describes the physical state of a key that produced the key event.
  */
-enum wl_keyboard_key_state {
+enum poor_wl_keyboard_key_state {
 	/**
 	 * key is not pressed
 	 */
-	WL_KEYBOARD_KEY_STATE_RELEASED = 0,
+	POOR_WL_KEYBOARD_KEY_STATE_RELEASED = 0,
 	/**
 	 * key is pressed
 	 */
-	WL_KEYBOARD_KEY_STATE_PRESSED = 1,
+	POOR_WL_KEYBOARD_KEY_STATE_PRESSED = 1,
 };
-#endif /* WL_KEYBOARD_KEY_STATE_ENUM */
+#endif /* POOR_WL_KEYBOARD_KEY_STATE_ENUM */
 
-#ifndef WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID
-#define WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID
+#ifndef POOR_WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID
+#define POOR_WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_keyboard
- * Validate a wl_keyboard key_state value.
+ * @ingroup iface_poor_wl_keyboard
+ * Validate a poor_wl_keyboard key_state value.
  *
  * @return true on success, false on error.
- * @ref wl_keyboard_key_state
+ * @ref poor_wl_keyboard_key_state
  */
 static inline bool
-wl_keyboard_key_state_is_valid(uint32_t value, uint32_t version) {
+poor_wl_keyboard_key_state_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_KEYBOARD_KEY_STATE_RELEASED:
+	case POOR_WL_KEYBOARD_KEY_STATE_RELEASED:
 		return version >= 1;
-	case WL_KEYBOARD_KEY_STATE_PRESSED:
+	case POOR_WL_KEYBOARD_KEY_STATE_PRESSED:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID */
+#endif /* POOR_WL_KEYBOARD_KEY_STATE_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_keyboard
- * @struct wl_keyboard_interface
+ * @ingroup iface_poor_wl_keyboard
+ * @struct poor_wl_keyboard_interface
  */
-struct wl_keyboard_interface {
+struct poor_wl_keyboard_interface {
 	/**
 	 * release the keyboard object
 	 *
 	 * 
 	 * @since 3
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_KEYBOARD_KEYMAP 0
-#define WL_KEYBOARD_ENTER 1
-#define WL_KEYBOARD_LEAVE 2
-#define WL_KEYBOARD_KEY 3
-#define WL_KEYBOARD_MODIFIERS 4
-#define WL_KEYBOARD_REPEAT_INFO 5
+#define POOR_WL_KEYBOARD_KEYMAP 0
+#define POOR_WL_KEYBOARD_ENTER 1
+#define POOR_WL_KEYBOARD_LEAVE 2
+#define POOR_WL_KEYBOARD_KEY 3
+#define POOR_WL_KEYBOARD_MODIFIERS 4
+#define POOR_WL_KEYBOARD_REPEAT_INFO 5
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_KEYMAP_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_KEYMAP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_ENTER_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_LEAVE_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_KEY_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_KEY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_MODIFIERS_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_MODIFIERS_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION 4
+#define POOR_WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION 4
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_RELEASE_SINCE_VERSION 3
+#define POOR_WL_KEYBOARD_RELEASE_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an keymap event to the client owning the resource.
  * @param resource_ The client's resource
  * @param format keymap format
@@ -4232,13 +4232,13 @@ struct wl_keyboard_interface {
  * @param size keymap size, in bytes
  */
 static inline void
-wl_keyboard_send_keymap(struct wl_resource *resource_, uint32_t format, int32_t fd, uint32_t size)
+poor_wl_keyboard_send_keymap(struct poor_wl_resource *resource_, uint32_t format, int32_t fd, uint32_t size)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_KEYMAP, format, fd, size);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_KEYMAP, format, fd, size);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an enter event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the enter event
@@ -4246,26 +4246,26 @@ wl_keyboard_send_keymap(struct wl_resource *resource_, uint32_t format, int32_t 
  * @param keys the currently pressed keys
  */
 static inline void
-wl_keyboard_send_enter(struct wl_resource *resource_, uint32_t serial, struct wl_resource *surface, struct wl_array *keys)
+poor_wl_keyboard_send_enter(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface, struct poor_wl_array *keys)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_ENTER, serial, surface, keys);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_ENTER, serial, surface, keys);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an leave event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the leave event
  * @param surface surface that lost keyboard focus
  */
 static inline void
-wl_keyboard_send_leave(struct wl_resource *resource_, uint32_t serial, struct wl_resource *surface)
+poor_wl_keyboard_send_leave(struct poor_wl_resource *resource_, uint32_t serial, struct poor_wl_resource *surface)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_LEAVE, serial, surface);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_LEAVE, serial, surface);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an key event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the key event
@@ -4274,13 +4274,13 @@ wl_keyboard_send_leave(struct wl_resource *resource_, uint32_t serial, struct wl
  * @param state physical state of the key
  */
 static inline void
-wl_keyboard_send_key(struct wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
+poor_wl_keyboard_send_key(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_KEY, serial, time, key, state);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_KEY, serial, time, key, state);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an modifiers event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the modifiers event
@@ -4290,83 +4290,83 @@ wl_keyboard_send_key(struct wl_resource *resource_, uint32_t serial, uint32_t ti
  * @param group keyboard layout
  */
 static inline void
-wl_keyboard_send_modifiers(struct wl_resource *resource_, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
+poor_wl_keyboard_send_modifiers(struct poor_wl_resource *resource_, uint32_t serial, uint32_t mods_depressed, uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_MODIFIERS, serial, mods_depressed, mods_latched, mods_locked, group);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_MODIFIERS, serial, mods_depressed, mods_latched, mods_locked, group);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * Sends an repeat_info event to the client owning the resource.
  * @param resource_ The client's resource
  * @param rate the rate of repeating keys in characters per second
  * @param delay delay in milliseconds since key down until repeating starts
  */
 static inline void
-wl_keyboard_send_repeat_info(struct wl_resource *resource_, int32_t rate, int32_t delay)
+poor_wl_keyboard_send_repeat_info(struct poor_wl_resource *resource_, int32_t rate, int32_t delay)
 {
-	wl_resource_post_event(resource_, WL_KEYBOARD_REPEAT_INFO, rate, delay);
+	poor_wl_resource_post_event(resource_, POOR_WL_KEYBOARD_REPEAT_INFO, rate, delay);
 }
 
 /**
- * @ingroup iface_wl_touch
- * @struct wl_touch_interface
+ * @ingroup iface_poor_wl_touch
+ * @struct poor_wl_touch_interface
  */
-struct wl_touch_interface {
+struct poor_wl_touch_interface {
 	/**
 	 * release the touch object
 	 *
 	 * 
 	 * @since 3
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_TOUCH_DOWN 0
-#define WL_TOUCH_UP 1
-#define WL_TOUCH_MOTION 2
-#define WL_TOUCH_FRAME 3
-#define WL_TOUCH_CANCEL 4
-#define WL_TOUCH_SHAPE 5
-#define WL_TOUCH_ORIENTATION 6
+#define POOR_WL_TOUCH_DOWN 0
+#define POOR_WL_TOUCH_UP 1
+#define POOR_WL_TOUCH_MOTION 2
+#define POOR_WL_TOUCH_FRAME 3
+#define POOR_WL_TOUCH_CANCEL 4
+#define POOR_WL_TOUCH_SHAPE 5
+#define POOR_WL_TOUCH_ORIENTATION 6
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_DOWN_SINCE_VERSION 1
+#define POOR_WL_TOUCH_DOWN_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_UP_SINCE_VERSION 1
+#define POOR_WL_TOUCH_UP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_MOTION_SINCE_VERSION 1
+#define POOR_WL_TOUCH_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_FRAME_SINCE_VERSION 1
+#define POOR_WL_TOUCH_FRAME_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_CANCEL_SINCE_VERSION 1
+#define POOR_WL_TOUCH_CANCEL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_SHAPE_SINCE_VERSION 6
+#define POOR_WL_TOUCH_SHAPE_SINCE_VERSION 6
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_ORIENTATION_SINCE_VERSION 6
+#define POOR_WL_TOUCH_ORIENTATION_SINCE_VERSION 6
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_RELEASE_SINCE_VERSION 3
+#define POOR_WL_TOUCH_RELEASE_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an down event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the touch down event
@@ -4377,13 +4377,13 @@ struct wl_touch_interface {
  * @param y surface-local y coordinate
  */
 static inline void
-wl_touch_send_down(struct wl_resource *resource_, uint32_t serial, uint32_t time, struct wl_resource *surface, int32_t id, wl_fixed_t x, wl_fixed_t y)
+poor_wl_touch_send_down(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, struct poor_wl_resource *surface, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_DOWN, serial, time, surface, id, x, y);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_DOWN, serial, time, surface, id, x, y);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an up event to the client owning the resource.
  * @param resource_ The client's resource
  * @param serial serial number of the touch up event
@@ -4391,13 +4391,13 @@ wl_touch_send_down(struct wl_resource *resource_, uint32_t serial, uint32_t time
  * @param id the unique ID of this touch point
  */
 static inline void
-wl_touch_send_up(struct wl_resource *resource_, uint32_t serial, uint32_t time, int32_t id)
+poor_wl_touch_send_up(struct poor_wl_resource *resource_, uint32_t serial, uint32_t time, int32_t id)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_UP, serial, time, id);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_UP, serial, time, id);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an motion event to the client owning the resource.
  * @param resource_ The client's resource
  * @param time timestamp with millisecond granularity
@@ -4406,35 +4406,35 @@ wl_touch_send_up(struct wl_resource *resource_, uint32_t serial, uint32_t time, 
  * @param y surface-local y coordinate
  */
 static inline void
-wl_touch_send_motion(struct wl_resource *resource_, uint32_t time, int32_t id, wl_fixed_t x, wl_fixed_t y)
+poor_wl_touch_send_motion(struct poor_wl_resource *resource_, uint32_t time, int32_t id, poor_wl_fixed_t x, poor_wl_fixed_t y)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_MOTION, time, id, x, y);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_MOTION, time, id, x, y);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an frame event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_touch_send_frame(struct wl_resource *resource_)
+poor_wl_touch_send_frame(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_FRAME);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_FRAME);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an cancel event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_touch_send_cancel(struct wl_resource *resource_)
+poor_wl_touch_send_cancel(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_CANCEL);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_CANCEL);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an shape event to the client owning the resource.
  * @param resource_ The client's resource
  * @param id the unique ID of this touch point
@@ -4442,95 +4442,95 @@ wl_touch_send_cancel(struct wl_resource *resource_)
  * @param minor length of the minor axis in surface-local coordinates
  */
 static inline void
-wl_touch_send_shape(struct wl_resource *resource_, int32_t id, wl_fixed_t major, wl_fixed_t minor)
+poor_wl_touch_send_shape(struct poor_wl_resource *resource_, int32_t id, poor_wl_fixed_t major, poor_wl_fixed_t minor)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_SHAPE, id, major, minor);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_SHAPE, id, major, minor);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  * Sends an orientation event to the client owning the resource.
  * @param resource_ The client's resource
  * @param id the unique ID of this touch point
  * @param orientation angle between major axis and positive surface y-axis in degrees
  */
 static inline void
-wl_touch_send_orientation(struct wl_resource *resource_, int32_t id, wl_fixed_t orientation)
+poor_wl_touch_send_orientation(struct poor_wl_resource *resource_, int32_t id, poor_wl_fixed_t orientation)
 {
-	wl_resource_post_event(resource_, WL_TOUCH_ORIENTATION, id, orientation);
+	poor_wl_resource_post_event(resource_, POOR_WL_TOUCH_ORIENTATION, id, orientation);
 }
 
-#ifndef WL_OUTPUT_SUBPIXEL_ENUM
-#define WL_OUTPUT_SUBPIXEL_ENUM
+#ifndef POOR_WL_OUTPUT_SUBPIXEL_ENUM
+#define POOR_WL_OUTPUT_SUBPIXEL_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * subpixel geometry information
  *
  * This enumeration describes how the physical
  * pixels on an output are laid out.
  */
-enum wl_output_subpixel {
+enum poor_wl_output_subpixel {
 	/**
 	 * unknown geometry
 	 */
-	WL_OUTPUT_SUBPIXEL_UNKNOWN = 0,
+	POOR_WL_OUTPUT_SUBPIXEL_UNKNOWN = 0,
 	/**
 	 * no geometry
 	 */
-	WL_OUTPUT_SUBPIXEL_NONE = 1,
+	POOR_WL_OUTPUT_SUBPIXEL_NONE = 1,
 	/**
 	 * horizontal RGB
 	 */
-	WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB = 2,
+	POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB = 2,
 	/**
 	 * horizontal BGR
 	 */
-	WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR = 3,
+	POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR = 3,
 	/**
 	 * vertical RGB
 	 */
-	WL_OUTPUT_SUBPIXEL_VERTICAL_RGB = 4,
+	POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_RGB = 4,
 	/**
 	 * vertical BGR
 	 */
-	WL_OUTPUT_SUBPIXEL_VERTICAL_BGR = 5,
+	POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_BGR = 5,
 };
-#endif /* WL_OUTPUT_SUBPIXEL_ENUM */
+#endif /* POOR_WL_OUTPUT_SUBPIXEL_ENUM */
 
-#ifndef WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID
-#define WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID
+#ifndef POOR_WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID
+#define POOR_WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_output
- * Validate a wl_output subpixel value.
+ * @ingroup iface_poor_wl_output
+ * Validate a poor_wl_output subpixel value.
  *
  * @return true on success, false on error.
- * @ref wl_output_subpixel
+ * @ref poor_wl_output_subpixel
  */
 static inline bool
-wl_output_subpixel_is_valid(uint32_t value, uint32_t version) {
+poor_wl_output_subpixel_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_OUTPUT_SUBPIXEL_UNKNOWN:
+	case POOR_WL_OUTPUT_SUBPIXEL_UNKNOWN:
 		return version >= 1;
-	case WL_OUTPUT_SUBPIXEL_NONE:
+	case POOR_WL_OUTPUT_SUBPIXEL_NONE:
 		return version >= 1;
-	case WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB:
+	case POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB:
 		return version >= 1;
-	case WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR:
+	case POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR:
 		return version >= 1;
-	case WL_OUTPUT_SUBPIXEL_VERTICAL_RGB:
+	case POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_RGB:
 		return version >= 1;
-	case WL_OUTPUT_SUBPIXEL_VERTICAL_BGR:
+	case POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_BGR:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID */
+#endif /* POOR_WL_OUTPUT_SUBPIXEL_ENUM_IS_VALID */
 
-#ifndef WL_OUTPUT_TRANSFORM_ENUM
-#define WL_OUTPUT_TRANSFORM_ENUM
+#ifndef POOR_WL_OUTPUT_TRANSFORM_ENUM
+#define POOR_WL_OUTPUT_TRANSFORM_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * transform from framebuffer to output
  *
  * This describes the transform that a compositor will apply to a
@@ -4545,122 +4545,122 @@ wl_output_subpixel_is_valid(uint32_t value, uint32_t version) {
  * compositor will still be able to scan out directly from client
  * surfaces.
  */
-enum wl_output_transform {
+enum poor_wl_output_transform {
 	/**
 	 * no transform
 	 */
-	WL_OUTPUT_TRANSFORM_NORMAL = 0,
+	POOR_WL_OUTPUT_TRANSFORM_NORMAL = 0,
 	/**
 	 * 90 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_90 = 1,
+	POOR_WL_OUTPUT_TRANSFORM_90 = 1,
 	/**
 	 * 180 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_180 = 2,
+	POOR_WL_OUTPUT_TRANSFORM_180 = 2,
 	/**
 	 * 270 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_270 = 3,
+	POOR_WL_OUTPUT_TRANSFORM_270 = 3,
 	/**
 	 * 180 degree flip around a vertical axis
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED = 4,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED = 4,
 	/**
 	 * flip and rotate 90 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_90 = 5,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_90 = 5,
 	/**
 	 * flip and rotate 180 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_180 = 6,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_180 = 6,
 	/**
 	 * flip and rotate 270 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_270 = 7,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_270 = 7,
 };
-#endif /* WL_OUTPUT_TRANSFORM_ENUM */
+#endif /* POOR_WL_OUTPUT_TRANSFORM_ENUM */
 
-#ifndef WL_OUTPUT_TRANSFORM_ENUM_IS_VALID
-#define WL_OUTPUT_TRANSFORM_ENUM_IS_VALID
+#ifndef POOR_WL_OUTPUT_TRANSFORM_ENUM_IS_VALID
+#define POOR_WL_OUTPUT_TRANSFORM_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_output
- * Validate a wl_output transform value.
+ * @ingroup iface_poor_wl_output
+ * Validate a poor_wl_output transform value.
  *
  * @return true on success, false on error.
- * @ref wl_output_transform
+ * @ref poor_wl_output_transform
  */
 static inline bool
-wl_output_transform_is_valid(uint32_t value, uint32_t version) {
+poor_wl_output_transform_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_OUTPUT_TRANSFORM_NORMAL:
+	case POOR_WL_OUTPUT_TRANSFORM_NORMAL:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_90:
+	case POOR_WL_OUTPUT_TRANSFORM_90:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_180:
+	case POOR_WL_OUTPUT_TRANSFORM_180:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_270:
+	case POOR_WL_OUTPUT_TRANSFORM_270:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_FLIPPED:
+	case POOR_WL_OUTPUT_TRANSFORM_FLIPPED:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_FLIPPED_90:
+	case POOR_WL_OUTPUT_TRANSFORM_FLIPPED_90:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_FLIPPED_180:
+	case POOR_WL_OUTPUT_TRANSFORM_FLIPPED_180:
 		return version >= 1;
-	case WL_OUTPUT_TRANSFORM_FLIPPED_270:
+	case POOR_WL_OUTPUT_TRANSFORM_FLIPPED_270:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_OUTPUT_TRANSFORM_ENUM_IS_VALID */
+#endif /* POOR_WL_OUTPUT_TRANSFORM_ENUM_IS_VALID */
 
-#ifndef WL_OUTPUT_MODE_ENUM
-#define WL_OUTPUT_MODE_ENUM
+#ifndef POOR_WL_OUTPUT_MODE_ENUM
+#define POOR_WL_OUTPUT_MODE_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * mode information
  *
  * These flags describe properties of an output mode.
  * They are used in the flags bitfield of the mode event.
  */
-enum wl_output_mode {
+enum poor_wl_output_mode {
 	/**
 	 * indicates this is the current mode
 	 */
-	WL_OUTPUT_MODE_CURRENT = 0x1,
+	POOR_WL_OUTPUT_MODE_CURRENT = 0x1,
 	/**
 	 * indicates this is the preferred mode
 	 */
-	WL_OUTPUT_MODE_PREFERRED = 0x2,
+	POOR_WL_OUTPUT_MODE_PREFERRED = 0x2,
 };
-#endif /* WL_OUTPUT_MODE_ENUM */
+#endif /* POOR_WL_OUTPUT_MODE_ENUM */
 
-#ifndef WL_OUTPUT_MODE_ENUM_IS_VALID
-#define WL_OUTPUT_MODE_ENUM_IS_VALID
+#ifndef POOR_WL_OUTPUT_MODE_ENUM_IS_VALID
+#define POOR_WL_OUTPUT_MODE_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_output
- * Validate a wl_output mode value.
+ * @ingroup iface_poor_wl_output
+ * Validate a poor_wl_output mode value.
  *
  * @return true on success, false on error.
- * @ref wl_output_mode
+ * @ref poor_wl_output_mode
  */
 static inline bool
-wl_output_mode_is_valid(uint32_t value, uint32_t version) {
+poor_wl_output_mode_is_valid(uint32_t value, uint32_t version) {
 	uint32_t valid = 0;
 	if (version >= 1)
-		valid |= WL_OUTPUT_MODE_CURRENT;
+		valid |= POOR_WL_OUTPUT_MODE_CURRENT;
 	if (version >= 1)
-		valid |= WL_OUTPUT_MODE_PREFERRED;
+		valid |= POOR_WL_OUTPUT_MODE_PREFERRED;
 	return (value & ~valid) == 0;
 }
-#endif /* WL_OUTPUT_MODE_ENUM_IS_VALID */
+#endif /* POOR_WL_OUTPUT_MODE_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_output
- * @struct wl_output_interface
+ * @ingroup iface_poor_wl_output
+ * @struct poor_wl_output_interface
  */
-struct wl_output_interface {
+struct poor_wl_output_interface {
 	/**
 	 * release the output object
 	 *
@@ -4668,39 +4668,39 @@ struct wl_output_interface {
 	 * going to use the output object anymore.
 	 * @since 3
 	 */
-	void (*release)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*release)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 };
 
-#define WL_OUTPUT_GEOMETRY 0
-#define WL_OUTPUT_MODE 1
-#define WL_OUTPUT_DONE 2
-#define WL_OUTPUT_SCALE 3
+#define POOR_WL_OUTPUT_GEOMETRY 0
+#define POOR_WL_OUTPUT_MODE 1
+#define POOR_WL_OUTPUT_DONE 2
+#define POOR_WL_OUTPUT_SCALE 3
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_GEOMETRY_SINCE_VERSION 1
+#define POOR_WL_OUTPUT_GEOMETRY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_MODE_SINCE_VERSION 1
+#define POOR_WL_OUTPUT_MODE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_DONE_SINCE_VERSION 2
+#define POOR_WL_OUTPUT_DONE_SINCE_VERSION 2
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_SCALE_SINCE_VERSION 2
+#define POOR_WL_OUTPUT_SCALE_SINCE_VERSION 2
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_RELEASE_SINCE_VERSION 3
+#define POOR_WL_OUTPUT_RELEASE_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * Sends an geometry event to the client owning the resource.
  * @param resource_ The client's resource
  * @param x x position within the global compositor space
@@ -4713,13 +4713,13 @@ struct wl_output_interface {
  * @param transform transform that maps framebuffer to output
  */
 static inline void
-wl_output_send_geometry(struct wl_resource *resource_, int32_t x, int32_t y, int32_t physical_width, int32_t physical_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
+poor_wl_output_send_geometry(struct poor_wl_resource *resource_, int32_t x, int32_t y, int32_t physical_width, int32_t physical_height, int32_t subpixel, const char *make, const char *model, int32_t transform)
 {
-	wl_resource_post_event(resource_, WL_OUTPUT_GEOMETRY, x, y, physical_width, physical_height, subpixel, make, model, transform);
+	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_GEOMETRY, x, y, physical_width, physical_height, subpixel, make, model, transform);
 }
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * Sends an mode event to the client owning the resource.
  * @param resource_ The client's resource
  * @param flags bitfield of mode flags
@@ -4728,46 +4728,46 @@ wl_output_send_geometry(struct wl_resource *resource_, int32_t x, int32_t y, int
  * @param refresh vertical refresh rate in mHz
  */
 static inline void
-wl_output_send_mode(struct wl_resource *resource_, uint32_t flags, int32_t width, int32_t height, int32_t refresh)
+poor_wl_output_send_mode(struct poor_wl_resource *resource_, uint32_t flags, int32_t width, int32_t height, int32_t refresh)
 {
-	wl_resource_post_event(resource_, WL_OUTPUT_MODE, flags, width, height, refresh);
+	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_MODE, flags, width, height, refresh);
 }
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * Sends an done event to the client owning the resource.
  * @param resource_ The client's resource
  */
 static inline void
-wl_output_send_done(struct wl_resource *resource_)
+poor_wl_output_send_done(struct poor_wl_resource *resource_)
 {
-	wl_resource_post_event(resource_, WL_OUTPUT_DONE);
+	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_DONE);
 }
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * Sends an scale event to the client owning the resource.
  * @param resource_ The client's resource
  * @param factor scaling factor of output
  */
 static inline void
-wl_output_send_scale(struct wl_resource *resource_, int32_t factor)
+poor_wl_output_send_scale(struct poor_wl_resource *resource_, int32_t factor)
 {
-	wl_resource_post_event(resource_, WL_OUTPUT_SCALE, factor);
+	poor_wl_resource_post_event(resource_, POOR_WL_OUTPUT_SCALE, factor);
 }
 
 /**
- * @ingroup iface_wl_region
- * @struct wl_region_interface
+ * @ingroup iface_poor_wl_region
+ * @struct poor_wl_region_interface
  */
-struct wl_region_interface {
+struct poor_wl_region_interface {
 	/**
 	 * destroy region
 	 *
 	 * Destroy the region. This will invalidate the object ID.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * add rectangle to region
 	 *
@@ -4777,8 +4777,8 @@ struct wl_region_interface {
 	 * @param width rectangle width
 	 * @param height rectangle height
 	 */
-	void (*add)(struct wl_client *client,
-		    struct wl_resource *resource,
+	void (*add)(struct poor_wl_client *client,
+		    struct poor_wl_resource *resource,
 		    int32_t x,
 		    int32_t y,
 		    int32_t width,
@@ -4792,8 +4792,8 @@ struct wl_region_interface {
 	 * @param width rectangle width
 	 * @param height rectangle height
 	 */
-	void (*subtract)(struct wl_client *client,
-			 struct wl_resource *resource,
+	void (*subtract)(struct poor_wl_client *client,
+			 struct poor_wl_resource *resource,
 			 int32_t x,
 			 int32_t y,
 			 int32_t width,
@@ -4802,53 +4802,53 @@ struct wl_region_interface {
 
 
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_DESTROY_SINCE_VERSION 1
+#define POOR_WL_REGION_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_ADD_SINCE_VERSION 1
+#define POOR_WL_REGION_ADD_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_SUBTRACT_SINCE_VERSION 1
+#define POOR_WL_REGION_SUBTRACT_SINCE_VERSION 1
 
-#ifndef WL_SUBCOMPOSITOR_ERROR_ENUM
-#define WL_SUBCOMPOSITOR_ERROR_ENUM
-enum wl_subcompositor_error {
+#ifndef POOR_WL_SUBCOMPOSITOR_ERROR_ENUM
+#define POOR_WL_SUBCOMPOSITOR_ERROR_ENUM
+enum poor_wl_subcompositor_error {
 	/**
 	 * the to-be sub-surface is invalid
 	 */
-	WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE = 0,
+	POOR_WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE = 0,
 };
-#endif /* WL_SUBCOMPOSITOR_ERROR_ENUM */
+#endif /* POOR_WL_SUBCOMPOSITOR_ERROR_ENUM */
 
-#ifndef WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID
-#define WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID
+#define POOR_WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_subcompositor
- * Validate a wl_subcompositor error value.
+ * @ingroup iface_poor_wl_subcompositor
+ * Validate a poor_wl_subcompositor error value.
  *
  * @return true on success, false on error.
- * @ref wl_subcompositor_error
+ * @ref poor_wl_subcompositor_error
  */
 static inline bool
-wl_subcompositor_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_subcompositor_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE:
+	case POOR_WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_SUBCOMPOSITOR_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_subcompositor
- * @struct wl_subcompositor_interface
+ * @ingroup iface_poor_wl_subcompositor
+ * @struct poor_wl_subcompositor_interface
  */
-struct wl_subcompositor_interface {
+struct poor_wl_subcompositor_interface {
 	/**
 	 * unbind from the subcompositor interface
 	 *
@@ -4856,8 +4856,8 @@ struct wl_subcompositor_interface {
 	 * protocol object anymore. This does not affect any other objects,
 	 * wl_subsurface objects included.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * give a surface the role sub-surface
 	 *
@@ -4872,58 +4872,58 @@ struct wl_subcompositor_interface {
 	 * @param surface the surface to be turned into a sub-surface
 	 * @param parent the parent surface
 	 */
-	void (*get_subsurface)(struct wl_client *client,
-			       struct wl_resource *resource,
+	void (*get_subsurface)(struct poor_wl_client *client,
+			       struct poor_wl_resource *resource,
 			       uint32_t id,
-			       struct wl_resource *surface,
-			       struct wl_resource *parent);
+			       struct poor_wl_resource *surface,
+			       struct poor_wl_resource *parent);
 };
 
 
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  */
-#define WL_SUBCOMPOSITOR_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SUBCOMPOSITOR_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  */
-#define WL_SUBCOMPOSITOR_GET_SUBSURFACE_SINCE_VERSION 1
+#define POOR_WL_SUBCOMPOSITOR_GET_SUBSURFACE_SINCE_VERSION 1
 
-#ifndef WL_SUBSURFACE_ERROR_ENUM
-#define WL_SUBSURFACE_ERROR_ENUM
-enum wl_subsurface_error {
+#ifndef POOR_WL_SUBSURFACE_ERROR_ENUM
+#define POOR_WL_SUBSURFACE_ERROR_ENUM
+enum poor_wl_subsurface_error {
 	/**
 	 * wl_surface is not a sibling or the parent
 	 */
-	WL_SUBSURFACE_ERROR_BAD_SURFACE = 0,
+	POOR_WL_SUBSURFACE_ERROR_BAD_SURFACE = 0,
 };
-#endif /* WL_SUBSURFACE_ERROR_ENUM */
+#endif /* POOR_WL_SUBSURFACE_ERROR_ENUM */
 
-#ifndef WL_SUBSURFACE_ERROR_ENUM_IS_VALID
-#define WL_SUBSURFACE_ERROR_ENUM_IS_VALID
+#ifndef POOR_WL_SUBSURFACE_ERROR_ENUM_IS_VALID
+#define POOR_WL_SUBSURFACE_ERROR_ENUM_IS_VALID
 /**
- * @ingroup iface_wl_subsurface
- * Validate a wl_subsurface error value.
+ * @ingroup iface_poor_wl_subsurface
+ * Validate a poor_wl_subsurface error value.
  *
  * @return true on success, false on error.
- * @ref wl_subsurface_error
+ * @ref poor_wl_subsurface_error
  */
 static inline bool
-wl_subsurface_error_is_valid(uint32_t value, uint32_t version) {
+poor_wl_subsurface_error_is_valid(uint32_t value, uint32_t version) {
 	switch (value) {
-	case WL_SUBSURFACE_ERROR_BAD_SURFACE:
+	case POOR_WL_SUBSURFACE_ERROR_BAD_SURFACE:
 		return version >= 1;
 	default:
 		return false;
 	}
 }
-#endif /* WL_SUBSURFACE_ERROR_ENUM_IS_VALID */
+#endif /* POOR_WL_SUBSURFACE_ERROR_ENUM_IS_VALID */
 
 /**
- * @ingroup iface_wl_subsurface
- * @struct wl_subsurface_interface
+ * @ingroup iface_poor_wl_subsurface
+ * @struct poor_wl_subsurface_interface
  */
-struct wl_subsurface_interface {
+struct poor_wl_subsurface_interface {
 	/**
 	 * remove sub-surface interface
 	 *
@@ -4933,8 +4933,8 @@ struct wl_subsurface_interface {
 	 * association to the parent is deleted, and the wl_surface loses
 	 * its role as a sub-surface. The wl_surface is unmapped.
 	 */
-	void (*destroy)(struct wl_client *client,
-			struct wl_resource *resource);
+	void (*destroy)(struct poor_wl_client *client,
+			struct poor_wl_resource *resource);
 	/**
 	 * reposition the sub-surface
 	 *
@@ -4958,8 +4958,8 @@ struct wl_subsurface_interface {
 	 * @param x x coordinate in the parent surface
 	 * @param y y coordinate in the parent surface
 	 */
-	void (*set_position)(struct wl_client *client,
-			     struct wl_resource *resource,
+	void (*set_position)(struct poor_wl_client *client,
+			     struct poor_wl_resource *resource,
 			     int32_t x,
 			     int32_t y);
 	/**
@@ -4982,9 +4982,9 @@ struct wl_subsurface_interface {
 	 * stack of its siblings and parent.
 	 * @param sibling the reference surface
 	 */
-	void (*place_above)(struct wl_client *client,
-			    struct wl_resource *resource,
-			    struct wl_resource *sibling);
+	void (*place_above)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
+			    struct poor_wl_resource *sibling);
 	/**
 	 * restack the sub-surface
 	 *
@@ -4992,9 +4992,9 @@ struct wl_subsurface_interface {
 	 * See wl_subsurface.place_above.
 	 * @param sibling the reference surface
 	 */
-	void (*place_below)(struct wl_client *client,
-			    struct wl_resource *resource,
-			    struct wl_resource *sibling);
+	void (*place_below)(struct poor_wl_client *client,
+			    struct poor_wl_resource *resource,
+			    struct poor_wl_resource *sibling);
 	/**
 	 * set sub-surface to synchronized mode
 	 *
@@ -5012,8 +5012,8 @@ struct wl_subsurface_interface {
 	 *
 	 * See wl_subsurface for the recursive effect of this mode.
 	 */
-	void (*set_sync)(struct wl_client *client,
-			 struct wl_resource *resource);
+	void (*set_sync)(struct poor_wl_client *client,
+			 struct poor_wl_resource *resource);
 	/**
 	 * set sub-surface to desynchronized mode
 	 *
@@ -5038,35 +5038,35 @@ struct wl_subsurface_interface {
 	 * If a surface's parent surface behaves as desynchronized, then
 	 * the cached state is applied on set_desync.
 	 */
-	void (*set_desync)(struct wl_client *client,
-			   struct wl_resource *resource);
+	void (*set_desync)(struct poor_wl_client *client,
+			   struct poor_wl_resource *resource);
 };
 
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_SET_POSITION_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_SET_POSITION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_PLACE_ABOVE_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_PLACE_ABOVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_PLACE_BELOW_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_PLACE_BELOW_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_SET_SYNC_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_SET_SYNC_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  */
-#define WL_SUBSURFACE_SET_DESYNC_SINCE_VERSION 1
+#define POOR_WL_SUBSURFACE_SET_DESYNC_SINCE_VERSION 1
 
 #ifdef  __cplusplus
 }

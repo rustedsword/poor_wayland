@@ -27,11 +27,11 @@
 
 #include <assert.h>
 
-#include "wayland-server.h"
+#include "poor_wayland_server.h"
 #include "test-runner.h"
 
 static void
-signal_notify(struct wl_listener *listener, void *data)
+signal_notify(struct poor_wl_listener *listener, void *data)
 {
 	/* only increase counter*/
 	++(*((int *) data));
@@ -39,9 +39,9 @@ signal_notify(struct wl_listener *listener, void *data)
 
 TEST(signal_init)
 {
-	struct wl_signal signal;
+	struct poor_wl_signal signal;
 
-	wl_signal_init(&signal);
+	poor_wl_signal_init(&signal);
 
 	/* Test if listeners' list is initialized */
 	assert(&signal.listener_list == signal.listener_list.next
@@ -52,32 +52,32 @@ TEST(signal_init)
 
 TEST(signal_add_get)
 {
-	struct wl_signal signal;
+	struct poor_wl_signal signal;
 
 	/* we just need different values of notify */
-	struct wl_listener l1 = {.notify = (wl_notify_func_t) 0x1};
-	struct wl_listener l2 = {.notify = (wl_notify_func_t) 0x2};
-	struct wl_listener l3 = {.notify = (wl_notify_func_t) 0x3};
+	struct poor_wl_listener l1 = {.notify = (poor_wl_notify_func_t) 0x1};
+	struct poor_wl_listener l2 = {.notify = (poor_wl_notify_func_t) 0x2};
+	struct poor_wl_listener l3 = {.notify = (poor_wl_notify_func_t) 0x3};
 	/* one real, why not */
-	struct wl_listener l4 = {.notify = signal_notify};
+	struct poor_wl_listener l4 = {.notify = signal_notify};
 
-	wl_signal_init(&signal);
+	poor_wl_signal_init(&signal);
 
-	wl_signal_add(&signal, &l1);
-	wl_signal_add(&signal, &l2);
-	wl_signal_add(&signal, &l3);
-	wl_signal_add(&signal, &l4);
+	poor_wl_signal_add(&signal, &l1);
+	poor_wl_signal_add(&signal, &l2);
+	poor_wl_signal_add(&signal, &l3);
+	poor_wl_signal_add(&signal, &l4);
 
-	assert(wl_signal_get(&signal, signal_notify) == &l4);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x3) == &l3);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x2) == &l2);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x1) == &l1);
+	assert(poor_wl_signal_get(&signal, signal_notify) == &l4);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x3) == &l3);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x2) == &l2);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x1) == &l1);
 
 	/* get should not be destructive */
-	assert(wl_signal_get(&signal, signal_notify) == &l4);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x3) == &l3);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x2) == &l2);
-	assert(wl_signal_get(&signal, (wl_notify_func_t) 0x1) == &l1);
+	assert(poor_wl_signal_get(&signal, signal_notify) == &l4);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x3) == &l3);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x2) == &l2);
+	assert(poor_wl_signal_get(&signal, (poor_wl_notify_func_t) 0x1) == &l1);
 }
 
 TEST(signal_emit_to_one_listener)
@@ -85,14 +85,14 @@ TEST(signal_emit_to_one_listener)
 	int count = 0;
 	int counter;
 
-	struct wl_signal signal;
-	struct wl_listener l1 = {.notify = signal_notify};
+	struct poor_wl_signal signal;
+	struct poor_wl_listener l1 = {.notify = signal_notify};
 
-	wl_signal_init(&signal);
-	wl_signal_add(&signal, &l1);
+	poor_wl_signal_init(&signal);
+	poor_wl_signal_add(&signal, &l1);
 
 	for (counter = 0; counter < 100; counter++)
-		wl_signal_emit(&signal, &count);
+		poor_wl_signal_emit(&signal, &count);
 
 	assert(counter == count);
 }
@@ -102,40 +102,40 @@ TEST(signal_emit_to_more_listeners)
 	int count = 0;
 	int counter;
 
-	struct wl_signal signal;
-	struct wl_listener l1 = {.notify = signal_notify};
-	struct wl_listener l2 = {.notify = signal_notify};
-	struct wl_listener l3 = {.notify = signal_notify};
+	struct poor_wl_signal signal;
+	struct poor_wl_listener l1 = {.notify = signal_notify};
+	struct poor_wl_listener l2 = {.notify = signal_notify};
+	struct poor_wl_listener l3 = {.notify = signal_notify};
 
-	wl_signal_init(&signal);
-	wl_signal_add(&signal, &l1);
-	wl_signal_add(&signal, &l2);
-	wl_signal_add(&signal, &l3);
+	poor_wl_signal_init(&signal);
+	poor_wl_signal_add(&signal, &l1);
+	poor_wl_signal_add(&signal, &l2);
+	poor_wl_signal_add(&signal, &l3);
 
 	for (counter = 0; counter < 100; counter++)
-		wl_signal_emit(&signal, &count);
+		poor_wl_signal_emit(&signal, &count);
 
 	assert(3 * counter == count);
 }
 
 struct signal_emit_mutable_data {
 	int count;
-	struct wl_listener *remove_listener;
+	struct poor_wl_listener *remove_listener;
 };
 
 static void
-signal_notify_mutable(struct wl_listener *listener, void *data)
+signal_notify_mutable(struct poor_wl_listener *listener, void *data)
 {
 	struct signal_emit_mutable_data *test_data = data;
 	test_data->count++;
 }
 
 static void
-signal_notify_and_remove_mutable(struct wl_listener *listener, void *data)
+signal_notify_and_remove_mutable(struct poor_wl_listener *listener, void *data)
 {
 	struct signal_emit_mutable_data *test_data = data;
 	signal_notify_mutable(listener, test_data);
-	wl_list_remove(&test_data->remove_listener->link);
+	poor_wl_list_remove(&test_data->remove_listener->link);
 }
 
 TEST(signal_emit_mutable)
@@ -143,18 +143,18 @@ TEST(signal_emit_mutable)
 	struct signal_emit_mutable_data data = {0};
 
 	/* l2 will remove l3 before l3 is notified */
-	struct wl_signal signal;
-	struct wl_listener l1 = {.notify = signal_notify_mutable};
-	struct wl_listener l2 = {.notify = signal_notify_and_remove_mutable};
-	struct wl_listener l3 = {.notify = signal_notify_mutable};
+	struct poor_wl_signal signal;
+	struct poor_wl_listener l1 = {.notify = signal_notify_mutable};
+	struct poor_wl_listener l2 = {.notify = signal_notify_and_remove_mutable};
+	struct poor_wl_listener l3 = {.notify = signal_notify_mutable};
 
-	wl_signal_init(&signal);
-	wl_signal_add(&signal, &l1);
-	wl_signal_add(&signal, &l2);
-	wl_signal_add(&signal, &l3);
+	poor_wl_signal_init(&signal);
+	poor_wl_signal_add(&signal, &l1);
+	poor_wl_signal_add(&signal, &l2);
+	poor_wl_signal_add(&signal, &l3);
 
 	data.remove_listener = &l3;
-	wl_signal_emit_mutable(&signal, &data);
+	poor_wl_signal_emit_mutable(&signal, &data);
 
 	assert(data.count == 2);
 }

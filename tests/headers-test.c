@@ -25,31 +25,31 @@
 
 #define _GNU_SOURCE
 
-#include "wayland-client-core.h"
-#include "wayland-server-core.h"
+#include "poor_wayland_client_core.h"
+#include "poor_wayland_server_core.h"
 
-#ifdef WL_DISPLAY_SYNC
-#error including wayland-client-core.h imported protocol symbols!
+#ifdef POOR_WL_DISPLAY_SYNC
+#error including poor_wayland_client_core.h imported protocol symbols!
 #endif
-#ifdef WL_DISPLAY_ERROR
-#error including wayland-server-core.h imported protocol symbols!
-#endif
-
-#ifdef WAYLAND_CLIENT_H
-#error including wayland-client-core.h included the non-core header!
-#endif
-#ifdef WAYLAND_SERVER_H
-#error including wayland-server-core.h included the non-core header!
+#ifdef POOR_WL_DISPLAY_ERROR
+#error including poor_wayland_server_core.h imported protocol symbols!
 #endif
 
-#include "wayland-client.h"
-#include "wayland-server.h"
-
-#ifndef WL_DISPLAY_SYNC
-#error including wayland-client.h did not import protocol symbols!
+#ifdef POOR_WAYLAND_CLIENT_H
+#error including poor_wayland_client_core.h included the non-core header!
 #endif
-#ifndef WL_DISPLAY_ERROR
-#error including wayland-server.h did not import protocol symbols!
+#ifdef POOR_WAYLAND_SERVER_H
+#error including poor_wayland_server_core.h included the non-core header!
+#endif
+
+#include "poor_wayland_client.h"
+#include "poor_wayland_server.h"
+
+#ifndef POOR_WL_DISPLAY_SYNC
+#error including poor_wayland_client.h did not import protocol symbols!
+#endif
+#ifndef POOR_WL_DISPLAY_ERROR
+#error including poor_wayland_server.h did not import protocol symbols!
 #endif
 
 int main(int argc, char **argv) { return 0; }

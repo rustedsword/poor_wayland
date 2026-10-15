@@ -28,10 +28,10 @@
  *  \brief Include the server API and protocol C API.
  */
 
-#ifndef WAYLAND_SERVER_H
-#define WAYLAND_SERVER_H
+#ifndef POOR_WAYLAND_SERVER_H
+#define POOR_WAYLAND_SERVER_H
 
-#include "wayland-server-core.h"
-#include "wayland-server-protocol.h"
+#include "poor_wayland_server_core.h"
+#include "poor_wayland_server_protocol.h"
 
 #endif

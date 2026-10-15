@@ -34,63 +34,63 @@
 
 TEST(fixed_double_conversions)
 {
-	wl_fixed_t f;
+	poor_wl_fixed_t f;
 	double d;
 
 	d = 62.125;
-	f = wl_fixed_from_double(d);
+	f = poor_wl_fixed_from_double(d);
 	fprintf(stderr, "double %lf to fixed %x\n", d, f);
 	assert(f == 0x3e20);
 
 	d = -1200.625;
-	f = wl_fixed_from_double(d);
+	f = poor_wl_fixed_from_double(d);
 	fprintf(stderr, "double %lf to fixed %x\n", d, f);
 	assert(f == -0x4b0a0);
 
 	f = random();
-	d = wl_fixed_to_double(f);
+	d = poor_wl_fixed_to_double(f);
 	fprintf(stderr, "fixed %x to double %lf\n", f, d);
 	assert(d == f / 256.0);
 
 	f = 0x012030;
-	d = wl_fixed_to_double(f);
+	d = poor_wl_fixed_to_double(f);
 	fprintf(stderr, "fixed %x to double %lf\n", f, d);
 	assert(d == 288.1875);
 
 	f = 0x70000000;
-	d = wl_fixed_to_double(f);
+	d = poor_wl_fixed_to_double(f);
 	fprintf(stderr, "fixed %x to double %lf\n", f, d);
 	assert(d == f / 256);
 
 	f = -0x012030;
-	d = wl_fixed_to_double(f);
+	d = poor_wl_fixed_to_double(f);
 	fprintf(stderr, "fixed %x to double %lf\n", f, d);
 	assert(d == -288.1875);
 
 	f = 0x80000000;
-	d = wl_fixed_to_double(f);
+	d = poor_wl_fixed_to_double(f);
 	fprintf(stderr, "fixed %x to double %lf\n", f, d);
 	assert(d == f / 256);
 }
 
 TEST(fixed_int_conversions)
 {
-	wl_fixed_t f;
+	poor_wl_fixed_t f;
 	int i;
 
 	i = 62;
-	f = wl_fixed_from_int(i);
+	f = poor_wl_fixed_from_int(i);
 	assert(f == 62 * 256);
 
 	i = -2080;
-	f = wl_fixed_from_int(i);
+	f = poor_wl_fixed_from_int(i);
 	assert(f == -2080 * 256);
 
 	f = 0x277013;
-	i = wl_fixed_to_int(f);
+	i = poor_wl_fixed_to_int(f);
 	assert(i == 0x2770);
 
 	f = -0x5044;
-	i = wl_fixed_to_int(f);
+	i = poor_wl_fixed_to_int(f);
 	assert(i == -0x50);
 }

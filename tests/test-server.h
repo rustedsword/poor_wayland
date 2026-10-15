@@ -8,7 +8,7 @@
 
 /*
  * A compositor for the tests, in its own translation unit since the client and server headers define different
- * struct wl_display. It runs on the loop of the test and announces test_global, wl_fixes and wl_shm.
+ * struct poor_wl_display. It runs on the loop of the test and announces poor_test_global, poor_wl_fixes and poor_wl_shm.
  */
 struct test_server_state {
 	unsigned clients_created;
@@ -45,7 +45,7 @@ void test_server_remove_global(void);
 void test_server_destroy_clients(void);
 bool test_server_global_destroyed(void);
 void test_server_log_messages(void);
-/* Hide the test_child global from clients */
+/* Hide the poor_test_child global from clients */
 void test_server_hide_extra(void);
 /* Accept on 'fd', which listens already */
 void test_server_listen_fd(int fd);

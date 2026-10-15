@@ -28,38 +28,38 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "wayland-util.h"
+#include "poor_wayland_util.h"
 
-extern const struct wl_interface another_intf_interface;
-extern const struct wl_interface intf_not_here_interface;
+extern const struct poor_wl_interface poor_another_intf_interface;
+extern const struct poor_wl_interface poor_intf_not_here_interface;
 
-static const struct wl_interface *small_test_types[] = {
+static const struct poor_wl_interface *poor_small_test_types[] = {
 	NULL,
 	NULL,
 	NULL,
-	&intf_not_here_interface,
+	&poor_intf_not_here_interface,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	&another_intf_interface,
+	&poor_another_intf_interface,
 };
 
-static const struct wl_message intf_A_requests[] = {
-	{ "rq1", "sun", small_test_types + 0 },
-	{ "rq2", "nsiufho", small_test_types + 3 },
-	{ "destroy", "", small_test_types + 0 },
+static const struct poor_wl_message poor_intf_A_requests[] = {
+	{ "rq1", "sun", poor_small_test_types + 0 },
+	{ "rq2", "nsiufho", poor_small_test_types + 3 },
+	{ "destroy", "", poor_small_test_types + 0 },
 };
 
-static const struct wl_message intf_A_events[] = {
-	{ "hey", "", small_test_types + 0 },
-	{ "yo", "2", small_test_types + 0 },
+static const struct poor_wl_message poor_intf_A_events[] = {
+	{ "hey", "", poor_small_test_types + 0 },
+	{ "yo", "2", poor_small_test_types + 0 },
 };
 
-WL_EXPORT const struct wl_interface intf_A_interface = {
+POOR_WL_EXPORT const struct poor_wl_interface poor_intf_A_interface = {
 	"intf_A", 3,
-	3, intf_A_requests,
-	2, intf_A_events,
+	3, poor_intf_A_requests,
+	2, poor_intf_A_events,
 };
 

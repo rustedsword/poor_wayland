@@ -10,22 +10,22 @@ wayland_doxygen = configure_file(
 )
 
 shared_files = files([
-	'../../src/wayland-util.h',
-	'../../src/wayland-connection.h',
+	'../../src/poor_wayland_util.h',
+	'../../src/poor_wayland_connection.h',
 ])
 
 client_files = files([
 	'../../src/wayland-client.c',
-	'../../src/wayland-client.h',
-	'../../src/wayland-client-core.h',
-	'../../src/wayland-client-display.h',
+	'../../src/poor_wayland_client.h',
+	'../../src/poor_wayland_client_core.h',
+	'../../src/poor_wayland_client_display.h',
 ])
 
 server_files = files([
 	'../../src/wayland-server.c',
-	'../../src/wayland-server.h',
-	'../../src/wayland-server-core.h',
-	'../../src/wayland-server-display.h',
+	'../../src/poor_wayland_server.h',
+	'../../src/poor_wayland_server_core.h',
+	'../../src/poor_wayland_server_display.h',
 	'../../src/wayland-shm.c',
 ])
 

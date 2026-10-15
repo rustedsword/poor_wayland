@@ -3,19 +3,19 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "wayland-util.h"
+#include "poor_wayland_util.h"
 
 
-static const struct wl_interface *empty_types[] = {
+static const struct poor_wl_interface *poor_empty_types[] = {
 };
 
-static const struct wl_message empty_requests[] = {
-	{ "empty", "", empty_types + 0 },
+static const struct poor_wl_message poor_empty_requests[] = {
+	{ "empty", "", poor_empty_types + 0 },
 };
 
-WL_EXPORT const struct wl_interface empty_interface = {
+POOR_WL_EXPORT const struct poor_wl_interface poor_empty_interface = {
 	"empty", 1,
-	1, empty_requests,
+	1, poor_empty_requests,
 	0, NULL,
 };
 

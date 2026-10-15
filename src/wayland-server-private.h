@@ -25,24 +25,24 @@
  * SOFTWARE.
  */
 
-#ifndef WAYLAND_SERVER_PRIVATE_H
-#define WAYLAND_SERVER_PRIVATE_H
+#ifndef POOR_WAYLAND_SERVER_PRIVATE_H
+#define POOR_WAYLAND_SERVER_PRIVATE_H
 
-#include "wayland-server-core.h"
-
-void
-wl_priv_signal_init(struct wl_priv_signal *signal);
+#include "poor_wayland_server_core.h"
 
 void
-wl_priv_signal_add(struct wl_priv_signal *signal, struct wl_listener *listener);
-
-struct wl_listener *
-wl_priv_signal_get(struct wl_priv_signal *signal, wl_notify_func_t notify);
+poor_wl_priv_signal_init(struct poor_wl_priv_signal *signal);
 
 void
-wl_priv_signal_emit(struct wl_priv_signal *signal, void *data);
+poor_wl_priv_signal_add(struct poor_wl_priv_signal *signal, struct poor_wl_listener *listener);
+
+struct poor_wl_listener *
+poor_wl_priv_signal_get(struct poor_wl_priv_signal *signal, poor_wl_notify_func_t notify);
 
 void
-wl_priv_signal_final_emit(struct wl_priv_signal *signal, void *data);
+poor_wl_priv_signal_emit(struct poor_wl_priv_signal *signal, void *data);
+
+void
+poor_wl_priv_signal_final_emit(struct poor_wl_priv_signal *signal, void *data);
 
 #endif

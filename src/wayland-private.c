@@ -39,35 +39,35 @@
  * In most cases the pointer equality test is sufficient. However, depending on how things are split across shared
  * objects, there can be multiple instances of the interface metadata constants.
  */
-int wl_interface_equal(const struct wl_interface *a, const struct wl_interface *b)
+int poor_wl_interface_equal(const struct poor_wl_interface *a, const struct poor_wl_interface *b)
 {
 	return a == b || strcmp(a->name, b->name) == 0;
 }
 
 /* Bit 0 marks a free entry that links the free list, bit 1 holds the flag */
-static bool map_entry_is_free(union wl_map_entry entry)
+static bool map_entry_is_free(union poor_wl_map_entry entry)
 {
 	return entry.next & 0x1;
 }
 
-static void *map_entry_get_data(union wl_map_entry entry)
+static void *map_entry_get_data(union poor_wl_map_entry entry)
 {
 	return (void *)(entry.next & ~(uintptr_t)0x3);
 }
 
-static uint32_t map_entry_get_flags(union wl_map_entry entry)
+static uint32_t map_entry_get_flags(union poor_wl_map_entry entry)
 {
 	return (entry.next >> 1) & 0x1;
 }
 
-static void map_entry_set(union wl_map_entry *entry, uint32_t flags, void *data)
+static void map_entry_set(union poor_wl_map_entry *entry, uint32_t flags, void *data)
 {
 	assert(!((uintptr_t)data & 0x3));
 	entry->data = data;
 	entry->next |= (flags & 0x1) << 1;
 }
 
-void wl_map_init(struct wl_map *map, uint32_t side, const struct wl_connection_memory *memory)
+void poor_wl_map_init(struct poor_wl_map *map, uint32_t side, const struct poor_wl_connection_memory *memory)
 {
 	map->client_entries = memory->client_objects;
 	map->server_entries = memory->server_objects;
@@ -79,23 +79,23 @@ void wl_map_init(struct wl_map *map, uint32_t side, const struct wl_connection_m
 }
 
 /* Selects the entries of 'i' and makes it an index into them */
-static union wl_map_entry *map_entries(struct wl_map *map, uint32_t *i, uint32_t **count, uint32_t *size)
+static union poor_wl_map_entry *map_entries(struct poor_wl_map *map, uint32_t *i, uint32_t **count, uint32_t *size)
 {
-	if (*i < WL_SERVER_ID_START) {
+	if (*i < POOR_WL_SERVER_ID_START) {
 		*count = &map->client_count;
 		*size = map->client_size;
 		return map->client_entries;
 	}
-	*i -= WL_SERVER_ID_START;
+	*i -= POOR_WL_SERVER_ID_START;
 	*count = &map->server_count;
 	*size = map->server_size;
 	return map->server_entries;
 }
 
-uint32_t wl_map_insert_new(struct wl_map *map, uint32_t flags, void *data)
+uint32_t poor_wl_map_insert_new(struct poor_wl_map *map, uint32_t flags, void *data)
 {
-	uint32_t base = map->side == WL_MAP_CLIENT_SIDE ? 0 : WL_SERVER_ID_START, i = base, *count, size;
-	union wl_map_entry *entries = map_entries(map, &i, &count, &size);
+	uint32_t base = map->side == POOR_WL_MAP_CLIENT_SIDE ? 0 : POOR_WL_SERVER_ID_START, i = base, *count, size;
+	union poor_wl_map_entry *entries = map_entries(map, &i, &count, &size);
 
 	if (map->free_list) {
 		i = map->free_list >> 1;
@@ -110,10 +110,10 @@ uint32_t wl_map_insert_new(struct wl_map *map, uint32_t flags, void *data)
 	return i + base;
 }
 
-int wl_map_insert_at(struct wl_map *map, uint32_t flags, uint32_t i, void *data)
+int poor_wl_map_insert_at(struct poor_wl_map *map, uint32_t flags, uint32_t i, void *data)
 {
 	uint32_t *count, size;
-	union wl_map_entry *entries = map_entries(map, &i, &count, &size);
+	union poor_wl_map_entry *entries = map_entries(map, &i, &count, &size);
 
 	if (i >= size) {
 		errno = ENOSPC;
@@ -130,12 +130,12 @@ int wl_map_insert_at(struct wl_map *map, uint32_t flags, uint32_t i, void *data)
 }
 
 /* The peer allocates its ids in order, reusing the ones of destroyed objects and of zombies */
-int wl_map_reserve_new(struct wl_map *map, uint32_t i)
+int poor_wl_map_reserve_new(struct poor_wl_map *map, uint32_t i)
 {
 	uint32_t *count, size;
-	union wl_map_entry *entries;
+	union poor_wl_map_entry *entries;
 
-	if ((i < WL_SERVER_ID_START) != (map->side == WL_MAP_SERVER_SIDE)) {
+	if ((i < POOR_WL_SERVER_ID_START) != (map->side == POOR_WL_MAP_SERVER_SIDE)) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -158,32 +158,32 @@ int wl_map_reserve_new(struct wl_map *map, uint32_t i)
 	return 0;
 }
 
-void wl_map_remove(struct wl_map *map, uint32_t i)
+void poor_wl_map_remove(struct poor_wl_map *map, uint32_t i)
 {
 	uint32_t *count, size;
-	union wl_map_entry *entries;
+	union poor_wl_map_entry *entries;
 
-	if ((i < WL_SERVER_ID_START) != (map->side == WL_MAP_CLIENT_SIDE))
+	if ((i < POOR_WL_SERVER_ID_START) != (map->side == POOR_WL_MAP_CLIENT_SIDE))
 		return;
 	entries = map_entries(map, &i, &count, &size);
 	entries[i].next = map->free_list;
 	map->free_list = (i << 1) | 1;
 }
 
-void *wl_map_lookup(struct wl_map *map, uint32_t i)
+void *poor_wl_map_lookup(struct poor_wl_map *map, uint32_t i)
 {
 	uint32_t *count, size;
-	union wl_map_entry *entries = map_entries(map, &i, &count, &size);
+	union poor_wl_map_entry *entries = map_entries(map, &i, &count, &size);
 
 	if (i < *count && !map_entry_is_free(entries[i]))
 		return map_entry_get_data(entries[i]);
 	return nullptr;
 }
 
-uint32_t wl_map_lookup_flags(struct wl_map *map, uint32_t i)
+uint32_t poor_wl_map_lookup_flags(struct poor_wl_map *map, uint32_t i)
 {
 	uint32_t *count, size;
-	union wl_map_entry *entries = map_entries(map, &i, &count, &size);
+	union poor_wl_map_entry *entries = map_entries(map, &i, &count, &size);
 
 	if (i < *count && !map_entry_is_free(entries[i]))
 		return map_entry_get_flags(entries[i]);
@@ -191,13 +191,13 @@ uint32_t wl_map_lookup_flags(struct wl_map *map, uint32_t i)
 }
 
 /* The callback can add and remove entries */
-static enum wl_iterator_result for_each_helper(union wl_map_entry *entries, const uint32_t *count, wl_iterator_func_t func,
+static enum poor_wl_iterator_result for_each_helper(union poor_wl_map_entry *entries, const uint32_t *count, poor_wl_iterator_func_t func,
 					       void *data)
 {
-	enum wl_iterator_result ret = WL_ITERATOR_CONTINUE;
+	enum poor_wl_iterator_result ret = POOR_WL_ITERATOR_CONTINUE;
 
-	for (uint32_t i = 0; i < *count && ret == WL_ITERATOR_CONTINUE; i++) {
-		union wl_map_entry entry = entries[i];
+	for (uint32_t i = 0; i < *count && ret == POOR_WL_ITERATOR_CONTINUE; i++) {
+		union poor_wl_map_entry entry = entries[i];
 
 		if (entry.data && !map_entry_is_free(entry))
 			ret = func(map_entry_get_data(entry), data, map_entry_get_flags(entry));
@@ -205,27 +205,27 @@ static enum wl_iterator_result for_each_helper(union wl_map_entry *entries, cons
 	return ret;
 }
 
-void wl_map_for_each(struct wl_map *map, wl_iterator_func_t func, void *data)
+void poor_wl_map_for_each(struct poor_wl_map *map, poor_wl_iterator_func_t func, void *data)
 {
-	if (for_each_helper(map->client_entries, &map->client_count, func, data) == WL_ITERATOR_CONTINUE)
+	if (for_each_helper(map->client_entries, &map->client_count, func, data) == POOR_WL_ITERATOR_CONTINUE)
 		for_each_helper(map->server_entries, &map->server_count, func, data);
 }
 
-wl_log_func_t wl_log_handler;
+poor_wl_log_func_t poor_wl_log_handler;
 
-void wl_log(const char *fmt, ...)
+void poor_wl_log(const char *fmt, ...)
 {
 	va_list argp;
 
-	if (!wl_log_handler)
+	if (!poor_wl_log_handler)
 		return;
 	va_start(argp, fmt);
-	wl_log_handler(fmt, argp);
+	poor_wl_log_handler(fmt, argp);
 	va_end(argp);
 }
 
 /* The process ends right away, so the message can't go through the loop */
-void wl_abort(const char *fmt, ...)
+void poor_wl_abort(const char *fmt, ...)
 {
 	va_list argp;
 

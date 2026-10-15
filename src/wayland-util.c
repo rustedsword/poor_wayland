@@ -26,15 +26,15 @@
 
 #include <string.h>
 
-#include "wayland-util.h"
+#include "poor_wayland_util.h"
 
-WL_EXPORT void wl_list_init(struct wl_list *list)
+POOR_WL_EXPORT void poor_wl_list_init(struct poor_wl_list *list)
 {
 	list->prev = list;
 	list->next = list;
 }
 
-WL_EXPORT void wl_list_insert(struct wl_list *list, struct wl_list *elm)
+POOR_WL_EXPORT void poor_wl_list_insert(struct poor_wl_list *list, struct poor_wl_list *elm)
 {
 	elm->prev = list;
 	elm->next = list->next;
@@ -42,7 +42,7 @@ WL_EXPORT void wl_list_insert(struct wl_list *list, struct wl_list *elm)
 	elm->next->prev = elm;
 }
 
-WL_EXPORT void wl_list_remove(struct wl_list *elm)
+POOR_WL_EXPORT void poor_wl_list_remove(struct poor_wl_list *elm)
 {
 	elm->prev->next = elm->next;
 	elm->next->prev = elm->prev;
@@ -50,23 +50,23 @@ WL_EXPORT void wl_list_remove(struct wl_list *elm)
 	elm->prev = nullptr;
 }
 
-WL_EXPORT int wl_list_length(const struct wl_list *list)
+POOR_WL_EXPORT int poor_wl_list_length(const struct poor_wl_list *list)
 {
 	int count = 0;
 
-	for (const struct wl_list *e = list->next; e != list; e = e->next)
+	for (const struct poor_wl_list *e = list->next; e != list; e = e->next)
 		count++;
 	return count;
 }
 
-WL_EXPORT int wl_list_empty(const struct wl_list *list)
+POOR_WL_EXPORT int poor_wl_list_empty(const struct poor_wl_list *list)
 {
 	return list->next == list;
 }
 
-WL_EXPORT void wl_list_insert_list(struct wl_list *list, struct wl_list *other)
+POOR_WL_EXPORT void poor_wl_list_insert_list(struct poor_wl_list *list, struct poor_wl_list *other)
 {
-	if (wl_list_empty(other))
+	if (poor_wl_list_empty(other))
 		return;
 	other->next->prev = list;
 	other->prev->next = list->next;
@@ -74,14 +74,14 @@ WL_EXPORT void wl_list_insert_list(struct wl_list *list, struct wl_list *other)
 	list->next = other->next;
 }
 
-WL_EXPORT void wl_array_init(struct wl_array *array, void *data, size_t alloc)
+POOR_WL_EXPORT void poor_wl_array_init(struct poor_wl_array *array, void *data, size_t alloc)
 {
 	array->size = 0;
 	array->alloc = alloc;
 	array->data = data;
 }
 
-WL_EXPORT void *wl_array_add(struct wl_array *array, size_t size)
+POOR_WL_EXPORT void *poor_wl_array_add(struct poor_wl_array *array, size_t size)
 {
 	void *p;
 
@@ -92,7 +92,7 @@ WL_EXPORT void *wl_array_add(struct wl_array *array, size_t size)
 	return p;
 }
 
-WL_EXPORT int wl_array_copy(struct wl_array *array, const struct wl_array *source)
+POOR_WL_EXPORT int poor_wl_array_copy(struct poor_wl_array *array, const struct poor_wl_array *source)
 {
 	if (source->size > array->alloc)
 		return -1;

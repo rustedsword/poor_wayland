@@ -3,13 +3,13 @@ if not (get_option('scanner') or get_option('libraries'))
 endif
 
 wayland_version_h = configuration_data()
-wayland_version_h.set('WAYLAND_VERSION', meson.project_version())
-wayland_version_h.set('WAYLAND_VERSION_MAJOR', wayland_version[0].to_int())
-wayland_version_h.set('WAYLAND_VERSION_MINOR', wayland_version[1].to_int())
-wayland_version_h.set('WAYLAND_VERSION_MICRO', wayland_version[2].to_int())
+wayland_version_h.set('POOR_WAYLAND_VERSION', meson.project_version())
+wayland_version_h.set('POOR_WAYLAND_VERSION_MAJOR', wayland_version[0].to_int())
+wayland_version_h.set('POOR_WAYLAND_VERSION_MINOR', wayland_version[1].to_int())
+wayland_version_h.set('POOR_WAYLAND_VERSION_MICRO', wayland_version[2].to_int())
 configure_file(
-	input: 'wayland-version.h.in',
-	output: 'wayland-version.h',
+	input: 'poor_wayland_version.h.in',
+	output: 'poor_wayland_version.h',
 	configuration: wayland_version_h,
 	install: get_option('libraries'),
 	install_dir: join_paths(get_option('prefix'), get_option('includedir'))
@@ -21,14 +21,14 @@ wayland_util = static_library(
 	sources: 'wayland-util.c'
 )
 
-# Whole, so both libraries export the wl_list and wl_array functions
+# Whole, so both libraries export the poor_wl_list and poor_wl_array functions
 wayland_util_dep = declare_dependency(
 	link_whole: wayland_util,
 	include_directories: include_directories('.')
 )
 
 if get_option('scanner')
-	# wayland-scanner
+	# poor_wayland_scanner
 
 	scanner_deps = [ dependency('expat') ]
 	scanner_args = [ '-include', 'config.h' ]
@@ -52,7 +52,7 @@ if get_option('scanner')
 	wayland_scanner_includes = [ root_inc, protocol_inc ]
 
 	wayland_scanner = executable(
-		'wayland-scanner',
+		'poor_wayland_scanner',
 		wayland_scanner_sources,
 		c_args: scanner_args,
 		include_directories: wayland_scanner_includes,
@@ -61,28 +61,28 @@ if get_option('scanner')
 	)
 
 	pkgconfig.generate(
-		name: 'Wayland Scanner',
-		description: 'Wayland scanner',
+		name: 'poor_wayland_scanner',
+		description: 'Code generator for poor_wayland protocols',
 		version: meson.project_version(),
 		variables: [
 			'datarootdir=' + join_paths('${prefix}', get_option('datadir')),
 			'pkgdatadir=' + join_paths('${pc_sysrootdir}${datarootdir}', meson.project_name()),
-			'wayland_scanner=${bindir}/wayland-scanner'
+			'poor_wayland_scanner=${bindir}/poor_wayland_scanner'
 		],
-		filebase: 'wayland-scanner'
+		filebase: 'poor_wayland_scanner'
 	)
 
 	if meson.can_run_host_binaries()
-		meson.override_find_program('wayland-scanner', wayland_scanner)
-		meson.override_dependency('wayland-scanner', declare_dependency(
-			variables: { 'wayland_scanner': 'wayland-scanner' },
+		meson.override_find_program('poor_wayland_scanner', wayland_scanner)
+		meson.override_dependency('poor_wayland_scanner', declare_dependency(
+			variables: { 'poor_wayland_scanner': 'poor_wayland_scanner' },
 		))
 	endif
 endif
 
 if not meson.can_run_host_binaries() or not get_option('scanner')
-	scanner_dep = dependency('wayland-scanner', native: true, version: meson.project_version())
-	wayland_scanner_for_build = find_program(scanner_dep.get_variable(pkgconfig: 'wayland_scanner'))
+	scanner_dep = dependency('poor_wayland_scanner', native: true, version: meson.project_version())
+	wayland_scanner_for_build = find_program(scanner_dep.get_variable(pkgconfig: 'poor_wayland_scanner'))
 else
 	wayland_scanner_for_build = wayland_scanner
 endif
@@ -111,22 +111,26 @@ if get_option('libraries')
 	generated_headers = [
 		{
 			'scanner_args': ['server-header'],
-			'output': 'wayland-server-protocol.h',
+			'output': 'poor_wayland_server_protocol.h',
+			'variable': 'wayland_server_protocol_h',
 			'install': true,
 		},
 		{
 			'scanner_args': ['server-header', '-c'],
-			'output': 'wayland-server-protocol-core.h',
+			'output': 'poor_wayland_server_protocol_core.h',
+			'variable': 'wayland_server_protocol_core_h',
 			'install': false,
 		},
 		{
 			'scanner_args': ['client-header'],
-			'output': 'wayland-client-protocol.h',
+			'output': 'poor_wayland_client_protocol.h',
+			'variable': 'wayland_client_protocol_h',
 			'install': true,
 		},
 		{
 			'scanner_args': ['client-header', '-c'],
-			'output': 'wayland-client-protocol-core.h',
+			'output': 'poor_wayland_client_protocol_core.h',
+			'variable': 'wayland_client_protocol_core_h',
 			'install': false,
 		},
 	]
@@ -136,7 +140,7 @@ if get_option('libraries')
 		output_file = gen['output']
 		install_file = gen['install']
 		install_dir = join_paths(get_option('prefix'), get_option('includedir'))
-		target_name = output_file.underscorify()
+		target_name = gen['variable']
 
 		target = custom_target(
 			target_name,
@@ -159,20 +163,11 @@ if get_option('libraries')
 			wayland_scanner_for_build, '-s', 'public-code', '@INPUT@', '@OUTPUT@'
 		],
 		input: wayland_protocol_xml,
-		output: 'wayland-protocol.c'
+		output: 'poor_wayland_protocol.c'
 	)
 
-	if wayland_version[0] != '1'
-		# The versioning used for the shared libraries assumes that the major
-		# version of Wayland as a whole will increase to 2 if and only if there
-		# is an ABI break, at which point we should probably bump the SONAME of
-		# all libraries to .so.2. For more details see
-		# https://gitlab.freedesktop.org/wayland/wayland/-/merge_requests/177
-		error('We probably need to bump the SONAME of libwayland-server and -client')
-	endif
-
 	wayland_server = library(
-		'wayland-server',
+		'poor_wayland_server',
 		sources: [
 			wayland_server_protocol_core_h,
 			wayland_server_protocol_h,
@@ -180,9 +175,8 @@ if get_option('libraries')
 			'wayland-server.c',
 			'wayland-shm.c',
 		],
-		# To avoid an unnecessary SONAME bump, wayland 1.x.y produces
-		# libwayland-server.so.0.x.y.
-		version: '.'.join(['0', wayland_version[1], wayland_version[2]]),
+		version: meson.project_version(),
+		soversion: '0',
 		dependencies: [
 			ffi_dep,
 			wayland_private_dep,
@@ -207,10 +201,10 @@ if get_option('libraries')
 
 	pkgconfig.generate(
 		wayland_server,
-		name: 'Wayland Server',
-		description: 'Server side implementation of the Wayland protocol',
+		name: 'poor_wayland_server',
+		description: 'Wayland server library on io_uring',
 		version: meson.project_version(),
-		filebase: 'wayland-server',
+		filebase: 'poor_wayland_server',
 		libraries: mathlib_dep,
 		requires: [ 'poor_loop', 'liburing' ],
 		variables: [
@@ -219,19 +213,18 @@ if get_option('libraries')
 		]
 	)
 
-	meson.override_dependency('wayland-server', wayland_server_dep)
+	meson.override_dependency('poor_wayland_server', wayland_server_dep)
 
 	wayland_client = library(
-		'wayland-client',
+		'poor_wayland_client',
 		sources: [
 			wayland_client_protocol_core_h,
 			wayland_client_protocol_h,
 			wayland_protocol_c,
 			'wayland-client.c'
 		],
-		# To avoid an unnecessary SONAME bump, wayland 1.x.y produces
-		# libwayland-client.so.0.x.y.
-		version: '.'.join(['0', wayland_version[1], wayland_version[2]]),
+		version: meson.project_version(),
+		soversion: '0',
 		dependencies: [
 			ffi_dep,
 			wayland_private_dep,
@@ -245,10 +238,10 @@ if get_option('libraries')
 
 	pkgconfig.generate(
 		wayland_client,
-		name: 'Wayland Client',
-		description: 'Wayland client side library',
+		name: 'poor_wayland_client',
+		description: 'Wayland client library on io_uring',
 		version: meson.project_version(),
-		filebase: 'wayland-client',
+		filebase: 'poor_wayland_client',
 		libraries: mathlib_dep,
 		requires: [ 'poor_loop', 'liburing' ],
 		variables: [
@@ -267,16 +260,16 @@ if get_option('libraries')
 		]
 	)
 
-	meson.override_dependency('wayland-client', wayland_client_dep)
+	meson.override_dependency('poor_wayland_client', wayland_client_dep)
 
 	install_headers([
-		'wayland-util.h',
-		'wayland-server.h',
-		'wayland-server-core.h',
-		'wayland-client.h',
-		'wayland-client-core.h',
-		'wayland-client-display.h',
-		'wayland-server-display.h',
-		'wayland-connection.h',
+		'poor_wayland_util.h',
+		'poor_wayland_connection.h',
+		'poor_wayland_server.h',
+		'poor_wayland_server_core.h',
+		'poor_wayland_server_display.h',
+		'poor_wayland_client.h',
+		'poor_wayland_client_core.h',
+		'poor_wayland_client_display.h',
 	])
 endif

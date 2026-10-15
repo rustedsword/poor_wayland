@@ -29,14 +29,14 @@
 #include <string.h>
 
 #include "test-runner.h"
-#include "wayland-util.h"
+#include "poor_wayland_util.h"
 
 TEST(array_init)
 {
-	struct wl_array array;
+	struct poor_wl_array array;
 	char storage[16];
 
-	wl_array_init(&array, storage, sizeof(storage));
+	poor_wl_array_init(&array, storage, sizeof(storage));
 	assert(array.size == 0);
 	assert(array.alloc == sizeof(storage));
 	assert(array.data == storage);
@@ -45,7 +45,7 @@ TEST(array_init)
 TEST(array_init_macro)
 {
 	int storage[4];
-	struct wl_array array = WL_ARRAY_INIT(storage);
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 
 	assert(array.size == 0);
 	assert(array.alloc == sizeof(storage));
@@ -62,10 +62,10 @@ TEST(array_add)
 	};
 	constexpr unsigned iterations = 1321;
 	static struct mydata storage[iterations];
-	struct wl_array array = WL_ARRAY_INIT(storage);
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 
 	for (unsigned i = 0; i < iterations; i++) {
-		struct mydata *ptr = wl_array_add(&array, sizeof(*ptr));
+		struct mydata *ptr = poor_wl_array_add(&array, sizeof(*ptr));
 
 		assert(ptr == &storage[i]);
 		assert((i + 1) * sizeof(*ptr) == array.size);
@@ -87,31 +87,31 @@ TEST(array_add)
 TEST(array_add_beyond_storage)
 {
 	char storage[10];
-	struct wl_array array = WL_ARRAY_INIT(storage);
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 
-	assert(wl_array_add(&array, 6) == storage);
-	assert(!wl_array_add(&array, 5));
+	assert(poor_wl_array_add(&array, 6) == storage);
+	assert(!poor_wl_array_add(&array, 5));
 	assert(array.size == 6);
-	assert(wl_array_add(&array, 4) == storage + 6);
-	assert(!wl_array_add(&array, 1));
-	assert(wl_array_add(&array, 0) == storage + 10);
+	assert(poor_wl_array_add(&array, 4) == storage + 6);
+	assert(!poor_wl_array_add(&array, 1));
+	assert(poor_wl_array_add(&array, 0) == storage + 10);
 }
 
 TEST(array_copy)
 {
 	constexpr int iterations = 1529;
 	static int source_storage[iterations], copy_storage[iterations], small_storage[iterations - 1];
-	struct wl_array source = WL_ARRAY_INIT(source_storage);
-	struct wl_array copy = WL_ARRAY_INIT(copy_storage);
-	struct wl_array small = WL_ARRAY_INIT(small_storage);
+	struct poor_wl_array source = POOR_WL_ARRAY_INIT(source_storage);
+	struct poor_wl_array copy = POOR_WL_ARRAY_INIT(copy_storage);
+	struct poor_wl_array small = POOR_WL_ARRAY_INIT(small_storage);
 
 	for (int i = 0; i < iterations; i++) {
-		int *p = wl_array_add(&source, sizeof(int));
+		int *p = poor_wl_array_add(&source, sizeof(int));
 
 		assert(p);
 		*p = i * 2 + i;
 	}
-	assert(wl_array_copy(&copy, &source) == 0);
+	assert(poor_wl_array_copy(&copy, &source) == 0);
 	assert(copy.size == source.size);
 	for (int i = 0; i < iterations; i++) {
 		int *s = (int *)source.data + i;
@@ -121,7 +121,7 @@ TEST(array_copy)
 		assert(s != c);
 		assert(*s == i * 2 + i);
 	}
-	assert(wl_array_copy(&small, &source) == -1);
+	assert(poor_wl_array_copy(&small, &source) == -1);
 	assert(small.size == 0);
 }
 
@@ -129,17 +129,17 @@ TEST(array_for_each)
 {
 	static const int elements[] = { 77, 12, 45192, 53280, 334455 };
 	int storage[5];
-	struct wl_array array = WL_ARRAY_INIT(storage);
+	struct poor_wl_array array = POOR_WL_ARRAY_INIT(storage);
 	int *p;
 	int i;
 
 	for (i = 0; i < 5; i++) {
-		p = wl_array_add(&array, sizeof(*p));
+		p = poor_wl_array_add(&array, sizeof(*p));
 		assert(p);
 		*p = elements[i];
 	}
 	i = 0;
-	wl_array_for_each(p, &array) {
+	poor_wl_array_for_each(p, &array) {
 		assert(*p == elements[i]);
 		i++;
 	}

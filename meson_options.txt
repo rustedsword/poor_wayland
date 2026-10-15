@@ -10,6 +10,10 @@ option('tests',
   description: 'Compile Wayland tests',
   type: 'boolean',
   value: true)
+option('examples',
+  description: 'Compile the examples (requires the refs/wayland-protocols submodule)',
+  type: 'boolean',
+  value: false)
 option('documentation',
   description: 'Build the documentation (requires Doxygen, dot, xmlto, xsltproc)',
   type: 'boolean',

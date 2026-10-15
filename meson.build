@@ -1,6 +1,6 @@
 project(
-	'wayland', 'c',
-	version: '1.26.90',
+	'poor_wayland', 'c',
+	version: '0.1.0',
 	license: 'MIT',
 	meson_version: '>= 1.4.0',
 	default_options: [
@@ -64,11 +64,11 @@ src_inc = include_directories('src')
 
 subdir('src')
 
-if get_option('libraries')
-	subdir('egl')
-endif
 if get_option('tests')
 	subdir('tests')
+endif
+if get_option('examples')
+	subdir('examples')
 endif
 if get_option('documentation')
 	subdir('doc')
@@ -76,15 +76,9 @@ endif
 
 if get_option('scanner')
 	install_data([
-		'wayland-scanner.mk',
 		'protocol/wayland.xml',
 		'protocol/wayland.dtd',
 	],
-		install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'wayland'),
-	)
-
-	install_data(
-		[ 'wayland-scanner.m4' ],
-		install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'aclocal'),
+		install_dir: join_paths(get_option('prefix'), get_option('datadir'), meson.project_name()),
 	)
 endif

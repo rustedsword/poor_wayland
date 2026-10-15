@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008 Kristian Høgsberg
+ * Copyright © 2012 Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -23,20 +23,12 @@
  * SOFTWARE.
  */
 
-/** \file
- *
- *  \brief Include the client API and protocol C API.
- *
- *  \warning Use of this header file is discouraged. Prefer including
- *  wayland-client-core.h instead, which does not include the
- *  client protocol header and as such only defines the library
- *  API.
- */
+#ifndef POOR_WAYLAND_VERSION_H
+#define POOR_WAYLAND_VERSION_H
 
-#ifndef WAYLAND_CLIENT_H
-#define WAYLAND_CLIENT_H
-
-#include "wayland-client-core.h"
-#include "wayland-client-protocol.h"
+#define POOR_WAYLAND_VERSION_MAJOR @POOR_WAYLAND_VERSION_MAJOR@
+#define POOR_WAYLAND_VERSION_MINOR @POOR_WAYLAND_VERSION_MINOR@
+#define POOR_WAYLAND_VERSION_MICRO @POOR_WAYLAND_VERSION_MICRO@
+#define POOR_WAYLAND_VERSION "@POOR_WAYLAND_VERSION@"
 
 #endif

@@ -27,29 +27,29 @@
 
 #include <assert.h>
 
-#include "wayland-client.h"
+#include "poor_wayland_client.h"
 #include "wayland-private.h"
-#include "wayland-server.h"
+#include "poor_wayland_server.h"
 #include "test-runner.h"
 
 TEST(message_version)
 {
 	unsigned int i;
 	const struct {
-		const struct wl_message *message;
+		const struct poor_wl_message *message;
 		int expected_version;
 	} messages[] = {
-		{ &wl_pointer_interface.events[WL_POINTER_ENTER], 1 },
-		{ &wl_surface_interface.events[WL_SURFACE_ENTER], 1 },
-		{ &wl_pointer_interface.methods[WL_POINTER_SET_CURSOR], 1 },
-		{ &wl_pointer_interface.methods[WL_POINTER_RELEASE], 3 },
-		{ &wl_surface_interface.methods[WL_SURFACE_DESTROY], 1 },
-		{ &wl_surface_interface.methods[WL_SURFACE_SET_BUFFER_TRANSFORM], 2 },
-		{ &wl_surface_interface.methods[WL_SURFACE_SET_BUFFER_SCALE], 3 },
+		{ &poor_wl_pointer_interface.events[POOR_WL_POINTER_ENTER], 1 },
+		{ &poor_wl_surface_interface.events[POOR_WL_SURFACE_ENTER], 1 },
+		{ &poor_wl_pointer_interface.methods[POOR_WL_POINTER_SET_CURSOR], 1 },
+		{ &poor_wl_pointer_interface.methods[POOR_WL_POINTER_RELEASE], 3 },
+		{ &poor_wl_surface_interface.methods[POOR_WL_SURFACE_DESTROY], 1 },
+		{ &poor_wl_surface_interface.methods[POOR_WL_SURFACE_SET_BUFFER_TRANSFORM], 2 },
+		{ &poor_wl_surface_interface.methods[POOR_WL_SURFACE_SET_BUFFER_SCALE], 3 },
 	};
 
 	for (i = 0; i < ARRAY_SIZE(messages); ++i) {
-		assert(wl_message_get_since(messages[i].message) ==
+		assert(poor_wl_message_get_since(messages[i].message) ==
 		       messages[i].expected_version);
 	}
 }
@@ -57,7 +57,7 @@ TEST(message_version)
 TEST(message_count_fds)
 {
 	const struct {
-		struct wl_message message;
+		struct poor_wl_message message;
 		int expected_fd_count;
 	} messages[] = {
 		{ { "empty", "", nullptr }, 0 },
@@ -67,6 +67,6 @@ TEST(message_count_fds)
 	};
 
 	for (unsigned i = 0; i < ARRAY_SIZE(messages); ++i)
-		assert(wl_message_count_fds(&messages[i].message) == messages[i].expected_fd_count);
-	assert(wl_message_count_fds(&wl_keyboard_interface.events[WL_KEYBOARD_KEYMAP]) == 1);
+		assert(poor_wl_message_count_fds(&messages[i].message) == messages[i].expected_fd_count);
+	assert(poor_wl_message_count_fds(&poor_wl_keyboard_interface.events[POOR_WL_KEYBOARD_KEYMAP]) == 1);
 }

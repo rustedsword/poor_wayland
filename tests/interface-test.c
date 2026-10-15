@@ -27,26 +27,26 @@
 
 #include <assert.h>
 
-#include "wayland-client.h"
+#include "poor_wayland_client.h"
 #include "wayland-private.h"
 #include "test-runner.h"
 
 TEST(interface_equal)
 {
-	const struct wl_interface fake = {
+	const struct poor_wl_interface fake = {
 		"fake", 1, 0, NULL, 0, NULL
 	};
-	const struct wl_interface fake_registry = {
+	const struct poor_wl_interface fake_registry = {
 		"wl_registry", 1, 0, NULL, 0, NULL
 	};
-	const struct wl_interface copy = wl_registry_interface;
+	const struct poor_wl_interface copy = poor_wl_registry_interface;
 
-	assert(&wl_registry_interface != &copy);
+	assert(&poor_wl_registry_interface != &copy);
 
-	assert(wl_interface_equal(&wl_registry_interface,
-				  &wl_registry_interface));
-	assert(wl_interface_equal(&wl_registry_interface, &copy));
-	assert(wl_interface_equal(&wl_registry_interface,
+	assert(poor_wl_interface_equal(&poor_wl_registry_interface,
+				  &poor_wl_registry_interface));
+	assert(poor_wl_interface_equal(&poor_wl_registry_interface, &copy));
+	assert(poor_wl_interface_equal(&poor_wl_registry_interface,
 				  &fake_registry));
-	assert(!wl_interface_equal(&wl_registry_interface, &fake));
+	assert(!poor_wl_interface_equal(&poor_wl_registry_interface, &fake));
 }

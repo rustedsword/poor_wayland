@@ -1,42 +1,42 @@
 /* SCANNER TEST */
 
-#ifndef WAYLAND_CLIENT_PROTOCOL_H
-#define WAYLAND_CLIENT_PROTOCOL_H
+#ifndef POOR_WAYLAND_CLIENT_PROTOCOL_H
+#define POOR_WAYLAND_CLIENT_PROTOCOL_H
 
 #include <stdint.h>
 #include <stddef.h>
-#include "wayland-client.h"
+#include "poor_wayland_client.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /**
- * @page page_wayland The wayland protocol
- * @section page_ifaces_wayland Interfaces
- * - @subpage page_iface_wl_display - core global object
- * - @subpage page_iface_wl_registry - global registry object
- * - @subpage page_iface_wl_callback - callback object
- * - @subpage page_iface_wl_compositor - the compositor singleton
- * - @subpage page_iface_wl_shm_pool - a shared memory pool
- * - @subpage page_iface_wl_shm - shared memory support
- * - @subpage page_iface_wl_buffer - content for a wl_surface
- * - @subpage page_iface_wl_data_offer - offer to transfer data
- * - @subpage page_iface_wl_data_source - offer to transfer data
- * - @subpage page_iface_wl_data_device - data transfer device
- * - @subpage page_iface_wl_data_device_manager - data transfer interface
- * - @subpage page_iface_wl_shell - create desktop-style surfaces
- * - @subpage page_iface_wl_shell_surface - desktop-style metadata interface
- * - @subpage page_iface_wl_surface - an onscreen surface
- * - @subpage page_iface_wl_seat - group of input devices
- * - @subpage page_iface_wl_pointer - pointer input device
- * - @subpage page_iface_wl_keyboard - keyboard input device
- * - @subpage page_iface_wl_touch - touchscreen input device
- * - @subpage page_iface_wl_output - compositor output region
- * - @subpage page_iface_wl_region - region interface
- * - @subpage page_iface_wl_subcompositor - sub-surface compositing
- * - @subpage page_iface_wl_subsurface - sub-surface interface to a wl_surface
- * @section page_copyright_wayland Copyright
+ * @page page_poor_wayland The poor_wayland protocol
+ * @section page_ifaces_poor_wayland Interfaces
+ * - @subpage page_iface_poor_wl_display - core global object
+ * - @subpage page_iface_poor_wl_registry - global registry object
+ * - @subpage page_iface_poor_wl_callback - callback object
+ * - @subpage page_iface_poor_wl_compositor - the compositor singleton
+ * - @subpage page_iface_poor_wl_shm_pool - a shared memory pool
+ * - @subpage page_iface_poor_wl_shm - shared memory support
+ * - @subpage page_iface_poor_wl_buffer - content for a wl_surface
+ * - @subpage page_iface_poor_wl_data_offer - offer to transfer data
+ * - @subpage page_iface_poor_wl_data_source - offer to transfer data
+ * - @subpage page_iface_poor_wl_data_device - data transfer device
+ * - @subpage page_iface_poor_wl_data_device_manager - data transfer interface
+ * - @subpage page_iface_poor_wl_shell - create desktop-style surfaces
+ * - @subpage page_iface_poor_wl_shell_surface - desktop-style metadata interface
+ * - @subpage page_iface_poor_wl_surface - an onscreen surface
+ * - @subpage page_iface_poor_wl_seat - group of input devices
+ * - @subpage page_iface_poor_wl_pointer - pointer input device
+ * - @subpage page_iface_poor_wl_keyboard - keyboard input device
+ * - @subpage page_iface_poor_wl_touch - touchscreen input device
+ * - @subpage page_iface_poor_wl_output - compositor output region
+ * - @subpage page_iface_poor_wl_region - region interface
+ * - @subpage page_iface_poor_wl_subcompositor - sub-surface compositing
+ * - @subpage page_iface_poor_wl_subsurface - sub-surface interface to a wl_surface
+ * @section page_copyright_poor_wayland Copyright
  * <pre>
  *
  * Copyright © 2008-2011 Kristian Høgsberg
@@ -65,53 +65,53 @@ extern "C" {
  * SOFTWARE.
  * </pre>
  */
-struct wl_buffer;
-struct wl_callback;
-struct wl_compositor;
-struct wl_data_device;
-struct wl_data_device_manager;
-struct wl_data_offer;
-struct wl_data_source;
-struct wl_display;
-struct wl_keyboard;
-struct wl_output;
-struct wl_pointer;
-struct wl_region;
-struct wl_registry;
-struct wl_seat;
-struct wl_shell;
-struct wl_shell_surface;
-struct wl_shm;
-struct wl_shm_pool;
-struct wl_subcompositor;
-struct wl_subsurface;
-struct wl_surface;
-struct wl_touch;
+struct poor_wl_buffer;
+struct poor_wl_callback;
+struct poor_wl_compositor;
+struct poor_wl_data_device;
+struct poor_wl_data_device_manager;
+struct poor_wl_data_offer;
+struct poor_wl_data_source;
+struct poor_wl_display;
+struct poor_wl_keyboard;
+struct poor_wl_output;
+struct poor_wl_pointer;
+struct poor_wl_region;
+struct poor_wl_registry;
+struct poor_wl_seat;
+struct poor_wl_shell;
+struct poor_wl_shell_surface;
+struct poor_wl_shm;
+struct poor_wl_shm_pool;
+struct poor_wl_subcompositor;
+struct poor_wl_subsurface;
+struct poor_wl_surface;
+struct poor_wl_touch;
 
-#ifndef WL_DISPLAY_INTERFACE
-#define WL_DISPLAY_INTERFACE
+#ifndef POOR_WL_DISPLAY_INTERFACE
+#define POOR_WL_DISPLAY_INTERFACE
 /**
- * @page page_iface_wl_display wl_display
- * @section page_iface_wl_display_desc Description
+ * @page page_iface_poor_wl_display poor_wl_display
+ * @section page_iface_poor_wl_display_desc Description
  *
  * The core global object.  This is a special singleton object.  It
  * is used for internal Wayland protocol features.
- * @section page_iface_wl_display_api API
- * See @ref iface_wl_display.
+ * @section page_iface_poor_wl_display_api API
+ * See @ref iface_poor_wl_display.
  */
 /**
- * @defgroup iface_wl_display The wl_display interface
+ * @defgroup iface_poor_wl_display The poor_wl_display interface
  *
  * The core global object.  This is a special singleton object.  It
  * is used for internal Wayland protocol features.
  */
-extern const struct wl_interface wl_display_interface;
+extern const struct poor_wl_interface poor_wl_display_interface;
 #endif
-#ifndef WL_REGISTRY_INTERFACE
-#define WL_REGISTRY_INTERFACE
+#ifndef POOR_WL_REGISTRY_INTERFACE
+#define POOR_WL_REGISTRY_INTERFACE
 /**
- * @page page_iface_wl_registry wl_registry
- * @section page_iface_wl_registry_desc Description
+ * @page page_iface_poor_wl_registry poor_wl_registry
+ * @section page_iface_poor_wl_registry_desc Description
  *
  * The singleton global registry object.  The server has a number of
  * global objects that are available to all clients.  These objects
@@ -133,11 +133,11 @@ extern const struct wl_interface wl_display_interface;
  * request.  This creates a client-side handle that lets the object
  * emit events to the client and lets the client invoke requests on
  * the object.
- * @section page_iface_wl_registry_api API
- * See @ref iface_wl_registry.
+ * @section page_iface_poor_wl_registry_api API
+ * See @ref iface_poor_wl_registry.
  */
 /**
- * @defgroup iface_wl_registry The wl_registry interface
+ * @defgroup iface_poor_wl_registry The poor_wl_registry interface
  *
  * The singleton global registry object.  The server has a number of
  * global objects that are available to all clients.  These objects
@@ -160,53 +160,53 @@ extern const struct wl_interface wl_display_interface;
  * emit events to the client and lets the client invoke requests on
  * the object.
  */
-extern const struct wl_interface wl_registry_interface;
+extern const struct poor_wl_interface poor_wl_registry_interface;
 #endif
-#ifndef WL_CALLBACK_INTERFACE
-#define WL_CALLBACK_INTERFACE
+#ifndef POOR_WL_CALLBACK_INTERFACE
+#define POOR_WL_CALLBACK_INTERFACE
 /**
- * @page page_iface_wl_callback wl_callback
- * @section page_iface_wl_callback_desc Description
+ * @page page_iface_poor_wl_callback poor_wl_callback
+ * @section page_iface_poor_wl_callback_desc Description
  *
  * Clients can handle the 'done' event to get notified when
  * the related request is done.
- * @section page_iface_wl_callback_api API
- * See @ref iface_wl_callback.
+ * @section page_iface_poor_wl_callback_api API
+ * See @ref iface_poor_wl_callback.
  */
 /**
- * @defgroup iface_wl_callback The wl_callback interface
+ * @defgroup iface_poor_wl_callback The poor_wl_callback interface
  *
  * Clients can handle the 'done' event to get notified when
  * the related request is done.
  */
-extern const struct wl_interface wl_callback_interface;
+extern const struct poor_wl_interface poor_wl_callback_interface;
 #endif
-#ifndef WL_COMPOSITOR_INTERFACE
-#define WL_COMPOSITOR_INTERFACE
+#ifndef POOR_WL_COMPOSITOR_INTERFACE
+#define POOR_WL_COMPOSITOR_INTERFACE
 /**
- * @page page_iface_wl_compositor wl_compositor
- * @section page_iface_wl_compositor_desc Description
+ * @page page_iface_poor_wl_compositor poor_wl_compositor
+ * @section page_iface_poor_wl_compositor_desc Description
  *
  * A compositor.  This object is a singleton global.  The
  * compositor is in charge of combining the contents of multiple
  * surfaces into one displayable output.
- * @section page_iface_wl_compositor_api API
- * See @ref iface_wl_compositor.
+ * @section page_iface_poor_wl_compositor_api API
+ * See @ref iface_poor_wl_compositor.
  */
 /**
- * @defgroup iface_wl_compositor The wl_compositor interface
+ * @defgroup iface_poor_wl_compositor The poor_wl_compositor interface
  *
  * A compositor.  This object is a singleton global.  The
  * compositor is in charge of combining the contents of multiple
  * surfaces into one displayable output.
  */
-extern const struct wl_interface wl_compositor_interface;
+extern const struct poor_wl_interface poor_wl_compositor_interface;
 #endif
-#ifndef WL_SHM_POOL_INTERFACE
-#define WL_SHM_POOL_INTERFACE
+#ifndef POOR_WL_SHM_POOL_INTERFACE
+#define POOR_WL_SHM_POOL_INTERFACE
 /**
- * @page page_iface_wl_shm_pool wl_shm_pool
- * @section page_iface_wl_shm_pool_desc Description
+ * @page page_iface_poor_wl_shm_pool poor_wl_shm_pool
+ * @section page_iface_poor_wl_shm_pool_desc Description
  *
  * The wl_shm_pool object encapsulates a piece of memory shared
  * between the compositor and client.  Through the wl_shm_pool
@@ -215,11 +215,11 @@ extern const struct wl_interface wl_compositor_interface;
  * underlying mapped memory. Reusing the mapped memory avoids the
  * setup/teardown overhead and is useful when interactively resizing
  * a surface or for many small buffers.
- * @section page_iface_wl_shm_pool_api API
- * See @ref iface_wl_shm_pool.
+ * @section page_iface_poor_wl_shm_pool_api API
+ * See @ref iface_poor_wl_shm_pool.
  */
 /**
- * @defgroup iface_wl_shm_pool The wl_shm_pool interface
+ * @defgroup iface_poor_wl_shm_pool The poor_wl_shm_pool interface
  *
  * The wl_shm_pool object encapsulates a piece of memory shared
  * between the compositor and client.  Through the wl_shm_pool
@@ -229,13 +229,13 @@ extern const struct wl_interface wl_compositor_interface;
  * setup/teardown overhead and is useful when interactively resizing
  * a surface or for many small buffers.
  */
-extern const struct wl_interface wl_shm_pool_interface;
+extern const struct poor_wl_interface poor_wl_shm_pool_interface;
 #endif
-#ifndef WL_SHM_INTERFACE
-#define WL_SHM_INTERFACE
+#ifndef POOR_WL_SHM_INTERFACE
+#define POOR_WL_SHM_INTERFACE
 /**
- * @page page_iface_wl_shm wl_shm
- * @section page_iface_wl_shm_desc Description
+ * @page page_iface_poor_wl_shm poor_wl_shm
+ * @section page_iface_poor_wl_shm_desc Description
  *
  * A singleton global object that provides support for shared
  * memory.
@@ -246,11 +246,11 @@ extern const struct wl_interface wl_shm_pool_interface;
  * At connection setup time, the wl_shm object emits one or more
  * format events to inform clients about the valid pixel formats
  * that can be used for buffers.
- * @section page_iface_wl_shm_api API
- * See @ref iface_wl_shm.
+ * @section page_iface_poor_wl_shm_api API
+ * See @ref iface_poor_wl_shm.
  */
 /**
- * @defgroup iface_wl_shm The wl_shm interface
+ * @defgroup iface_poor_wl_shm The poor_wl_shm interface
  *
  * A singleton global object that provides support for shared
  * memory.
@@ -262,24 +262,24 @@ extern const struct wl_interface wl_shm_pool_interface;
  * format events to inform clients about the valid pixel formats
  * that can be used for buffers.
  */
-extern const struct wl_interface wl_shm_interface;
+extern const struct poor_wl_interface poor_wl_shm_interface;
 #endif
-#ifndef WL_BUFFER_INTERFACE
-#define WL_BUFFER_INTERFACE
+#ifndef POOR_WL_BUFFER_INTERFACE
+#define POOR_WL_BUFFER_INTERFACE
 /**
- * @page page_iface_wl_buffer wl_buffer
- * @section page_iface_wl_buffer_desc Description
+ * @page page_iface_poor_wl_buffer poor_wl_buffer
+ * @section page_iface_poor_wl_buffer_desc Description
  *
  * A buffer provides the content for a wl_surface. Buffers are
  * created through factory interfaces such as wl_drm, wl_shm or
  * similar. It has a width and a height and can be attached to a
  * wl_surface, but the mechanism by which a client provides and
  * updates the contents is defined by the buffer factory interface.
- * @section page_iface_wl_buffer_api API
- * See @ref iface_wl_buffer.
+ * @section page_iface_poor_wl_buffer_api API
+ * See @ref iface_poor_wl_buffer.
  */
 /**
- * @defgroup iface_wl_buffer The wl_buffer interface
+ * @defgroup iface_poor_wl_buffer The poor_wl_buffer interface
  *
  * A buffer provides the content for a wl_surface. Buffers are
  * created through factory interfaces such as wl_drm, wl_shm or
@@ -287,13 +287,13 @@ extern const struct wl_interface wl_shm_interface;
  * wl_surface, but the mechanism by which a client provides and
  * updates the contents is defined by the buffer factory interface.
  */
-extern const struct wl_interface wl_buffer_interface;
+extern const struct poor_wl_interface poor_wl_buffer_interface;
 #endif
-#ifndef WL_DATA_OFFER_INTERFACE
-#define WL_DATA_OFFER_INTERFACE
+#ifndef POOR_WL_DATA_OFFER_INTERFACE
+#define POOR_WL_DATA_OFFER_INTERFACE
 /**
- * @page page_iface_wl_data_offer wl_data_offer
- * @section page_iface_wl_data_offer_desc Description
+ * @page page_iface_poor_wl_data_offer poor_wl_data_offer
+ * @section page_iface_poor_wl_data_offer_desc Description
  *
  * A wl_data_offer represents a piece of data offered for transfer
  * by another client (the source client).  It is used by the
@@ -301,11 +301,11 @@ extern const struct wl_interface wl_buffer_interface;
  * describes the different mime types that the data can be
  * converted to and provides the mechanism for transferring the
  * data directly from the source client.
- * @section page_iface_wl_data_offer_api API
- * See @ref iface_wl_data_offer.
+ * @section page_iface_poor_wl_data_offer_api API
+ * See @ref iface_poor_wl_data_offer.
  */
 /**
- * @defgroup iface_wl_data_offer The wl_data_offer interface
+ * @defgroup iface_poor_wl_data_offer The poor_wl_data_offer interface
  *
  * A wl_data_offer represents a piece of data offered for transfer
  * by another client (the source client).  It is used by the
@@ -314,47 +314,47 @@ extern const struct wl_interface wl_buffer_interface;
  * converted to and provides the mechanism for transferring the
  * data directly from the source client.
  */
-extern const struct wl_interface wl_data_offer_interface;
+extern const struct poor_wl_interface poor_wl_data_offer_interface;
 #endif
-#ifndef WL_DATA_SOURCE_INTERFACE
-#define WL_DATA_SOURCE_INTERFACE
+#ifndef POOR_WL_DATA_SOURCE_INTERFACE
+#define POOR_WL_DATA_SOURCE_INTERFACE
 /**
- * @page page_iface_wl_data_source wl_data_source
- * @section page_iface_wl_data_source_desc Description
+ * @page page_iface_poor_wl_data_source poor_wl_data_source
+ * @section page_iface_poor_wl_data_source_desc Description
  *
  * The wl_data_source object is the source side of a wl_data_offer.
  * It is created by the source client in a data transfer and
  * provides a way to describe the offered data and a way to respond
  * to requests to transfer the data.
- * @section page_iface_wl_data_source_api API
- * See @ref iface_wl_data_source.
+ * @section page_iface_poor_wl_data_source_api API
+ * See @ref iface_poor_wl_data_source.
  */
 /**
- * @defgroup iface_wl_data_source The wl_data_source interface
+ * @defgroup iface_poor_wl_data_source The poor_wl_data_source interface
  *
  * The wl_data_source object is the source side of a wl_data_offer.
  * It is created by the source client in a data transfer and
  * provides a way to describe the offered data and a way to respond
  * to requests to transfer the data.
  */
-extern const struct wl_interface wl_data_source_interface;
+extern const struct poor_wl_interface poor_wl_data_source_interface;
 #endif
-#ifndef WL_DATA_DEVICE_INTERFACE
-#define WL_DATA_DEVICE_INTERFACE
+#ifndef POOR_WL_DATA_DEVICE_INTERFACE
+#define POOR_WL_DATA_DEVICE_INTERFACE
 /**
- * @page page_iface_wl_data_device wl_data_device
- * @section page_iface_wl_data_device_desc Description
+ * @page page_iface_poor_wl_data_device poor_wl_data_device
+ * @section page_iface_poor_wl_data_device_desc Description
  *
  * There is one wl_data_device per seat which can be obtained
  * from the global wl_data_device_manager singleton.
  *
  * A wl_data_device provides access to inter-client data transfer
  * mechanisms such as copy-and-paste and drag-and-drop.
- * @section page_iface_wl_data_device_api API
- * See @ref iface_wl_data_device.
+ * @section page_iface_poor_wl_data_device_api API
+ * See @ref iface_poor_wl_data_device.
  */
 /**
- * @defgroup iface_wl_data_device The wl_data_device interface
+ * @defgroup iface_poor_wl_data_device The poor_wl_data_device interface
  *
  * There is one wl_data_device per seat which can be obtained
  * from the global wl_data_device_manager singleton.
@@ -362,13 +362,13 @@ extern const struct wl_interface wl_data_source_interface;
  * A wl_data_device provides access to inter-client data transfer
  * mechanisms such as copy-and-paste and drag-and-drop.
  */
-extern const struct wl_interface wl_data_device_interface;
+extern const struct poor_wl_interface poor_wl_data_device_interface;
 #endif
-#ifndef WL_DATA_DEVICE_MANAGER_INTERFACE
-#define WL_DATA_DEVICE_MANAGER_INTERFACE
+#ifndef POOR_WL_DATA_DEVICE_MANAGER_INTERFACE
+#define POOR_WL_DATA_DEVICE_MANAGER_INTERFACE
 /**
- * @page page_iface_wl_data_device_manager wl_data_device_manager
- * @section page_iface_wl_data_device_manager_desc Description
+ * @page page_iface_poor_wl_data_device_manager poor_wl_data_device_manager
+ * @section page_iface_poor_wl_data_device_manager_desc Description
  *
  * The wl_data_device_manager is a singleton global object that
  * provides access to inter-client data transfer mechanisms such as
@@ -380,11 +380,11 @@ extern const struct wl_interface wl_data_device_interface;
  * wl_data_device_manager object will have different requirements for
  * functioning properly. See wl_data_source.set_actions,
  * wl_data_offer.accept and wl_data_offer.finish for details.
- * @section page_iface_wl_data_device_manager_api API
- * See @ref iface_wl_data_device_manager.
+ * @section page_iface_poor_wl_data_device_manager_api API
+ * See @ref iface_poor_wl_data_device_manager.
  */
 /**
- * @defgroup iface_wl_data_device_manager The wl_data_device_manager interface
+ * @defgroup iface_poor_wl_data_device_manager The poor_wl_data_device_manager interface
  *
  * The wl_data_device_manager is a singleton global object that
  * provides access to inter-client data transfer mechanisms such as
@@ -397,24 +397,24 @@ extern const struct wl_interface wl_data_device_interface;
  * functioning properly. See wl_data_source.set_actions,
  * wl_data_offer.accept and wl_data_offer.finish for details.
  */
-extern const struct wl_interface wl_data_device_manager_interface;
+extern const struct poor_wl_interface poor_wl_data_device_manager_interface;
 #endif
-#ifndef WL_SHELL_INTERFACE
-#define WL_SHELL_INTERFACE
+#ifndef POOR_WL_SHELL_INTERFACE
+#define POOR_WL_SHELL_INTERFACE
 /**
- * @page page_iface_wl_shell wl_shell
- * @section page_iface_wl_shell_desc Description
+ * @page page_iface_poor_wl_shell poor_wl_shell
+ * @section page_iface_poor_wl_shell_desc Description
  *
  * This interface is implemented by servers that provide
  * desktop-style user interfaces.
  *
  * It allows clients to associate a wl_shell_surface with
  * a basic surface.
- * @section page_iface_wl_shell_api API
- * See @ref iface_wl_shell.
+ * @section page_iface_poor_wl_shell_api API
+ * See @ref iface_poor_wl_shell.
  */
 /**
- * @defgroup iface_wl_shell The wl_shell interface
+ * @defgroup iface_poor_wl_shell The poor_wl_shell interface
  *
  * This interface is implemented by servers that provide
  * desktop-style user interfaces.
@@ -422,13 +422,13 @@ extern const struct wl_interface wl_data_device_manager_interface;
  * It allows clients to associate a wl_shell_surface with
  * a basic surface.
  */
-extern const struct wl_interface wl_shell_interface;
+extern const struct poor_wl_interface poor_wl_shell_interface;
 #endif
-#ifndef WL_SHELL_SURFACE_INTERFACE
-#define WL_SHELL_SURFACE_INTERFACE
+#ifndef POOR_WL_SHELL_SURFACE_INTERFACE
+#define POOR_WL_SHELL_SURFACE_INTERFACE
 /**
- * @page page_iface_wl_shell_surface wl_shell_surface
- * @section page_iface_wl_shell_surface_desc Description
+ * @page page_iface_poor_wl_shell_surface poor_wl_shell_surface
+ * @section page_iface_poor_wl_shell_surface_desc Description
  *
  * An interface that may be implemented by a wl_surface, for
  * implementations that provide a desktop-style user interface.
@@ -441,11 +441,11 @@ extern const struct wl_interface wl_shell_interface;
  * the related wl_surface is destroyed. On the client side,
  * wl_shell_surface_destroy() must be called before destroying
  * the wl_surface object.
- * @section page_iface_wl_shell_surface_api API
- * See @ref iface_wl_shell_surface.
+ * @section page_iface_poor_wl_shell_surface_api API
+ * See @ref iface_poor_wl_shell_surface.
  */
 /**
- * @defgroup iface_wl_shell_surface The wl_shell_surface interface
+ * @defgroup iface_poor_wl_shell_surface The poor_wl_shell_surface interface
  *
  * An interface that may be implemented by a wl_surface, for
  * implementations that provide a desktop-style user interface.
@@ -459,13 +459,13 @@ extern const struct wl_interface wl_shell_interface;
  * wl_shell_surface_destroy() must be called before destroying
  * the wl_surface object.
  */
-extern const struct wl_interface wl_shell_surface_interface;
+extern const struct poor_wl_interface poor_wl_shell_surface_interface;
 #endif
-#ifndef WL_SURFACE_INTERFACE
-#define WL_SURFACE_INTERFACE
+#ifndef POOR_WL_SURFACE_INTERFACE
+#define POOR_WL_SURFACE_INTERFACE
 /**
- * @page page_iface_wl_surface wl_surface
- * @section page_iface_wl_surface_desc Description
+ * @page page_iface_poor_wl_surface poor_wl_surface
+ * @section page_iface_poor_wl_surface_desc Description
  *
  * A surface is a rectangular area that is displayed on the screen.
  * It has a location, size and pixel contents.
@@ -506,11 +506,11 @@ extern const struct wl_interface wl_shell_surface_interface;
  * wl_surface again, but it is not allowed to use the wl_surface as
  * a cursor (cursor is a different role than sub-surface, and role
  * switching is not allowed).
- * @section page_iface_wl_surface_api API
- * See @ref iface_wl_surface.
+ * @section page_iface_poor_wl_surface_api API
+ * See @ref iface_poor_wl_surface.
  */
 /**
- * @defgroup iface_wl_surface The wl_surface interface
+ * @defgroup iface_poor_wl_surface The poor_wl_surface interface
  *
  * A surface is a rectangular area that is displayed on the screen.
  * It has a location, size and pixel contents.
@@ -552,36 +552,36 @@ extern const struct wl_interface wl_shell_surface_interface;
  * a cursor (cursor is a different role than sub-surface, and role
  * switching is not allowed).
  */
-extern const struct wl_interface wl_surface_interface;
+extern const struct poor_wl_interface poor_wl_surface_interface;
 #endif
-#ifndef WL_SEAT_INTERFACE
-#define WL_SEAT_INTERFACE
+#ifndef POOR_WL_SEAT_INTERFACE
+#define POOR_WL_SEAT_INTERFACE
 /**
- * @page page_iface_wl_seat wl_seat
- * @section page_iface_wl_seat_desc Description
+ * @page page_iface_poor_wl_seat poor_wl_seat
+ * @section page_iface_poor_wl_seat_desc Description
  *
  * A seat is a group of keyboards, pointer and touch devices. This
  * object is published as a global during start up, or when such a
  * device is hot plugged.  A seat typically has a pointer and
  * maintains a keyboard focus and a pointer focus.
- * @section page_iface_wl_seat_api API
- * See @ref iface_wl_seat.
+ * @section page_iface_poor_wl_seat_api API
+ * See @ref iface_poor_wl_seat.
  */
 /**
- * @defgroup iface_wl_seat The wl_seat interface
+ * @defgroup iface_poor_wl_seat The poor_wl_seat interface
  *
  * A seat is a group of keyboards, pointer and touch devices. This
  * object is published as a global during start up, or when such a
  * device is hot plugged.  A seat typically has a pointer and
  * maintains a keyboard focus and a pointer focus.
  */
-extern const struct wl_interface wl_seat_interface;
+extern const struct poor_wl_interface poor_wl_seat_interface;
 #endif
-#ifndef WL_POINTER_INTERFACE
-#define WL_POINTER_INTERFACE
+#ifndef POOR_WL_POINTER_INTERFACE
+#define POOR_WL_POINTER_INTERFACE
 /**
- * @page page_iface_wl_pointer wl_pointer
- * @section page_iface_wl_pointer_desc Description
+ * @page page_iface_poor_wl_pointer poor_wl_pointer
+ * @section page_iface_poor_wl_pointer_desc Description
  *
  * The wl_pointer interface represents one or more input devices,
  * such as mice, which control the pointer location and pointer_focus
@@ -591,11 +591,11 @@ extern const struct wl_interface wl_seat_interface;
  * events for the surfaces that the pointer is located over,
  * and button and axis events for button presses, button releases
  * and scrolling.
- * @section page_iface_wl_pointer_api API
- * See @ref iface_wl_pointer.
+ * @section page_iface_poor_wl_pointer_api API
+ * See @ref iface_poor_wl_pointer.
  */
 /**
- * @defgroup iface_wl_pointer The wl_pointer interface
+ * @defgroup iface_poor_wl_pointer The poor_wl_pointer interface
  *
  * The wl_pointer interface represents one or more input devices,
  * such as mice, which control the pointer location and pointer_focus
@@ -606,32 +606,32 @@ extern const struct wl_interface wl_seat_interface;
  * and button and axis events for button presses, button releases
  * and scrolling.
  */
-extern const struct wl_interface wl_pointer_interface;
+extern const struct poor_wl_interface poor_wl_pointer_interface;
 #endif
-#ifndef WL_KEYBOARD_INTERFACE
-#define WL_KEYBOARD_INTERFACE
+#ifndef POOR_WL_KEYBOARD_INTERFACE
+#define POOR_WL_KEYBOARD_INTERFACE
 /**
- * @page page_iface_wl_keyboard wl_keyboard
- * @section page_iface_wl_keyboard_desc Description
+ * @page page_iface_poor_wl_keyboard poor_wl_keyboard
+ * @section page_iface_poor_wl_keyboard_desc Description
  *
  * The wl_keyboard interface represents one or more keyboards
  * associated with a seat.
- * @section page_iface_wl_keyboard_api API
- * See @ref iface_wl_keyboard.
+ * @section page_iface_poor_wl_keyboard_api API
+ * See @ref iface_poor_wl_keyboard.
  */
 /**
- * @defgroup iface_wl_keyboard The wl_keyboard interface
+ * @defgroup iface_poor_wl_keyboard The poor_wl_keyboard interface
  *
  * The wl_keyboard interface represents one or more keyboards
  * associated with a seat.
  */
-extern const struct wl_interface wl_keyboard_interface;
+extern const struct poor_wl_interface poor_wl_keyboard_interface;
 #endif
-#ifndef WL_TOUCH_INTERFACE
-#define WL_TOUCH_INTERFACE
+#ifndef POOR_WL_TOUCH_INTERFACE
+#define POOR_WL_TOUCH_INTERFACE
 /**
- * @page page_iface_wl_touch wl_touch
- * @section page_iface_wl_touch_desc Description
+ * @page page_iface_poor_wl_touch poor_wl_touch
+ * @section page_iface_poor_wl_touch_desc Description
  *
  * The wl_touch interface represents a touchscreen
  * associated with a seat.
@@ -641,11 +641,11 @@ extern const struct wl_interface wl_keyboard_interface;
  * with a down event, followed by zero or more motion events,
  * and ending with an up event. Events relating to the same
  * contact point can be identified by the ID of the sequence.
- * @section page_iface_wl_touch_api API
- * See @ref iface_wl_touch.
+ * @section page_iface_poor_wl_touch_api API
+ * See @ref iface_poor_wl_touch.
  */
 /**
- * @defgroup iface_wl_touch The wl_touch interface
+ * @defgroup iface_poor_wl_touch The poor_wl_touch interface
  *
  * The wl_touch interface represents a touchscreen
  * associated with a seat.
@@ -656,13 +656,13 @@ extern const struct wl_interface wl_keyboard_interface;
  * and ending with an up event. Events relating to the same
  * contact point can be identified by the ID of the sequence.
  */
-extern const struct wl_interface wl_touch_interface;
+extern const struct poor_wl_interface poor_wl_touch_interface;
 #endif
-#ifndef WL_OUTPUT_INTERFACE
-#define WL_OUTPUT_INTERFACE
+#ifndef POOR_WL_OUTPUT_INTERFACE
+#define POOR_WL_OUTPUT_INTERFACE
 /**
- * @page page_iface_wl_output wl_output
- * @section page_iface_wl_output_desc Description
+ * @page page_iface_poor_wl_output poor_wl_output
+ * @section page_iface_poor_wl_output_desc Description
  *
  * An output describes part of the compositor geometry.  The
  * compositor works in the 'compositor coordinate system' and an
@@ -670,11 +670,11 @@ extern const struct wl_interface wl_touch_interface;
  * actually visible.  This typically corresponds to a monitor that
  * displays part of the compositor space.  This object is published
  * as global during start up, or when a monitor is hotplugged.
- * @section page_iface_wl_output_api API
- * See @ref iface_wl_output.
+ * @section page_iface_poor_wl_output_api API
+ * See @ref iface_poor_wl_output.
  */
 /**
- * @defgroup iface_wl_output The wl_output interface
+ * @defgroup iface_poor_wl_output The poor_wl_output interface
  *
  * An output describes part of the compositor geometry.  The
  * compositor works in the 'compositor coordinate system' and an
@@ -683,36 +683,36 @@ extern const struct wl_interface wl_touch_interface;
  * displays part of the compositor space.  This object is published
  * as global during start up, or when a monitor is hotplugged.
  */
-extern const struct wl_interface wl_output_interface;
+extern const struct poor_wl_interface poor_wl_output_interface;
 #endif
-#ifndef WL_REGION_INTERFACE
-#define WL_REGION_INTERFACE
+#ifndef POOR_WL_REGION_INTERFACE
+#define POOR_WL_REGION_INTERFACE
 /**
- * @page page_iface_wl_region wl_region
- * @section page_iface_wl_region_desc Description
+ * @page page_iface_poor_wl_region poor_wl_region
+ * @section page_iface_poor_wl_region_desc Description
  *
  * A region object describes an area.
  *
  * Region objects are used to describe the opaque and input
  * regions of a surface.
- * @section page_iface_wl_region_api API
- * See @ref iface_wl_region.
+ * @section page_iface_poor_wl_region_api API
+ * See @ref iface_poor_wl_region.
  */
 /**
- * @defgroup iface_wl_region The wl_region interface
+ * @defgroup iface_poor_wl_region The poor_wl_region interface
  *
  * A region object describes an area.
  *
  * Region objects are used to describe the opaque and input
  * regions of a surface.
  */
-extern const struct wl_interface wl_region_interface;
+extern const struct poor_wl_interface poor_wl_region_interface;
 #endif
-#ifndef WL_SUBCOMPOSITOR_INTERFACE
-#define WL_SUBCOMPOSITOR_INTERFACE
+#ifndef POOR_WL_SUBCOMPOSITOR_INTERFACE
+#define POOR_WL_SUBCOMPOSITOR_INTERFACE
 /**
- * @page page_iface_wl_subcompositor wl_subcompositor
- * @section page_iface_wl_subcompositor_desc Description
+ * @page page_iface_poor_wl_subcompositor poor_wl_subcompositor
+ * @section page_iface_poor_wl_subcompositor_desc Description
  *
  * The global interface exposing sub-surface compositing capabilities.
  * A wl_surface, that has sub-surfaces associated, is called the
@@ -733,11 +733,11 @@ extern const struct wl_interface wl_region_interface;
  * a video player with decorations and video in separate wl_surface
  * objects. This should allow the compositor to pass YUV video buffer
  * processing to dedicated overlay hardware when possible.
- * @section page_iface_wl_subcompositor_api API
- * See @ref iface_wl_subcompositor.
+ * @section page_iface_poor_wl_subcompositor_api API
+ * See @ref iface_poor_wl_subcompositor.
  */
 /**
- * @defgroup iface_wl_subcompositor The wl_subcompositor interface
+ * @defgroup iface_poor_wl_subcompositor The poor_wl_subcompositor interface
  *
  * The global interface exposing sub-surface compositing capabilities.
  * A wl_surface, that has sub-surfaces associated, is called the
@@ -759,13 +759,13 @@ extern const struct wl_interface wl_region_interface;
  * objects. This should allow the compositor to pass YUV video buffer
  * processing to dedicated overlay hardware when possible.
  */
-extern const struct wl_interface wl_subcompositor_interface;
+extern const struct poor_wl_interface poor_wl_subcompositor_interface;
 #endif
-#ifndef WL_SUBSURFACE_INTERFACE
-#define WL_SUBSURFACE_INTERFACE
+#ifndef POOR_WL_SUBSURFACE_INTERFACE
+#define POOR_WL_SUBSURFACE_INTERFACE
 /**
- * @page page_iface_wl_subsurface wl_subsurface
- * @section page_iface_wl_subsurface_desc Description
+ * @page page_iface_poor_wl_subsurface poor_wl_subsurface
+ * @section page_iface_poor_wl_subsurface_desc Description
  *
  * An additional interface to a wl_surface object, which has been
  * made a sub-surface. A sub-surface has one parent surface. A
@@ -816,11 +816,11 @@ extern const struct wl_interface wl_subcompositor_interface;
  *
  * If the parent wl_surface object is destroyed, the sub-surface is
  * unmapped.
- * @section page_iface_wl_subsurface_api API
- * See @ref iface_wl_subsurface.
+ * @section page_iface_poor_wl_subsurface_api API
+ * See @ref iface_poor_wl_subsurface.
  */
 /**
- * @defgroup iface_wl_subsurface The wl_subsurface interface
+ * @defgroup iface_poor_wl_subsurface The poor_wl_subsurface interface
  *
  * An additional interface to a wl_surface object, which has been
  * made a sub-surface. A sub-surface has one parent surface. A
@@ -872,39 +872,39 @@ extern const struct wl_interface wl_subcompositor_interface;
  * If the parent wl_surface object is destroyed, the sub-surface is
  * unmapped.
  */
-extern const struct wl_interface wl_subsurface_interface;
+extern const struct poor_wl_interface poor_wl_subsurface_interface;
 #endif
 
-#ifndef WL_DISPLAY_ERROR_ENUM
-#define WL_DISPLAY_ERROR_ENUM
+#ifndef POOR_WL_DISPLAY_ERROR_ENUM
+#define POOR_WL_DISPLAY_ERROR_ENUM
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  * global error values
  *
  * These errors are global and can be emitted in response to any
  * server request.
  */
-enum wl_display_error {
+enum poor_wl_display_error {
 	/**
 	 * server couldn't find object
 	 */
-	WL_DISPLAY_ERROR_INVALID_OBJECT = 0,
+	POOR_WL_DISPLAY_ERROR_INVALID_OBJECT = 0,
 	/**
 	 * method doesn't exist on the specified interface
 	 */
-	WL_DISPLAY_ERROR_INVALID_METHOD = 1,
+	POOR_WL_DISPLAY_ERROR_INVALID_METHOD = 1,
 	/**
 	 * server is out of memory
 	 */
-	WL_DISPLAY_ERROR_NO_MEMORY = 2,
+	POOR_WL_DISPLAY_ERROR_NO_MEMORY = 2,
 };
-#endif /* WL_DISPLAY_ERROR_ENUM */
+#endif /* POOR_WL_DISPLAY_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_display
- * @struct wl_display_listener
+ * @ingroup iface_poor_wl_display
+ * @struct poor_wl_display_listener
  */
-struct wl_display_listener {
+struct poor_wl_display_listener {
 	/**
 	 * fatal error event
 	 *
@@ -920,7 +920,7 @@ struct wl_display_listener {
 	 * @param message error description
 	 */
 	void (*error)(void *data,
-		      struct wl_display *wl_display,
+		      struct poor_wl_display *poor_wl_display,
 		      void *object_id,
 		      uint32_t code,
 		      const char *message);
@@ -935,64 +935,64 @@ struct wl_display_listener {
 	 * @param id deleted object ID
 	 */
 	void (*delete_id)(void *data,
-			  struct wl_display *wl_display,
+			  struct poor_wl_display *poor_wl_display,
 			  uint32_t id);
 };
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
 static inline int
-wl_display_add_listener(struct wl_display *wl_display,
-			const struct wl_display_listener *listener, void *data)
+poor_wl_display_add_listener(struct poor_wl_display *poor_wl_display,
+			     const struct poor_wl_display_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_display,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_display,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_DISPLAY_SYNC 0
-#define WL_DISPLAY_GET_REGISTRY 1
+#define POOR_WL_DISPLAY_SYNC 0
+#define POOR_WL_DISPLAY_GET_REGISTRY 1
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_ERROR_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_ERROR_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_DELETE_ID_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_DELETE_ID_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_SYNC_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_SYNC_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  */
-#define WL_DISPLAY_GET_REGISTRY_SINCE_VERSION 1
+#define POOR_WL_DISPLAY_GET_REGISTRY_SINCE_VERSION 1
 
-/** @ingroup iface_wl_display */
+/** @ingroup iface_poor_wl_display */
 static inline void
-wl_display_set_user_data(struct wl_display *wl_display, void *user_data)
+poor_wl_display_set_user_data(struct poor_wl_display *poor_wl_display, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_display, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_display, user_data);
 }
 
-/** @ingroup iface_wl_display */
+/** @ingroup iface_poor_wl_display */
 static inline void *
-wl_display_get_user_data(struct wl_display *wl_display)
+poor_wl_display_get_user_data(struct poor_wl_display *poor_wl_display)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_display);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_display);
 }
 
 static inline uint32_t
-wl_display_get_version(struct wl_display *wl_display)
+poor_wl_display_get_version(struct poor_wl_display *poor_wl_display)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_display);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_display);
 }
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  *
  * The sync request asks the server to emit the 'done' event
  * on the returned wl_callback object.  Since requests are
@@ -1006,32 +1006,40 @@ wl_display_get_version(struct wl_display *wl_display)
  *
  * The callback_data passed in the callback is the event serial.
  */
-static inline struct wl_callback *
-wl_display_sync(struct wl_display *wl_display, struct wl_proxy *callback)
+static inline struct poor_wl_callback *
+poor_wl_display_sync(struct poor_wl_display *poor_wl_display, struct poor_wl_callback *callback)
 {
-	return (struct wl_callback *) wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
-			 WL_DISPLAY_SYNC, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, callback);
+	return (struct poor_wl_callback *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_display,
+			 POOR_WL_DISPLAY_SYNC, &poor_wl_callback_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_display), 0, callback);
 }
 
 /**
- * @ingroup iface_wl_display
+ * @ingroup iface_poor_wl_display
  *
  * This request creates a registry object that allows the client
  * to list and bind the global objects available from the
  * compositor.
  */
-static inline struct wl_registry *
-wl_display_get_registry(struct wl_display *wl_display, struct wl_proxy *registry)
+static inline struct poor_wl_registry *
+poor_wl_display_get_registry(struct poor_wl_display *poor_wl_display, struct poor_wl_registry *registry)
 {
-	return (struct wl_registry *) wl_proxy_marshal_flags((struct wl_proxy *) wl_display,
-			 WL_DISPLAY_GET_REGISTRY, &wl_registry_interface, wl_proxy_get_version((struct wl_proxy *) wl_display), 0, registry);
+	return (struct poor_wl_registry *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_display,
+			 POOR_WL_DISPLAY_GET_REGISTRY, &poor_wl_registry_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_display), 0, registry);
 }
 
 /**
- * @ingroup iface_wl_registry
- * @struct wl_registry_listener
+ * @ingroup iface_poor_wl_registry
+ * @struct poor_wl_registry
  */
-struct wl_registry_listener {
+struct poor_wl_registry {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_registry
+ * @struct poor_wl_registry_listener
+ */
+struct poor_wl_registry_listener {
 	/**
 	 * announce global object
 	 *
@@ -1045,7 +1053,7 @@ struct wl_registry_listener {
 	 * @param version interface version
 	 */
 	void (*global)(void *data,
-		       struct wl_registry *wl_registry,
+		       struct poor_wl_registry *poor_wl_registry,
 		       uint32_t name,
 		       const char *interface,
 		       uint32_t version);
@@ -1065,82 +1073,90 @@ struct wl_registry_listener {
 	 * @param name numeric name of the global object
 	 */
 	void (*global_remove)(void *data,
-			      struct wl_registry *wl_registry,
+			      struct poor_wl_registry *poor_wl_registry,
 			      uint32_t name);
 };
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
 static inline int
-wl_registry_add_listener(struct wl_registry *wl_registry,
-			 const struct wl_registry_listener *listener, void *data)
+poor_wl_registry_add_listener(struct poor_wl_registry *poor_wl_registry,
+			      const struct poor_wl_registry_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_registry,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_registry,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_REGISTRY_BIND 0
+#define POOR_WL_REGISTRY_BIND 0
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_GLOBAL_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_GLOBAL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_GLOBAL_REMOVE_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_GLOBAL_REMOVE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  */
-#define WL_REGISTRY_BIND_SINCE_VERSION 1
+#define POOR_WL_REGISTRY_BIND_SINCE_VERSION 1
 
-/** @ingroup iface_wl_registry */
+/** @ingroup iface_poor_wl_registry */
 static inline void
-wl_registry_set_user_data(struct wl_registry *wl_registry, void *user_data)
+poor_wl_registry_set_user_data(struct poor_wl_registry *poor_wl_registry, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_registry, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_registry, user_data);
 }
 
-/** @ingroup iface_wl_registry */
+/** @ingroup iface_poor_wl_registry */
 static inline void *
-wl_registry_get_user_data(struct wl_registry *wl_registry)
+poor_wl_registry_get_user_data(struct poor_wl_registry *poor_wl_registry)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_registry);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_registry);
 }
 
 static inline uint32_t
-wl_registry_get_version(struct wl_registry *wl_registry)
+poor_wl_registry_get_version(struct poor_wl_registry *poor_wl_registry)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_registry);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_registry);
 }
 
-/** @ingroup iface_wl_registry */
+/** @ingroup iface_poor_wl_registry */
 static inline void
-wl_registry_destroy(struct wl_registry *wl_registry)
+poor_wl_registry_destroy(struct poor_wl_registry *poor_wl_registry)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_registry);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_registry);
 }
 
 /**
- * @ingroup iface_wl_registry
+ * @ingroup iface_poor_wl_registry
  *
  * Binds a new, client-created object to the server using the
  * specified name as the identifier.
  */
 static inline void *
-wl_registry_bind(struct wl_registry *wl_registry, uint32_t name, const struct wl_interface *interface, uint32_t version, struct wl_proxy *id)
+poor_wl_registry_bind(struct poor_wl_registry *poor_wl_registry, uint32_t name, const struct poor_wl_interface *interface, uint32_t version, void *id)
 {
-	return (void *) wl_proxy_marshal_flags((struct wl_proxy *) wl_registry,
-			 WL_REGISTRY_BIND, interface, version, 0, name, interface->name, version, id);
+	return (void *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_registry,
+			 POOR_WL_REGISTRY_BIND, interface, version, 0, name, interface->name, version, id);
 }
 
 /**
- * @ingroup iface_wl_callback
- * @struct wl_callback_listener
+ * @ingroup iface_poor_wl_callback
+ * @struct poor_wl_callback
  */
-struct wl_callback_listener {
+struct poor_wl_callback {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_callback
+ * @struct poor_wl_callback_listener
+ */
+struct poor_wl_callback_listener {
 	/**
 	 * done event
 	 *
@@ -1148,158 +1164,174 @@ struct wl_callback_listener {
 	 * @param callback_data request-specific data for the callback
 	 */
 	void (*done)(void *data,
-		     struct wl_callback *wl_callback,
+		     struct poor_wl_callback *poor_wl_callback,
 		     uint32_t callback_data);
 };
 
 /**
- * @ingroup iface_wl_callback
+ * @ingroup iface_poor_wl_callback
  */
 static inline int
-wl_callback_add_listener(struct wl_callback *wl_callback,
-			 const struct wl_callback_listener *listener, void *data)
+poor_wl_callback_add_listener(struct poor_wl_callback *poor_wl_callback,
+			      const struct poor_wl_callback_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_callback,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_callback,
 				     (void (**)(void)) listener, data);
 }
 
 /**
- * @ingroup iface_wl_callback
+ * @ingroup iface_poor_wl_callback
  */
-#define WL_CALLBACK_DONE_SINCE_VERSION 1
+#define POOR_WL_CALLBACK_DONE_SINCE_VERSION 1
 
 
-/** @ingroup iface_wl_callback */
+/** @ingroup iface_poor_wl_callback */
 static inline void
-wl_callback_set_user_data(struct wl_callback *wl_callback, void *user_data)
+poor_wl_callback_set_user_data(struct poor_wl_callback *poor_wl_callback, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_callback, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_callback, user_data);
 }
 
-/** @ingroup iface_wl_callback */
+/** @ingroup iface_poor_wl_callback */
 static inline void *
-wl_callback_get_user_data(struct wl_callback *wl_callback)
+poor_wl_callback_get_user_data(struct poor_wl_callback *poor_wl_callback)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_callback);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_callback);
 }
 
 static inline uint32_t
-wl_callback_get_version(struct wl_callback *wl_callback)
+poor_wl_callback_get_version(struct poor_wl_callback *poor_wl_callback)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_callback);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_callback);
 }
 
-/** @ingroup iface_wl_callback */
+/** @ingroup iface_poor_wl_callback */
 static inline void
-wl_callback_destroy(struct wl_callback *wl_callback)
+poor_wl_callback_destroy(struct poor_wl_callback *poor_wl_callback)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_callback);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_callback);
 }
 
-#define WL_COMPOSITOR_CREATE_SURFACE 0
-#define WL_COMPOSITOR_CREATE_REGION 1
+/**
+ * @ingroup iface_poor_wl_compositor
+ * @struct poor_wl_compositor
+ */
+struct poor_wl_compositor {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_COMPOSITOR_CREATE_SURFACE 0
+#define POOR_WL_COMPOSITOR_CREATE_REGION 1
 
 
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  */
-#define WL_COMPOSITOR_CREATE_SURFACE_SINCE_VERSION 1
+#define POOR_WL_COMPOSITOR_CREATE_SURFACE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  */
-#define WL_COMPOSITOR_CREATE_REGION_SINCE_VERSION 1
+#define POOR_WL_COMPOSITOR_CREATE_REGION_SINCE_VERSION 1
 
-/** @ingroup iface_wl_compositor */
+/** @ingroup iface_poor_wl_compositor */
 static inline void
-wl_compositor_set_user_data(struct wl_compositor *wl_compositor, void *user_data)
+poor_wl_compositor_set_user_data(struct poor_wl_compositor *poor_wl_compositor, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_compositor, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_compositor, user_data);
 }
 
-/** @ingroup iface_wl_compositor */
+/** @ingroup iface_poor_wl_compositor */
 static inline void *
-wl_compositor_get_user_data(struct wl_compositor *wl_compositor)
+poor_wl_compositor_get_user_data(struct poor_wl_compositor *poor_wl_compositor)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_compositor);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_compositor);
 }
 
 static inline uint32_t
-wl_compositor_get_version(struct wl_compositor *wl_compositor)
+poor_wl_compositor_get_version(struct poor_wl_compositor *poor_wl_compositor)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_compositor);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_compositor);
 }
 
-/** @ingroup iface_wl_compositor */
+/** @ingroup iface_poor_wl_compositor */
 static inline void
-wl_compositor_destroy(struct wl_compositor *wl_compositor)
+poor_wl_compositor_destroy(struct poor_wl_compositor *poor_wl_compositor)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_compositor);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_compositor);
 }
 
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  *
  * Ask the compositor to create a new surface.
  */
-static inline struct wl_surface *
-wl_compositor_create_surface(struct wl_compositor *wl_compositor, struct wl_proxy *id)
+static inline struct poor_wl_surface *
+poor_wl_compositor_create_surface(struct poor_wl_compositor *poor_wl_compositor, struct poor_wl_surface *id)
 {
-	return (struct wl_surface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
-			 WL_COMPOSITOR_CREATE_SURFACE, &wl_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, id);
+	return (struct poor_wl_surface *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_compositor,
+			 POOR_WL_COMPOSITOR_CREATE_SURFACE, &poor_wl_surface_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_compositor), 0, id);
 }
 
 /**
- * @ingroup iface_wl_compositor
+ * @ingroup iface_poor_wl_compositor
  *
  * Ask the compositor to create a new region.
  */
-static inline struct wl_region *
-wl_compositor_create_region(struct wl_compositor *wl_compositor, struct wl_proxy *id)
+static inline struct poor_wl_region *
+poor_wl_compositor_create_region(struct poor_wl_compositor *poor_wl_compositor, struct poor_wl_region *id)
 {
-	return (struct wl_region *) wl_proxy_marshal_flags((struct wl_proxy *) wl_compositor,
-			 WL_COMPOSITOR_CREATE_REGION, &wl_region_interface, wl_proxy_get_version((struct wl_proxy *) wl_compositor), 0, id);
+	return (struct poor_wl_region *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_compositor,
+			 POOR_WL_COMPOSITOR_CREATE_REGION, &poor_wl_region_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_compositor), 0, id);
 }
 
-#define WL_SHM_POOL_CREATE_BUFFER 0
-#define WL_SHM_POOL_DESTROY 1
-#define WL_SHM_POOL_RESIZE 2
+/**
+ * @ingroup iface_poor_wl_shm_pool
+ * @struct poor_wl_shm_pool
+ */
+struct poor_wl_shm_pool {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_SHM_POOL_CREATE_BUFFER 0
+#define POOR_WL_SHM_POOL_DESTROY 1
+#define POOR_WL_SHM_POOL_RESIZE 2
 
 
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_CREATE_BUFFER_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_CREATE_BUFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  */
-#define WL_SHM_POOL_RESIZE_SINCE_VERSION 1
+#define POOR_WL_SHM_POOL_RESIZE_SINCE_VERSION 1
 
-/** @ingroup iface_wl_shm_pool */
+/** @ingroup iface_poor_wl_shm_pool */
 static inline void
-wl_shm_pool_set_user_data(struct wl_shm_pool *wl_shm_pool, void *user_data)
+poor_wl_shm_pool_set_user_data(struct poor_wl_shm_pool *poor_wl_shm_pool, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_shm_pool, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_shm_pool, user_data);
 }
 
-/** @ingroup iface_wl_shm_pool */
+/** @ingroup iface_poor_wl_shm_pool */
 static inline void *
-wl_shm_pool_get_user_data(struct wl_shm_pool *wl_shm_pool)
+poor_wl_shm_pool_get_user_data(struct poor_wl_shm_pool *poor_wl_shm_pool)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_shm_pool);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_shm_pool);
 }
 
 static inline uint32_t
-wl_shm_pool_get_version(struct wl_shm_pool *wl_shm_pool)
+poor_wl_shm_pool_get_version(struct poor_wl_shm_pool *poor_wl_shm_pool)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_shm_pool);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm_pool);
 }
 
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  *
  * Create a wl_buffer object from the pool.
  *
@@ -1313,15 +1345,15 @@ wl_shm_pool_get_version(struct wl_shm_pool *wl_shm_pool)
  * so it is valid to destroy the pool immediately after creating
  * a buffer from it.
  */
-static inline struct wl_buffer *
-wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, struct wl_proxy *id, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format)
+static inline struct poor_wl_buffer *
+poor_wl_shm_pool_create_buffer(struct poor_wl_shm_pool *poor_wl_shm_pool, struct poor_wl_buffer *id, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format)
 {
-	return (struct wl_buffer *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shm_pool,
-			 WL_SHM_POOL_CREATE_BUFFER, &wl_buffer_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm_pool), 0, id, offset, width, height, stride, format);
+	return (struct poor_wl_buffer *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shm_pool,
+			 POOR_WL_SHM_POOL_CREATE_BUFFER, &poor_wl_buffer_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm_pool), 0, id, offset, width, height, stride, format);
 }
 
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  *
  * Destroy the shared memory pool.
  *
@@ -1330,14 +1362,14 @@ wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, struct wl_proxy *id, 
  * are gone.
  */
 static inline void
-wl_shm_pool_destroy(struct wl_shm_pool *wl_shm_pool)
+poor_wl_shm_pool_destroy(struct poor_wl_shm_pool *poor_wl_shm_pool)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shm_pool,
-			 WL_SHM_POOL_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shm_pool), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shm_pool,
+			 POOR_WL_SHM_POOL_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm_pool), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_shm_pool
+ * @ingroup iface_poor_wl_shm_pool
  *
  * This request will cause the server to remap the backing memory
  * for the pool from the file descriptor passed when the pool was
@@ -1345,40 +1377,40 @@ wl_shm_pool_destroy(struct wl_shm_pool *wl_shm_pool)
  * used to make the pool bigger.
  */
 static inline void
-wl_shm_pool_resize(struct wl_shm_pool *wl_shm_pool, int32_t size)
+poor_wl_shm_pool_resize(struct poor_wl_shm_pool *poor_wl_shm_pool, int32_t size)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shm_pool,
-			 WL_SHM_POOL_RESIZE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shm_pool), 0, size);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shm_pool,
+			 POOR_WL_SHM_POOL_RESIZE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm_pool), 0, size);
 }
 
-#ifndef WL_SHM_ERROR_ENUM
-#define WL_SHM_ERROR_ENUM
+#ifndef POOR_WL_SHM_ERROR_ENUM
+#define POOR_WL_SHM_ERROR_ENUM
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  * wl_shm error values
  *
  * These errors can be emitted in response to wl_shm requests.
  */
-enum wl_shm_error {
+enum poor_wl_shm_error {
 	/**
 	 * buffer format is not known
 	 */
-	WL_SHM_ERROR_INVALID_FORMAT = 0,
+	POOR_WL_SHM_ERROR_INVALID_FORMAT = 0,
 	/**
 	 * invalid size or stride during pool or buffer creation
 	 */
-	WL_SHM_ERROR_INVALID_STRIDE = 1,
+	POOR_WL_SHM_ERROR_INVALID_STRIDE = 1,
 	/**
 	 * mmapping the file descriptor failed
 	 */
-	WL_SHM_ERROR_INVALID_FD = 2,
+	POOR_WL_SHM_ERROR_INVALID_FD = 2,
 };
-#endif /* WL_SHM_ERROR_ENUM */
+#endif /* POOR_WL_SHM_ERROR_ENUM */
 
-#ifndef WL_SHM_FORMAT_ENUM
-#define WL_SHM_FORMAT_ENUM
+#ifndef POOR_WL_SHM_FORMAT_ENUM
+#define POOR_WL_SHM_FORMAT_ENUM
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  * pixel formats
  *
  * This describes the memory layout of an individual pixel.
@@ -1391,247 +1423,255 @@ enum wl_shm_error {
  * The formats actually supported by the compositor will be
  * reported by the format event.
  */
-enum wl_shm_format {
+enum poor_wl_shm_format {
 	/**
 	 * 32-bit ARGB format, [31:0] A:R:G:B 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_ARGB8888 = 0,
+	POOR_WL_SHM_FORMAT_ARGB8888 = 0,
 	/**
 	 * 32-bit RGB format, [31:0] x:R:G:B 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_XRGB8888 = 1,
+	POOR_WL_SHM_FORMAT_XRGB8888 = 1,
 	/**
 	 * 8-bit color index format, [7:0] C
 	 */
-	WL_SHM_FORMAT_C8 = 0x20203843,
+	POOR_WL_SHM_FORMAT_C8 = 0x20203843,
 	/**
 	 * 8-bit RGB format, [7:0] R:G:B 3:3:2
 	 */
-	WL_SHM_FORMAT_RGB332 = 0x38424752,
+	POOR_WL_SHM_FORMAT_RGB332 = 0x38424752,
 	/**
 	 * 8-bit BGR format, [7:0] B:G:R 2:3:3
 	 */
-	WL_SHM_FORMAT_BGR233 = 0x38524742,
+	POOR_WL_SHM_FORMAT_BGR233 = 0x38524742,
 	/**
 	 * 16-bit xRGB format, [15:0] x:R:G:B 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_XRGB4444 = 0x32315258,
+	POOR_WL_SHM_FORMAT_XRGB4444 = 0x32315258,
 	/**
 	 * 16-bit xBGR format, [15:0] x:B:G:R 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_XBGR4444 = 0x32314258,
+	POOR_WL_SHM_FORMAT_XBGR4444 = 0x32314258,
 	/**
 	 * 16-bit RGBx format, [15:0] R:G:B:x 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_RGBX4444 = 0x32315852,
+	POOR_WL_SHM_FORMAT_RGBX4444 = 0x32315852,
 	/**
 	 * 16-bit BGRx format, [15:0] B:G:R:x 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_BGRX4444 = 0x32315842,
+	POOR_WL_SHM_FORMAT_BGRX4444 = 0x32315842,
 	/**
 	 * 16-bit ARGB format, [15:0] A:R:G:B 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_ARGB4444 = 0x32315241,
+	POOR_WL_SHM_FORMAT_ARGB4444 = 0x32315241,
 	/**
 	 * 16-bit ABGR format, [15:0] A:B:G:R 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_ABGR4444 = 0x32314241,
+	POOR_WL_SHM_FORMAT_ABGR4444 = 0x32314241,
 	/**
 	 * 16-bit RBGA format, [15:0] R:G:B:A 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_RGBA4444 = 0x32314152,
+	POOR_WL_SHM_FORMAT_RGBA4444 = 0x32314152,
 	/**
 	 * 16-bit BGRA format, [15:0] B:G:R:A 4:4:4:4 little endian
 	 */
-	WL_SHM_FORMAT_BGRA4444 = 0x32314142,
+	POOR_WL_SHM_FORMAT_BGRA4444 = 0x32314142,
 	/**
 	 * 16-bit xRGB format, [15:0] x:R:G:B 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_XRGB1555 = 0x35315258,
+	POOR_WL_SHM_FORMAT_XRGB1555 = 0x35315258,
 	/**
 	 * 16-bit xBGR 1555 format, [15:0] x:B:G:R 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_XBGR1555 = 0x35314258,
+	POOR_WL_SHM_FORMAT_XBGR1555 = 0x35314258,
 	/**
 	 * 16-bit RGBx 5551 format, [15:0] R:G:B:x 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_RGBX5551 = 0x35315852,
+	POOR_WL_SHM_FORMAT_RGBX5551 = 0x35315852,
 	/**
 	 * 16-bit BGRx 5551 format, [15:0] B:G:R:x 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_BGRX5551 = 0x35315842,
+	POOR_WL_SHM_FORMAT_BGRX5551 = 0x35315842,
 	/**
 	 * 16-bit ARGB 1555 format, [15:0] A:R:G:B 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_ARGB1555 = 0x35315241,
+	POOR_WL_SHM_FORMAT_ARGB1555 = 0x35315241,
 	/**
 	 * 16-bit ABGR 1555 format, [15:0] A:B:G:R 1:5:5:5 little endian
 	 */
-	WL_SHM_FORMAT_ABGR1555 = 0x35314241,
+	POOR_WL_SHM_FORMAT_ABGR1555 = 0x35314241,
 	/**
 	 * 16-bit RGBA 5551 format, [15:0] R:G:B:A 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_RGBA5551 = 0x35314152,
+	POOR_WL_SHM_FORMAT_RGBA5551 = 0x35314152,
 	/**
 	 * 16-bit BGRA 5551 format, [15:0] B:G:R:A 5:5:5:1 little endian
 	 */
-	WL_SHM_FORMAT_BGRA5551 = 0x35314142,
+	POOR_WL_SHM_FORMAT_BGRA5551 = 0x35314142,
 	/**
 	 * 16-bit RGB 565 format, [15:0] R:G:B 5:6:5 little endian
 	 */
-	WL_SHM_FORMAT_RGB565 = 0x36314752,
+	POOR_WL_SHM_FORMAT_RGB565 = 0x36314752,
 	/**
 	 * 16-bit BGR 565 format, [15:0] B:G:R 5:6:5 little endian
 	 */
-	WL_SHM_FORMAT_BGR565 = 0x36314742,
+	POOR_WL_SHM_FORMAT_BGR565 = 0x36314742,
 	/**
 	 * 24-bit RGB format, [23:0] R:G:B little endian
 	 */
-	WL_SHM_FORMAT_RGB888 = 0x34324752,
+	POOR_WL_SHM_FORMAT_RGB888 = 0x34324752,
 	/**
 	 * 24-bit BGR format, [23:0] B:G:R little endian
 	 */
-	WL_SHM_FORMAT_BGR888 = 0x34324742,
+	POOR_WL_SHM_FORMAT_BGR888 = 0x34324742,
 	/**
 	 * 32-bit xBGR format, [31:0] x:B:G:R 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_XBGR8888 = 0x34324258,
+	POOR_WL_SHM_FORMAT_XBGR8888 = 0x34324258,
 	/**
 	 * 32-bit RGBx format, [31:0] R:G:B:x 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_RGBX8888 = 0x34325852,
+	POOR_WL_SHM_FORMAT_RGBX8888 = 0x34325852,
 	/**
 	 * 32-bit BGRx format, [31:0] B:G:R:x 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_BGRX8888 = 0x34325842,
+	POOR_WL_SHM_FORMAT_BGRX8888 = 0x34325842,
 	/**
 	 * 32-bit ABGR format, [31:0] A:B:G:R 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_ABGR8888 = 0x34324241,
+	POOR_WL_SHM_FORMAT_ABGR8888 = 0x34324241,
 	/**
 	 * 32-bit RGBA format, [31:0] R:G:B:A 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_RGBA8888 = 0x34324152,
+	POOR_WL_SHM_FORMAT_RGBA8888 = 0x34324152,
 	/**
 	 * 32-bit BGRA format, [31:0] B:G:R:A 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_BGRA8888 = 0x34324142,
+	POOR_WL_SHM_FORMAT_BGRA8888 = 0x34324142,
 	/**
 	 * 32-bit xRGB format, [31:0] x:R:G:B 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_XRGB2101010 = 0x30335258,
+	POOR_WL_SHM_FORMAT_XRGB2101010 = 0x30335258,
 	/**
 	 * 32-bit xBGR format, [31:0] x:B:G:R 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_XBGR2101010 = 0x30334258,
+	POOR_WL_SHM_FORMAT_XBGR2101010 = 0x30334258,
 	/**
 	 * 32-bit RGBx format, [31:0] R:G:B:x 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_RGBX1010102 = 0x30335852,
+	POOR_WL_SHM_FORMAT_RGBX1010102 = 0x30335852,
 	/**
 	 * 32-bit BGRx format, [31:0] B:G:R:x 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_BGRX1010102 = 0x30335842,
+	POOR_WL_SHM_FORMAT_BGRX1010102 = 0x30335842,
 	/**
 	 * 32-bit ARGB format, [31:0] A:R:G:B 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_ARGB2101010 = 0x30335241,
+	POOR_WL_SHM_FORMAT_ARGB2101010 = 0x30335241,
 	/**
 	 * 32-bit ABGR format, [31:0] A:B:G:R 2:10:10:10 little endian
 	 */
-	WL_SHM_FORMAT_ABGR2101010 = 0x30334241,
+	POOR_WL_SHM_FORMAT_ABGR2101010 = 0x30334241,
 	/**
 	 * 32-bit RGBA format, [31:0] R:G:B:A 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_RGBA1010102 = 0x30334152,
+	POOR_WL_SHM_FORMAT_RGBA1010102 = 0x30334152,
 	/**
 	 * 32-bit BGRA format, [31:0] B:G:R:A 10:10:10:2 little endian
 	 */
-	WL_SHM_FORMAT_BGRA1010102 = 0x30334142,
+	POOR_WL_SHM_FORMAT_BGRA1010102 = 0x30334142,
 	/**
 	 * packed YCbCr format, [31:0] Cr0:Y1:Cb0:Y0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_YUYV = 0x56595559,
+	POOR_WL_SHM_FORMAT_YUYV = 0x56595559,
 	/**
 	 * packed YCbCr format, [31:0] Cb0:Y1:Cr0:Y0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_YVYU = 0x55595659,
+	POOR_WL_SHM_FORMAT_YVYU = 0x55595659,
 	/**
 	 * packed YCbCr format, [31:0] Y1:Cr0:Y0:Cb0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_UYVY = 0x59565955,
+	POOR_WL_SHM_FORMAT_UYVY = 0x59565955,
 	/**
 	 * packed YCbCr format, [31:0] Y1:Cb0:Y0:Cr0 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_VYUY = 0x59555956,
+	POOR_WL_SHM_FORMAT_VYUY = 0x59555956,
 	/**
 	 * packed AYCbCr format, [31:0] A:Y:Cb:Cr 8:8:8:8 little endian
 	 */
-	WL_SHM_FORMAT_AYUV = 0x56555941,
+	POOR_WL_SHM_FORMAT_AYUV = 0x56555941,
 	/**
 	 * 2 plane YCbCr Cr:Cb format, 2x2 subsampled Cr:Cb plane
 	 */
-	WL_SHM_FORMAT_NV12 = 0x3231564e,
+	POOR_WL_SHM_FORMAT_NV12 = 0x3231564e,
 	/**
 	 * 2 plane YCbCr Cb:Cr format, 2x2 subsampled Cb:Cr plane
 	 */
-	WL_SHM_FORMAT_NV21 = 0x3132564e,
+	POOR_WL_SHM_FORMAT_NV21 = 0x3132564e,
 	/**
 	 * 2 plane YCbCr Cr:Cb format, 2x1 subsampled Cr:Cb plane
 	 */
-	WL_SHM_FORMAT_NV16 = 0x3631564e,
+	POOR_WL_SHM_FORMAT_NV16 = 0x3631564e,
 	/**
 	 * 2 plane YCbCr Cb:Cr format, 2x1 subsampled Cb:Cr plane
 	 */
-	WL_SHM_FORMAT_NV61 = 0x3136564e,
+	POOR_WL_SHM_FORMAT_NV61 = 0x3136564e,
 	/**
 	 * 3 plane YCbCr format, 4x4 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV410 = 0x39565559,
+	POOR_WL_SHM_FORMAT_YUV410 = 0x39565559,
 	/**
 	 * 3 plane YCbCr format, 4x4 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU410 = 0x39555659,
+	POOR_WL_SHM_FORMAT_YVU410 = 0x39555659,
 	/**
 	 * 3 plane YCbCr format, 4x1 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV411 = 0x31315559,
+	POOR_WL_SHM_FORMAT_YUV411 = 0x31315559,
 	/**
 	 * 3 plane YCbCr format, 4x1 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU411 = 0x31315659,
+	POOR_WL_SHM_FORMAT_YVU411 = 0x31315659,
 	/**
 	 * 3 plane YCbCr format, 2x2 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV420 = 0x32315559,
+	POOR_WL_SHM_FORMAT_YUV420 = 0x32315559,
 	/**
 	 * 3 plane YCbCr format, 2x2 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU420 = 0x32315659,
+	POOR_WL_SHM_FORMAT_YVU420 = 0x32315659,
 	/**
 	 * 3 plane YCbCr format, 2x1 subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV422 = 0x36315559,
+	POOR_WL_SHM_FORMAT_YUV422 = 0x36315559,
 	/**
 	 * 3 plane YCbCr format, 2x1 subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU422 = 0x36315659,
+	POOR_WL_SHM_FORMAT_YVU422 = 0x36315659,
 	/**
 	 * 3 plane YCbCr format, non-subsampled Cb (1) and Cr (2) planes
 	 */
-	WL_SHM_FORMAT_YUV444 = 0x34325559,
+	POOR_WL_SHM_FORMAT_YUV444 = 0x34325559,
 	/**
 	 * 3 plane YCbCr format, non-subsampled Cr (1) and Cb (2) planes
 	 */
-	WL_SHM_FORMAT_YVU444 = 0x34325659,
+	POOR_WL_SHM_FORMAT_YVU444 = 0x34325659,
 };
-#endif /* WL_SHM_FORMAT_ENUM */
+#endif /* POOR_WL_SHM_FORMAT_ENUM */
 
 /**
- * @ingroup iface_wl_shm
- * @struct wl_shm_listener
+ * @ingroup iface_poor_wl_shm
+ * @struct poor_wl_shm
  */
-struct wl_shm_listener {
+struct poor_wl_shm {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_shm
+ * @struct poor_wl_shm_listener
+ */
+struct poor_wl_shm_listener {
 	/**
 	 * pixel format description
 	 *
@@ -1640,62 +1680,62 @@ struct wl_shm_listener {
 	 * @param format buffer pixel format
 	 */
 	void (*format)(void *data,
-		       struct wl_shm *wl_shm,
+		       struct poor_wl_shm *poor_wl_shm,
 		       uint32_t format);
 };
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  */
 static inline int
-wl_shm_add_listener(struct wl_shm *wl_shm,
-		    const struct wl_shm_listener *listener, void *data)
+poor_wl_shm_add_listener(struct poor_wl_shm *poor_wl_shm,
+			 const struct poor_wl_shm_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_shm,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_shm,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_SHM_CREATE_POOL 0
+#define POOR_WL_SHM_CREATE_POOL 0
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  */
-#define WL_SHM_FORMAT_SINCE_VERSION 1
+#define POOR_WL_SHM_FORMAT_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  */
-#define WL_SHM_CREATE_POOL_SINCE_VERSION 1
+#define POOR_WL_SHM_CREATE_POOL_SINCE_VERSION 1
 
-/** @ingroup iface_wl_shm */
+/** @ingroup iface_poor_wl_shm */
 static inline void
-wl_shm_set_user_data(struct wl_shm *wl_shm, void *user_data)
+poor_wl_shm_set_user_data(struct poor_wl_shm *poor_wl_shm, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_shm, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_shm, user_data);
 }
 
-/** @ingroup iface_wl_shm */
+/** @ingroup iface_poor_wl_shm */
 static inline void *
-wl_shm_get_user_data(struct wl_shm *wl_shm)
+poor_wl_shm_get_user_data(struct poor_wl_shm *poor_wl_shm)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_shm);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_shm);
 }
 
 static inline uint32_t
-wl_shm_get_version(struct wl_shm *wl_shm)
+poor_wl_shm_get_version(struct poor_wl_shm *poor_wl_shm)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_shm);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm);
 }
 
-/** @ingroup iface_wl_shm */
+/** @ingroup iface_poor_wl_shm */
 static inline void
-wl_shm_destroy(struct wl_shm *wl_shm)
+poor_wl_shm_destroy(struct poor_wl_shm *poor_wl_shm)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_shm);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_shm);
 }
 
 /**
- * @ingroup iface_wl_shm
+ * @ingroup iface_poor_wl_shm
  *
  * Create a new wl_shm_pool object.
  *
@@ -1703,18 +1743,26 @@ wl_shm_destroy(struct wl_shm *wl_shm)
  * objects.  The server will mmap size bytes of the passed file
  * descriptor, to use as backing memory for the pool.
  */
-static inline struct wl_shm_pool *
-wl_shm_create_pool(struct wl_shm *wl_shm, struct wl_proxy *id, int32_t fd, int32_t size)
+static inline struct poor_wl_shm_pool *
+poor_wl_shm_create_pool(struct poor_wl_shm *poor_wl_shm, struct poor_wl_shm_pool *id, int32_t fd, int32_t size)
 {
-	return (struct wl_shm_pool *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shm,
-			 WL_SHM_CREATE_POOL, &wl_shm_pool_interface, wl_proxy_get_version((struct wl_proxy *) wl_shm), 0, id, fd, size);
+	return (struct poor_wl_shm_pool *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shm,
+			 POOR_WL_SHM_CREATE_POOL, &poor_wl_shm_pool_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shm), 0, id, fd, size);
 }
 
 /**
- * @ingroup iface_wl_buffer
- * @struct wl_buffer_listener
+ * @ingroup iface_poor_wl_buffer
+ * @struct poor_wl_buffer
  */
-struct wl_buffer_listener {
+struct poor_wl_buffer {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_buffer
+ * @struct poor_wl_buffer_listener
+ */
+struct poor_wl_buffer_listener {
 	/**
 	 * compositor releases buffer
 	 *
@@ -1732,54 +1780,54 @@ struct wl_buffer_listener {
 	 * optimization for GL(ES) compositors with wl_shm clients.
 	 */
 	void (*release)(void *data,
-			struct wl_buffer *wl_buffer);
+			struct poor_wl_buffer *poor_wl_buffer);
 };
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  */
 static inline int
-wl_buffer_add_listener(struct wl_buffer *wl_buffer,
-		       const struct wl_buffer_listener *listener, void *data)
+poor_wl_buffer_add_listener(struct poor_wl_buffer *poor_wl_buffer,
+			    const struct poor_wl_buffer_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_buffer,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_buffer,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_BUFFER_DESTROY 0
+#define POOR_WL_BUFFER_DESTROY 0
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  */
-#define WL_BUFFER_RELEASE_SINCE_VERSION 1
+#define POOR_WL_BUFFER_RELEASE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  */
-#define WL_BUFFER_DESTROY_SINCE_VERSION 1
+#define POOR_WL_BUFFER_DESTROY_SINCE_VERSION 1
 
-/** @ingroup iface_wl_buffer */
+/** @ingroup iface_poor_wl_buffer */
 static inline void
-wl_buffer_set_user_data(struct wl_buffer *wl_buffer, void *user_data)
+poor_wl_buffer_set_user_data(struct poor_wl_buffer *poor_wl_buffer, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_buffer, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_buffer, user_data);
 }
 
-/** @ingroup iface_wl_buffer */
+/** @ingroup iface_poor_wl_buffer */
 static inline void *
-wl_buffer_get_user_data(struct wl_buffer *wl_buffer)
+poor_wl_buffer_get_user_data(struct poor_wl_buffer *poor_wl_buffer)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_buffer);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_buffer);
 }
 
 static inline uint32_t
-wl_buffer_get_version(struct wl_buffer *wl_buffer)
+poor_wl_buffer_get_version(struct poor_wl_buffer *poor_wl_buffer)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_buffer);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_buffer);
 }
 
 /**
- * @ingroup iface_wl_buffer
+ * @ingroup iface_poor_wl_buffer
  *
  * Destroy a buffer. If and how you need to release the backing
  * storage is defined by the buffer factory interface.
@@ -1787,39 +1835,47 @@ wl_buffer_get_version(struct wl_buffer *wl_buffer)
  * For possible side-effects to a surface, see wl_surface.attach.
  */
 static inline void
-wl_buffer_destroy(struct wl_buffer *wl_buffer)
+poor_wl_buffer_destroy(struct poor_wl_buffer *poor_wl_buffer)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_buffer,
-			 WL_BUFFER_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_buffer), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_buffer,
+			 POOR_WL_BUFFER_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_buffer), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifndef WL_DATA_OFFER_ERROR_ENUM
-#define WL_DATA_OFFER_ERROR_ENUM
-enum wl_data_offer_error {
+#ifndef POOR_WL_DATA_OFFER_ERROR_ENUM
+#define POOR_WL_DATA_OFFER_ERROR_ENUM
+enum poor_wl_data_offer_error {
 	/**
 	 * finish request was called untimely
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_FINISH = 0,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_FINISH = 0,
 	/**
 	 * action mask contains invalid values
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK = 1,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION_MASK = 1,
 	/**
 	 * action argument has an invalid value
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_ACTION = 2,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_ACTION = 2,
 	/**
 	 * offer doesn't accept this request
 	 */
-	WL_DATA_OFFER_ERROR_INVALID_OFFER = 3,
+	POOR_WL_DATA_OFFER_ERROR_INVALID_OFFER = 3,
 };
-#endif /* WL_DATA_OFFER_ERROR_ENUM */
+#endif /* POOR_WL_DATA_OFFER_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_data_offer
- * @struct wl_data_offer_listener
+ * @ingroup iface_poor_wl_data_offer
+ * @struct poor_wl_data_offer
  */
-struct wl_data_offer_listener {
+struct poor_wl_data_offer {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_offer
+ * @struct poor_wl_data_offer_listener
+ */
+struct poor_wl_data_offer_listener {
 	/**
 	 * advertise offered mime type
 	 *
@@ -1828,7 +1884,7 @@ struct wl_data_offer_listener {
 	 * @param mime_type offered mime type
 	 */
 	void (*offer)(void *data,
-		      struct wl_data_offer *wl_data_offer,
+		      struct poor_wl_data_offer *poor_wl_data_offer,
 		      const char *mime_type);
 	/**
 	 * notify the source-side available actions
@@ -1841,7 +1897,7 @@ struct wl_data_offer_listener {
 	 * @since 3
 	 */
 	void (*source_actions)(void *data,
-			       struct wl_data_offer *wl_data_offer,
+			       struct poor_wl_data_offer *poor_wl_data_offer,
 			       uint32_t source_actions);
 	/**
 	 * notify the selected action
@@ -1887,83 +1943,83 @@ struct wl_data_offer_listener {
 	 * @since 3
 	 */
 	void (*action)(void *data,
-		       struct wl_data_offer *wl_data_offer,
+		       struct poor_wl_data_offer *poor_wl_data_offer,
 		       uint32_t dnd_action);
 };
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
 static inline int
-wl_data_offer_add_listener(struct wl_data_offer *wl_data_offer,
-			   const struct wl_data_offer_listener *listener, void *data)
+poor_wl_data_offer_add_listener(struct poor_wl_data_offer *poor_wl_data_offer,
+				const struct poor_wl_data_offer_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_data_offer,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_offer,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_DATA_OFFER_ACCEPT 0
-#define WL_DATA_OFFER_RECEIVE 1
-#define WL_DATA_OFFER_DESTROY 2
-#define WL_DATA_OFFER_FINISH 3
-#define WL_DATA_OFFER_SET_ACTIONS 4
+#define POOR_WL_DATA_OFFER_ACCEPT 0
+#define POOR_WL_DATA_OFFER_RECEIVE 1
+#define POOR_WL_DATA_OFFER_DESTROY 2
+#define POOR_WL_DATA_OFFER_FINISH 3
+#define POOR_WL_DATA_OFFER_SET_ACTIONS 4
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_SOURCE_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_SOURCE_ACTIONS_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_ACTION_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_ACTION_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_ACCEPT_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_ACCEPT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_RECEIVE_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_RECEIVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_DESTROY_SINCE_VERSION 1
+#define POOR_WL_DATA_OFFER_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_FINISH_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_FINISH_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  */
-#define WL_DATA_OFFER_SET_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_OFFER_SET_ACTIONS_SINCE_VERSION 3
 
-/** @ingroup iface_wl_data_offer */
+/** @ingroup iface_poor_wl_data_offer */
 static inline void
-wl_data_offer_set_user_data(struct wl_data_offer *wl_data_offer, void *user_data)
+poor_wl_data_offer_set_user_data(struct poor_wl_data_offer *poor_wl_data_offer, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_data_offer, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_data_offer, user_data);
 }
 
-/** @ingroup iface_wl_data_offer */
+/** @ingroup iface_poor_wl_data_offer */
 static inline void *
-wl_data_offer_get_user_data(struct wl_data_offer *wl_data_offer)
+poor_wl_data_offer_get_user_data(struct poor_wl_data_offer *poor_wl_data_offer)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_data_offer);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_data_offer);
 }
 
 static inline uint32_t
-wl_data_offer_get_version(struct wl_data_offer *wl_data_offer)
+poor_wl_data_offer_get_version(struct poor_wl_data_offer *poor_wl_data_offer)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_data_offer);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  *
  * Indicate that the client can accept the given mime type, or
  * NULL for not accepted.
@@ -1981,14 +2037,14 @@ wl_data_offer_get_version(struct wl_data_offer *wl_data_offer)
  * conjunction with wl_data_source.action for feedback.
  */
 static inline void
-wl_data_offer_accept(struct wl_data_offer *wl_data_offer, uint32_t serial, const char *mime_type)
+poor_wl_data_offer_accept(struct poor_wl_data_offer *poor_wl_data_offer, uint32_t serial, const char *mime_type)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_offer,
-			 WL_DATA_OFFER_ACCEPT, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_offer), 0, serial, mime_type);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_offer,
+			 POOR_WL_DATA_OFFER_ACCEPT, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer), 0, serial, mime_type);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  *
  * To transfer the offered data, the client issues this request
  * and indicates the mime type it wants to receive.  The transfer
@@ -2007,26 +2063,26 @@ wl_data_offer_accept(struct wl_data_offer *wl_data_offer, uint32_t serial, const
  * determine acceptance.
  */
 static inline void
-wl_data_offer_receive(struct wl_data_offer *wl_data_offer, const char *mime_type, int32_t fd)
+poor_wl_data_offer_receive(struct poor_wl_data_offer *poor_wl_data_offer, const char *mime_type, int32_t fd)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_offer,
-			 WL_DATA_OFFER_RECEIVE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_offer), 0, mime_type, fd);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_offer,
+			 POOR_WL_DATA_OFFER_RECEIVE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer), 0, mime_type, fd);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  *
  * Destroy the data offer.
  */
 static inline void
-wl_data_offer_destroy(struct wl_data_offer *wl_data_offer)
+poor_wl_data_offer_destroy(struct poor_wl_data_offer *poor_wl_data_offer)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_offer,
-			 WL_DATA_OFFER_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_offer), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_offer,
+			 POOR_WL_DATA_OFFER_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  *
  * Notifies the compositor that the drag destination successfully
  * finished the drag-and-drop operation.
@@ -2041,14 +2097,14 @@ wl_data_offer_destroy(struct wl_data_offer *wl_data_offer)
  * wl_data_offer.action.
  */
 static inline void
-wl_data_offer_finish(struct wl_data_offer *wl_data_offer)
+poor_wl_data_offer_finish(struct poor_wl_data_offer *poor_wl_data_offer)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_offer,
-			 WL_DATA_OFFER_FINISH, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_offer), 0);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_offer,
+			 POOR_WL_DATA_OFFER_FINISH, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer), 0);
 }
 
 /**
- * @ingroup iface_wl_data_offer
+ * @ingroup iface_poor_wl_data_offer
  *
  * Sets the actions that the destination side client supports for
  * this operation. This request may trigger the emission of
@@ -2083,31 +2139,39 @@ wl_data_offer_finish(struct wl_data_offer *wl_data_offer)
  * will be raised otherwise.
  */
 static inline void
-wl_data_offer_set_actions(struct wl_data_offer *wl_data_offer, uint32_t dnd_actions, uint32_t preferred_action)
+poor_wl_data_offer_set_actions(struct poor_wl_data_offer *poor_wl_data_offer, uint32_t dnd_actions, uint32_t preferred_action)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_offer,
-			 WL_DATA_OFFER_SET_ACTIONS, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_offer), 0, dnd_actions, preferred_action);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_offer,
+			 POOR_WL_DATA_OFFER_SET_ACTIONS, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_offer), 0, dnd_actions, preferred_action);
 }
 
-#ifndef WL_DATA_SOURCE_ERROR_ENUM
-#define WL_DATA_SOURCE_ERROR_ENUM
-enum wl_data_source_error {
+#ifndef POOR_WL_DATA_SOURCE_ERROR_ENUM
+#define POOR_WL_DATA_SOURCE_ERROR_ENUM
+enum poor_wl_data_source_error {
 	/**
 	 * action mask contains invalid values
 	 */
-	WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK = 0,
+	POOR_WL_DATA_SOURCE_ERROR_INVALID_ACTION_MASK = 0,
 	/**
 	 * source doesn't accept this request
 	 */
-	WL_DATA_SOURCE_ERROR_INVALID_SOURCE = 1,
+	POOR_WL_DATA_SOURCE_ERROR_INVALID_SOURCE = 1,
 };
-#endif /* WL_DATA_SOURCE_ERROR_ENUM */
+#endif /* POOR_WL_DATA_SOURCE_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_data_source
- * @struct wl_data_source_listener
+ * @ingroup iface_poor_wl_data_source
+ * @struct poor_wl_data_source
  */
-struct wl_data_source_listener {
+struct poor_wl_data_source {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_source
+ * @struct poor_wl_data_source_listener
+ */
+struct poor_wl_data_source_listener {
 	/**
 	 * a target accepts an offered mime type
 	 *
@@ -2118,7 +2182,7 @@ struct wl_data_source_listener {
 	 * @param mime_type mime type accepted by the target
 	 */
 	void (*target)(void *data,
-		       struct wl_data_source *wl_data_source,
+		       struct poor_wl_data_source *poor_wl_data_source,
 		       const char *mime_type);
 	/**
 	 * send the data
@@ -2130,7 +2194,7 @@ struct wl_data_source_listener {
 	 * @param fd file descriptor for the data
 	 */
 	void (*send)(void *data,
-		     struct wl_data_source *wl_data_source,
+		     struct poor_wl_data_source *poor_wl_data_source,
 		     const char *mime_type,
 		     int32_t fd);
 	/**
@@ -2157,7 +2221,7 @@ struct wl_data_source_listener {
 	 * source.
 	 */
 	void (*cancelled)(void *data,
-			  struct wl_data_source *wl_data_source);
+			  struct poor_wl_data_source *poor_wl_data_source);
 	/**
 	 * the drag-and-drop operation physically finished
 	 *
@@ -2175,7 +2239,7 @@ struct wl_data_source_listener {
 	 * @since 3
 	 */
 	void (*dnd_drop_performed)(void *data,
-				   struct wl_data_source *wl_data_source);
+				   struct poor_wl_data_source *poor_wl_data_source);
 	/**
 	 * the drag-and-drop operation concluded
 	 *
@@ -2188,7 +2252,7 @@ struct wl_data_source_listener {
 	 * @since 3
 	 */
 	void (*dnd_finished)(void *data,
-			     struct wl_data_source *wl_data_source);
+			     struct poor_wl_data_source *poor_wl_data_source);
 	/**
 	 * notify the selected action
 	 *
@@ -2223,111 +2287,111 @@ struct wl_data_source_listener {
 	 * @since 3
 	 */
 	void (*action)(void *data,
-		       struct wl_data_source *wl_data_source,
+		       struct poor_wl_data_source *poor_wl_data_source,
 		       uint32_t dnd_action);
 };
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
 static inline int
-wl_data_source_add_listener(struct wl_data_source *wl_data_source,
-			    const struct wl_data_source_listener *listener, void *data)
+poor_wl_data_source_add_listener(struct poor_wl_data_source *poor_wl_data_source,
+				 const struct poor_wl_data_source_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_data_source,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_source,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_DATA_SOURCE_OFFER 0
-#define WL_DATA_SOURCE_DESTROY 1
-#define WL_DATA_SOURCE_SET_ACTIONS 2
+#define POOR_WL_DATA_SOURCE_OFFER 0
+#define POOR_WL_DATA_SOURCE_DESTROY 1
+#define POOR_WL_DATA_SOURCE_SET_ACTIONS 2
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_TARGET_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_TARGET_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_SEND_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_SEND_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_CANCELLED_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_CANCELLED_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DND_DROP_PERFORMED_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_DND_DROP_PERFORMED_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DND_FINISHED_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_DND_FINISHED_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_ACTION_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_ACTION_SINCE_VERSION 3
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_DESTROY_SINCE_VERSION 1
+#define POOR_WL_DATA_SOURCE_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  */
-#define WL_DATA_SOURCE_SET_ACTIONS_SINCE_VERSION 3
+#define POOR_WL_DATA_SOURCE_SET_ACTIONS_SINCE_VERSION 3
 
-/** @ingroup iface_wl_data_source */
+/** @ingroup iface_poor_wl_data_source */
 static inline void
-wl_data_source_set_user_data(struct wl_data_source *wl_data_source, void *user_data)
+poor_wl_data_source_set_user_data(struct poor_wl_data_source *poor_wl_data_source, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_data_source, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_data_source, user_data);
 }
 
-/** @ingroup iface_wl_data_source */
+/** @ingroup iface_poor_wl_data_source */
 static inline void *
-wl_data_source_get_user_data(struct wl_data_source *wl_data_source)
+poor_wl_data_source_get_user_data(struct poor_wl_data_source *poor_wl_data_source)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_data_source);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_data_source);
 }
 
 static inline uint32_t
-wl_data_source_get_version(struct wl_data_source *wl_data_source)
+poor_wl_data_source_get_version(struct poor_wl_data_source *poor_wl_data_source)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_data_source);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_source);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  *
  * This request adds a mime type to the set of mime types
  * advertised to targets.  Can be called several times to offer
  * multiple types.
  */
 static inline void
-wl_data_source_offer(struct wl_data_source *wl_data_source, const char *mime_type)
+poor_wl_data_source_offer(struct poor_wl_data_source *poor_wl_data_source, const char *mime_type)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_source,
-			 WL_DATA_SOURCE_OFFER, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_source), 0, mime_type);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_source,
+			 POOR_WL_DATA_SOURCE_OFFER, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_source), 0, mime_type);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  *
  * Destroy the data source.
  */
 static inline void
-wl_data_source_destroy(struct wl_data_source *wl_data_source)
+poor_wl_data_source_destroy(struct poor_wl_data_source *poor_wl_data_source)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_source,
-			 WL_DATA_SOURCE_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_source), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_source,
+			 POOR_WL_DATA_SOURCE_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_source), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_data_source
+ * @ingroup iface_poor_wl_data_source
  *
  * Sets the actions that the source side client supports for this
  * operation. This request may trigger wl_data_source.action and
@@ -2344,27 +2408,35 @@ wl_data_source_destroy(struct wl_data_source *wl_data_source)
  * for drag-and-drop will raise a protocol error.
  */
 static inline void
-wl_data_source_set_actions(struct wl_data_source *wl_data_source, uint32_t dnd_actions)
+poor_wl_data_source_set_actions(struct poor_wl_data_source *poor_wl_data_source, uint32_t dnd_actions)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_source,
-			 WL_DATA_SOURCE_SET_ACTIONS, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_source), 0, dnd_actions);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_source,
+			 POOR_WL_DATA_SOURCE_SET_ACTIONS, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_source), 0, dnd_actions);
 }
 
-#ifndef WL_DATA_DEVICE_ERROR_ENUM
-#define WL_DATA_DEVICE_ERROR_ENUM
-enum wl_data_device_error {
+#ifndef POOR_WL_DATA_DEVICE_ERROR_ENUM
+#define POOR_WL_DATA_DEVICE_ERROR_ENUM
+enum poor_wl_data_device_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_DATA_DEVICE_ERROR_ROLE = 0,
+	POOR_WL_DATA_DEVICE_ERROR_ROLE = 0,
 };
-#endif /* WL_DATA_DEVICE_ERROR_ENUM */
+#endif /* POOR_WL_DATA_DEVICE_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_data_device
- * @struct wl_data_device_listener
+ * @ingroup iface_poor_wl_data_device
+ * @struct poor_wl_data_device
  */
-struct wl_data_device_listener {
+struct poor_wl_data_device {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_data_device
+ * @struct poor_wl_data_device_listener
+ */
+struct poor_wl_data_device_listener {
 	/**
 	 * introduce a new wl_data_offer
 	 *
@@ -2378,8 +2450,8 @@ struct wl_data_device_listener {
 	 * @param id the new data_offer object
 	 */
 	void (*data_offer)(void *data,
-			   struct wl_data_device *wl_data_device,
-			   struct wl_data_offer *id);
+			   struct poor_wl_data_device *poor_wl_data_device,
+			   struct poor_wl_data_offer *id);
 	/**
 	 * initiate drag-and-drop session
 	 *
@@ -2394,12 +2466,12 @@ struct wl_data_device_listener {
 	 * @param id source data_offer object
 	 */
 	void (*enter)(void *data,
-		      struct wl_data_device *wl_data_device,
+		      struct poor_wl_data_device *poor_wl_data_device,
 		      uint32_t serial,
-		      struct wl_surface *surface,
-		      wl_fixed_t x,
-		      wl_fixed_t y,
-		      struct wl_data_offer *id);
+		      struct poor_wl_surface *surface,
+		      poor_wl_fixed_t x,
+		      poor_wl_fixed_t y,
+		      struct poor_wl_data_offer *id);
 	/**
 	 * end drag-and-drop session
 	 *
@@ -2408,7 +2480,7 @@ struct wl_data_device_listener {
 	 * wl_data_offer introduced at enter time at this point.
 	 */
 	void (*leave)(void *data,
-		      struct wl_data_device *wl_data_device);
+		      struct poor_wl_data_device *poor_wl_data_device);
 	/**
 	 * drag-and-drop session motion
 	 *
@@ -2421,10 +2493,10 @@ struct wl_data_device_listener {
 	 * @param y surface-local y coordinate
 	 */
 	void (*motion)(void *data,
-		       struct wl_data_device *wl_data_device,
+		       struct poor_wl_data_device *poor_wl_data_device,
 		       uint32_t time,
-		       wl_fixed_t x,
-		       wl_fixed_t y);
+		       poor_wl_fixed_t x,
+		       poor_wl_fixed_t y);
 	/**
 	 * end drag-and-drop session successfully
 	 *
@@ -2443,7 +2515,7 @@ struct wl_data_device_listener {
 	 * wl_data_offer.destroy in order to cancel the operation.
 	 */
 	void (*drop)(void *data,
-		     struct wl_data_device *wl_data_device);
+		     struct poor_wl_data_device *poor_wl_data_device);
 	/**
 	 * advertise new selection
 	 *
@@ -2460,92 +2532,92 @@ struct wl_data_device_listener {
 	 * @param id selection data_offer object
 	 */
 	void (*selection)(void *data,
-			  struct wl_data_device *wl_data_device,
-			  struct wl_data_offer *id);
+			  struct poor_wl_data_device *poor_wl_data_device,
+			  struct poor_wl_data_offer *id);
 };
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
 static inline int
-wl_data_device_add_listener(struct wl_data_device *wl_data_device,
-			    const struct wl_data_device_listener *listener, void *data)
+poor_wl_data_device_add_listener(struct poor_wl_data_device *poor_wl_data_device,
+				 const struct poor_wl_data_device_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_data_device,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_device,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_DATA_DEVICE_START_DRAG 0
-#define WL_DATA_DEVICE_SET_SELECTION 1
-#define WL_DATA_DEVICE_RELEASE 2
+#define POOR_WL_DATA_DEVICE_START_DRAG 0
+#define POOR_WL_DATA_DEVICE_SET_SELECTION 1
+#define POOR_WL_DATA_DEVICE_RELEASE 2
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_DATA_OFFER_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_DATA_OFFER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_ENTER_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_LEAVE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_MOTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_DROP_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_DROP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_SELECTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_SELECTION_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_START_DRAG_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_START_DRAG_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_SET_SELECTION_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_SET_SELECTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  */
-#define WL_DATA_DEVICE_RELEASE_SINCE_VERSION 2
+#define POOR_WL_DATA_DEVICE_RELEASE_SINCE_VERSION 2
 
-/** @ingroup iface_wl_data_device */
+/** @ingroup iface_poor_wl_data_device */
 static inline void
-wl_data_device_set_user_data(struct wl_data_device *wl_data_device, void *user_data)
+poor_wl_data_device_set_user_data(struct poor_wl_data_device *poor_wl_data_device, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_data_device, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_data_device, user_data);
 }
 
-/** @ingroup iface_wl_data_device */
+/** @ingroup iface_poor_wl_data_device */
 static inline void *
-wl_data_device_get_user_data(struct wl_data_device *wl_data_device)
+poor_wl_data_device_get_user_data(struct poor_wl_data_device *poor_wl_data_device)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_data_device);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_data_device);
 }
 
 static inline uint32_t
-wl_data_device_get_version(struct wl_data_device *wl_data_device)
+poor_wl_data_device_get_version(struct poor_wl_data_device *poor_wl_data_device)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_data_device);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device);
 }
 
-/** @ingroup iface_wl_data_device */
+/** @ingroup iface_poor_wl_data_device */
 static inline void
-wl_data_device_destroy(struct wl_data_device *wl_data_device)
+poor_wl_data_device_destroy(struct poor_wl_data_device *poor_wl_data_device)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_data_device);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_data_device);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  *
  * This request asks the compositor to start a drag-and-drop
  * operation on behalf of the client.
@@ -2576,14 +2648,14 @@ wl_data_device_destroy(struct wl_data_device *wl_data_device)
  * undefined, and the wl_surface is unmapped.
  */
 static inline void
-wl_data_device_start_drag(struct wl_data_device *wl_data_device, struct wl_data_source *source, struct wl_surface *origin, struct wl_surface *icon, uint32_t serial)
+poor_wl_data_device_start_drag(struct poor_wl_data_device *poor_wl_data_device, struct poor_wl_data_source *source, struct poor_wl_surface *origin, struct poor_wl_surface *icon, uint32_t serial)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device,
-			 WL_DATA_DEVICE_START_DRAG, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_device), 0, source, origin, icon, serial);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_device,
+			 POOR_WL_DATA_DEVICE_START_DRAG, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device), 0, source, origin, icon, serial);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  *
  * This request asks the compositor to set the selection
  * to the data from the source on behalf of the client.
@@ -2591,28 +2663,28 @@ wl_data_device_start_drag(struct wl_data_device *wl_data_device, struct wl_data_
  * To unset the selection, set the source to NULL.
  */
 static inline void
-wl_data_device_set_selection(struct wl_data_device *wl_data_device, struct wl_data_source *source, uint32_t serial)
+poor_wl_data_device_set_selection(struct poor_wl_data_device *poor_wl_data_device, struct poor_wl_data_source *source, uint32_t serial)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device,
-			 WL_DATA_DEVICE_SET_SELECTION, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_device), 0, source, serial);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_device,
+			 POOR_WL_DATA_DEVICE_SET_SELECTION, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device), 0, source, serial);
 }
 
 /**
- * @ingroup iface_wl_data_device
+ * @ingroup iface_poor_wl_data_device
  *
  * This request destroys the data device.
  */
 static inline void
-wl_data_device_release(struct wl_data_device *wl_data_device)
+poor_wl_data_device_release(struct poor_wl_data_device *poor_wl_data_device)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device,
-			 WL_DATA_DEVICE_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_data_device), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_device,
+			 POOR_WL_DATA_DEVICE_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifndef WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
-#define WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
+#ifndef POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
+#define POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  * drag and drop actions
  *
  * This is a bitmask of the available/preferred actions in a
@@ -2639,137 +2711,153 @@ wl_data_device_release(struct wl_data_device *wl_data_device)
  * or drags initiated with other buttons than BTN_LEFT to specific
  * actions (e.g. "ask").
  */
-enum wl_data_device_manager_dnd_action {
+enum poor_wl_data_device_manager_dnd_action {
 	/**
 	 * no action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE = 0,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE = 0,
 	/**
 	 * copy action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY = 1,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY = 1,
 	/**
 	 * move action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE = 2,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE = 2,
 	/**
 	 * ask action
 	 */
-	WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK = 4,
+	POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ASK = 4,
 };
-#endif /* WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM */
+#endif /* POOR_WL_DATA_DEVICE_MANAGER_DND_ACTION_ENUM */
 
-#define WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE 0
-#define WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE 1
+/**
+ * @ingroup iface_poor_wl_data_device_manager
+ * @struct poor_wl_data_device_manager
+ */
+struct poor_wl_data_device_manager {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE 0
+#define POOR_WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE 1
 
 
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  */
-#define WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  */
-#define WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE_SINCE_VERSION 1
+#define POOR_WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE_SINCE_VERSION 1
 
-/** @ingroup iface_wl_data_device_manager */
+/** @ingroup iface_poor_wl_data_device_manager */
 static inline void
-wl_data_device_manager_set_user_data(struct wl_data_device_manager *wl_data_device_manager, void *user_data)
+poor_wl_data_device_manager_set_user_data(struct poor_wl_data_device_manager *poor_wl_data_device_manager, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_data_device_manager, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_data_device_manager, user_data);
 }
 
-/** @ingroup iface_wl_data_device_manager */
+/** @ingroup iface_poor_wl_data_device_manager */
 static inline void *
-wl_data_device_manager_get_user_data(struct wl_data_device_manager *wl_data_device_manager)
+poor_wl_data_device_manager_get_user_data(struct poor_wl_data_device_manager *poor_wl_data_device_manager)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_data_device_manager);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_data_device_manager);
 }
 
 static inline uint32_t
-wl_data_device_manager_get_version(struct wl_data_device_manager *wl_data_device_manager)
+poor_wl_data_device_manager_get_version(struct poor_wl_data_device_manager *poor_wl_data_device_manager)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device_manager);
 }
 
-/** @ingroup iface_wl_data_device_manager */
+/** @ingroup iface_poor_wl_data_device_manager */
 static inline void
-wl_data_device_manager_destroy(struct wl_data_device_manager *wl_data_device_manager)
+poor_wl_data_device_manager_destroy(struct poor_wl_data_device_manager *poor_wl_data_device_manager)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_data_device_manager);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_data_device_manager);
 }
 
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  *
  * Create a new data source.
  */
-static inline struct wl_data_source *
-wl_data_device_manager_create_data_source(struct wl_data_device_manager *wl_data_device_manager, struct wl_proxy *id)
+static inline struct poor_wl_data_source *
+poor_wl_data_device_manager_create_data_source(struct poor_wl_data_device_manager *poor_wl_data_device_manager, struct poor_wl_data_source *id)
 {
-	return (struct wl_data_source *) wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
-			 WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE, &wl_data_source_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, id);
+	return (struct poor_wl_data_source *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_device_manager,
+			 POOR_WL_DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE, &poor_wl_data_source_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device_manager), 0, id);
 }
 
 /**
- * @ingroup iface_wl_data_device_manager
+ * @ingroup iface_poor_wl_data_device_manager
  *
  * Create a new data device for a given seat.
  */
-static inline struct wl_data_device *
-wl_data_device_manager_get_data_device(struct wl_data_device_manager *wl_data_device_manager, struct wl_proxy *id, struct wl_seat *seat)
+static inline struct poor_wl_data_device *
+poor_wl_data_device_manager_get_data_device(struct poor_wl_data_device_manager *poor_wl_data_device_manager, struct poor_wl_data_device *id, struct poor_wl_seat *seat)
 {
-	return (struct wl_data_device *) wl_proxy_marshal_flags((struct wl_proxy *) wl_data_device_manager,
-			 WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE, &wl_data_device_interface, wl_proxy_get_version((struct wl_proxy *) wl_data_device_manager), 0, id, seat);
+	return (struct poor_wl_data_device *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_data_device_manager,
+			 POOR_WL_DATA_DEVICE_MANAGER_GET_DATA_DEVICE, &poor_wl_data_device_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_data_device_manager), 0, id, seat);
 }
 
-#ifndef WL_SHELL_ERROR_ENUM
-#define WL_SHELL_ERROR_ENUM
-enum wl_shell_error {
+#ifndef POOR_WL_SHELL_ERROR_ENUM
+#define POOR_WL_SHELL_ERROR_ENUM
+enum poor_wl_shell_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_SHELL_ERROR_ROLE = 0,
+	POOR_WL_SHELL_ERROR_ROLE = 0,
 };
-#endif /* WL_SHELL_ERROR_ENUM */
+#endif /* POOR_WL_SHELL_ERROR_ENUM */
 
-#define WL_SHELL_GET_SHELL_SURFACE 0
+/**
+ * @ingroup iface_poor_wl_shell
+ * @struct poor_wl_shell
+ */
+struct poor_wl_shell {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_SHELL_GET_SHELL_SURFACE 0
 
 
 /**
- * @ingroup iface_wl_shell
+ * @ingroup iface_poor_wl_shell
  */
-#define WL_SHELL_GET_SHELL_SURFACE_SINCE_VERSION 1
+#define POOR_WL_SHELL_GET_SHELL_SURFACE_SINCE_VERSION 1
 
-/** @ingroup iface_wl_shell */
+/** @ingroup iface_poor_wl_shell */
 static inline void
-wl_shell_set_user_data(struct wl_shell *wl_shell, void *user_data)
+poor_wl_shell_set_user_data(struct poor_wl_shell *poor_wl_shell, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_shell, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_shell, user_data);
 }
 
-/** @ingroup iface_wl_shell */
+/** @ingroup iface_poor_wl_shell */
 static inline void *
-wl_shell_get_user_data(struct wl_shell *wl_shell)
+poor_wl_shell_get_user_data(struct poor_wl_shell *poor_wl_shell)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_shell);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_shell);
 }
 
 static inline uint32_t
-wl_shell_get_version(struct wl_shell *wl_shell)
+poor_wl_shell_get_version(struct poor_wl_shell *poor_wl_shell)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_shell);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell);
 }
 
-/** @ingroup iface_wl_shell */
+/** @ingroup iface_poor_wl_shell */
 static inline void
-wl_shell_destroy(struct wl_shell *wl_shell)
+poor_wl_shell_destroy(struct poor_wl_shell *poor_wl_shell)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_shell);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_shell);
 }
 
 /**
- * @ingroup iface_wl_shell
+ * @ingroup iface_poor_wl_shell
  *
  * Create a shell surface for an existing surface. This gives
  * the wl_surface the role of a shell surface. If the wl_surface
@@ -2777,17 +2865,17 @@ wl_shell_destroy(struct wl_shell *wl_shell)
  *
  * Only one shell surface can be associated with a given surface.
  */
-static inline struct wl_shell_surface *
-wl_shell_get_shell_surface(struct wl_shell *wl_shell, struct wl_proxy *id, struct wl_surface *surface)
+static inline struct poor_wl_shell_surface *
+poor_wl_shell_get_shell_surface(struct poor_wl_shell *poor_wl_shell, struct poor_wl_shell_surface *id, struct poor_wl_surface *surface)
 {
-	return (struct wl_shell_surface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_shell,
-			 WL_SHELL_GET_SHELL_SURFACE, &wl_shell_surface_interface, wl_proxy_get_version((struct wl_proxy *) wl_shell), 0, id, surface);
+	return (struct poor_wl_shell_surface *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell,
+			 POOR_WL_SHELL_GET_SHELL_SURFACE, &poor_wl_shell_surface_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell), 0, id, surface);
 }
 
-#ifndef WL_SHELL_SURFACE_RESIZE_ENUM
-#define WL_SHELL_SURFACE_RESIZE_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_RESIZE_ENUM
+#define POOR_WL_SHELL_SURFACE_RESIZE_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * edge values for resizing
  *
  * These values are used to indicate which edge of a surface
@@ -2795,98 +2883,106 @@ wl_shell_get_shell_surface(struct wl_shell *wl_shell, struct wl_proxy *id, struc
  * use this information to adapt its behavior, e.g. choose
  * an appropriate cursor image.
  */
-enum wl_shell_surface_resize {
+enum poor_wl_shell_surface_resize {
 	/**
 	 * no edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_NONE = 0,
+	POOR_WL_SHELL_SURFACE_RESIZE_NONE = 0,
 	/**
 	 * top edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP = 1,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP = 1,
 	/**
 	 * bottom edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM = 2,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM = 2,
 	/**
 	 * left edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_LEFT = 4,
+	POOR_WL_SHELL_SURFACE_RESIZE_LEFT = 4,
 	/**
 	 * top and left edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP_LEFT = 5,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP_LEFT = 5,
 	/**
 	 * bottom and left edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT = 6,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_LEFT = 6,
 	/**
 	 * right edge
 	 */
-	WL_SHELL_SURFACE_RESIZE_RIGHT = 8,
+	POOR_WL_SHELL_SURFACE_RESIZE_RIGHT = 8,
 	/**
 	 * top and right edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_TOP_RIGHT = 9,
+	POOR_WL_SHELL_SURFACE_RESIZE_TOP_RIGHT = 9,
 	/**
 	 * bottom and right edges
 	 */
-	WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT = 10,
+	POOR_WL_SHELL_SURFACE_RESIZE_BOTTOM_RIGHT = 10,
 };
-#endif /* WL_SHELL_SURFACE_RESIZE_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_RESIZE_ENUM */
 
-#ifndef WL_SHELL_SURFACE_TRANSIENT_ENUM
-#define WL_SHELL_SURFACE_TRANSIENT_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM
+#define POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * details of transient behaviour
  *
  * These flags specify details of the expected behaviour
  * of transient surfaces. Used in the set_transient request.
  */
-enum wl_shell_surface_transient {
+enum poor_wl_shell_surface_transient {
 	/**
 	 * do not set keyboard focus
 	 */
-	WL_SHELL_SURFACE_TRANSIENT_INACTIVE = 0x1,
+	POOR_WL_SHELL_SURFACE_TRANSIENT_INACTIVE = 0x1,
 };
-#endif /* WL_SHELL_SURFACE_TRANSIENT_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_TRANSIENT_ENUM */
 
-#ifndef WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
-#define WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
+#ifndef POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
+#define POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  * different method to set the surface fullscreen
  *
  * Hints to indicate to the compositor how to deal with a conflict
  * between the dimensions of the surface and the dimensions of the
  * output. The compositor is free to ignore this parameter.
  */
-enum wl_shell_surface_fullscreen_method {
+enum poor_wl_shell_surface_fullscreen_method {
 	/**
 	 * no preference, apply default policy
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT = 0,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DEFAULT = 0,
 	/**
 	 * scale, preserve the surface's aspect ratio and center on output
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE = 1,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_SCALE = 1,
 	/**
 	 * switch output mode to the smallest mode that can fit the surface, add black borders to compensate size mismatch
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER = 2,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_DRIVER = 2,
 	/**
 	 * no upscaling, center on output and add black borders to compensate size mismatch
 	 */
-	WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL = 3,
+	POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_FILL = 3,
 };
-#endif /* WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM */
+#endif /* POOR_WL_SHELL_SURFACE_FULLSCREEN_METHOD_ENUM */
 
 /**
- * @ingroup iface_wl_shell_surface
- * @struct wl_shell_surface_listener
+ * @ingroup iface_poor_wl_shell_surface
+ * @struct poor_wl_shell_surface
  */
-struct wl_shell_surface_listener {
+struct poor_wl_shell_surface {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_shell_surface
+ * @struct poor_wl_shell_surface_listener
+ */
+struct poor_wl_shell_surface_listener {
 	/**
 	 * ping client
 	 *
@@ -2895,7 +2991,7 @@ struct wl_shell_surface_listener {
 	 * @param serial serial number of the ping
 	 */
 	void (*ping)(void *data,
-		     struct wl_shell_surface *wl_shell_surface,
+		     struct poor_wl_shell_surface *poor_wl_shell_surface,
 		     uint32_t serial);
 	/**
 	 * suggest resize
@@ -2922,7 +3018,7 @@ struct wl_shell_surface_listener {
 	 * @param height new height of the surface
 	 */
 	void (*configure)(void *data,
-			  struct wl_shell_surface *wl_shell_surface,
+			  struct poor_wl_shell_surface *poor_wl_shell_surface,
 			  uint32_t edges,
 			  int32_t width,
 			  int32_t height);
@@ -2934,127 +3030,127 @@ struct wl_shell_surface_listener {
 	 * the client owning the popup surface.
 	 */
 	void (*popup_done)(void *data,
-			   struct wl_shell_surface *wl_shell_surface);
+			   struct poor_wl_shell_surface *poor_wl_shell_surface);
 };
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
 static inline int
-wl_shell_surface_add_listener(struct wl_shell_surface *wl_shell_surface,
-			      const struct wl_shell_surface_listener *listener, void *data)
+poor_wl_shell_surface_add_listener(struct poor_wl_shell_surface *poor_wl_shell_surface,
+				   const struct poor_wl_shell_surface_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_shell_surface,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_shell_surface,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_SHELL_SURFACE_PONG 0
-#define WL_SHELL_SURFACE_MOVE 1
-#define WL_SHELL_SURFACE_RESIZE 2
-#define WL_SHELL_SURFACE_SET_TOPLEVEL 3
-#define WL_SHELL_SURFACE_SET_TRANSIENT 4
-#define WL_SHELL_SURFACE_SET_FULLSCREEN 5
-#define WL_SHELL_SURFACE_SET_POPUP 6
-#define WL_SHELL_SURFACE_SET_MAXIMIZED 7
-#define WL_SHELL_SURFACE_SET_TITLE 8
-#define WL_SHELL_SURFACE_SET_CLASS 9
+#define POOR_WL_SHELL_SURFACE_PONG 0
+#define POOR_WL_SHELL_SURFACE_MOVE 1
+#define POOR_WL_SHELL_SURFACE_RESIZE 2
+#define POOR_WL_SHELL_SURFACE_SET_TOPLEVEL 3
+#define POOR_WL_SHELL_SURFACE_SET_TRANSIENT 4
+#define POOR_WL_SHELL_SURFACE_SET_FULLSCREEN 5
+#define POOR_WL_SHELL_SURFACE_SET_POPUP 6
+#define POOR_WL_SHELL_SURFACE_SET_MAXIMIZED 7
+#define POOR_WL_SHELL_SURFACE_SET_TITLE 8
+#define POOR_WL_SHELL_SURFACE_SET_CLASS 9
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_PING_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_PING_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_CONFIGURE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_CONFIGURE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_POPUP_DONE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_POPUP_DONE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_PONG_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_PONG_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_MOVE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_MOVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_RESIZE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_RESIZE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TOPLEVEL_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TOPLEVEL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TRANSIENT_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TRANSIENT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_FULLSCREEN_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_FULLSCREEN_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_POPUP_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_POPUP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_MAXIMIZED_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_MAXIMIZED_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_TITLE_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_TITLE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  */
-#define WL_SHELL_SURFACE_SET_CLASS_SINCE_VERSION 1
+#define POOR_WL_SHELL_SURFACE_SET_CLASS_SINCE_VERSION 1
 
-/** @ingroup iface_wl_shell_surface */
+/** @ingroup iface_poor_wl_shell_surface */
 static inline void
-wl_shell_surface_set_user_data(struct wl_shell_surface *wl_shell_surface, void *user_data)
+poor_wl_shell_surface_set_user_data(struct poor_wl_shell_surface *poor_wl_shell_surface, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_shell_surface, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_shell_surface, user_data);
 }
 
-/** @ingroup iface_wl_shell_surface */
+/** @ingroup iface_poor_wl_shell_surface */
 static inline void *
-wl_shell_surface_get_user_data(struct wl_shell_surface *wl_shell_surface)
+poor_wl_shell_surface_get_user_data(struct poor_wl_shell_surface *poor_wl_shell_surface)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_shell_surface);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_shell_surface);
 }
 
 static inline uint32_t
-wl_shell_surface_get_version(struct wl_shell_surface *wl_shell_surface)
+poor_wl_shell_surface_get_version(struct poor_wl_shell_surface *poor_wl_shell_surface)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_shell_surface);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface);
 }
 
-/** @ingroup iface_wl_shell_surface */
+/** @ingroup iface_poor_wl_shell_surface */
 static inline void
-wl_shell_surface_destroy(struct wl_shell_surface *wl_shell_surface)
+poor_wl_shell_surface_destroy(struct poor_wl_shell_surface *poor_wl_shell_surface)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_shell_surface);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_shell_surface);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * A client must respond to a ping event with a pong request or
  * the client may be deemed unresponsive.
  */
 static inline void
-wl_shell_surface_pong(struct wl_shell_surface *wl_shell_surface, uint32_t serial)
+poor_wl_shell_surface_pong(struct poor_wl_shell_surface *poor_wl_shell_surface, uint32_t serial)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_PONG, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, serial);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_PONG, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, serial);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Start a pointer-driven move of the surface.
  *
@@ -3063,14 +3159,14 @@ wl_shell_surface_pong(struct wl_shell_surface *wl_shell_surface, uint32_t serial
  * the surface (e.g. fullscreen or maximized).
  */
 static inline void
-wl_shell_surface_move(struct wl_shell_surface *wl_shell_surface, struct wl_seat *seat, uint32_t serial)
+poor_wl_shell_surface_move(struct poor_wl_shell_surface *poor_wl_shell_surface, struct poor_wl_seat *seat, uint32_t serial)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_MOVE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, seat, serial);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_MOVE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, seat, serial);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Start a pointer-driven resizing of the surface.
  *
@@ -3079,28 +3175,28 @@ wl_shell_surface_move(struct wl_shell_surface *wl_shell_surface, struct wl_seat 
  * the surface (e.g. fullscreen or maximized).
  */
 static inline void
-wl_shell_surface_resize(struct wl_shell_surface *wl_shell_surface, struct wl_seat *seat, uint32_t serial, uint32_t edges)
+poor_wl_shell_surface_resize(struct poor_wl_shell_surface *poor_wl_shell_surface, struct poor_wl_seat *seat, uint32_t serial, uint32_t edges)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_RESIZE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, seat, serial, edges);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_RESIZE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, seat, serial, edges);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Map the surface as a toplevel surface.
  *
  * A toplevel surface is not fullscreen, maximized or transient.
  */
 static inline void
-wl_shell_surface_set_toplevel(struct wl_shell_surface *wl_shell_surface)
+poor_wl_shell_surface_set_toplevel(struct poor_wl_shell_surface *poor_wl_shell_surface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_TOPLEVEL, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_TOPLEVEL, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Map the surface relative to an existing surface.
  *
@@ -3111,14 +3207,14 @@ wl_shell_surface_set_toplevel(struct wl_shell_surface *wl_shell_surface)
  * The flags argument controls details of the transient behaviour.
  */
 static inline void
-wl_shell_surface_set_transient(struct wl_shell_surface *wl_shell_surface, struct wl_surface *parent, int32_t x, int32_t y, uint32_t flags)
+poor_wl_shell_surface_set_transient(struct poor_wl_shell_surface *poor_wl_shell_surface, struct poor_wl_surface *parent, int32_t x, int32_t y, uint32_t flags)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_TRANSIENT, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, parent, x, y, flags);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_TRANSIENT, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, parent, x, y, flags);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Map the surface as a fullscreen surface.
  *
@@ -3155,14 +3251,14 @@ wl_shell_surface_set_transient(struct wl_shell_surface *wl_shell_surface, struct
  * be made fullscreen.
  */
 static inline void
-wl_shell_surface_set_fullscreen(struct wl_shell_surface *wl_shell_surface, uint32_t method, uint32_t framerate, struct wl_output *output)
+poor_wl_shell_surface_set_fullscreen(struct poor_wl_shell_surface *poor_wl_shell_surface, uint32_t method, uint32_t framerate, struct poor_wl_output *output)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_FULLSCREEN, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, method, framerate, output);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_FULLSCREEN, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, method, framerate, output);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Map the surface as a popup.
  *
@@ -3185,14 +3281,14 @@ wl_shell_surface_set_fullscreen(struct wl_shell_surface *wl_shell_surface, uint3
  * parent surface, in surface-local coordinates.
  */
 static inline void
-wl_shell_surface_set_popup(struct wl_shell_surface *wl_shell_surface, struct wl_seat *seat, uint32_t serial, struct wl_surface *parent, int32_t x, int32_t y, uint32_t flags)
+poor_wl_shell_surface_set_popup(struct poor_wl_shell_surface *poor_wl_shell_surface, struct poor_wl_seat *seat, uint32_t serial, struct poor_wl_surface *parent, int32_t x, int32_t y, uint32_t flags)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_POPUP, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, seat, serial, parent, x, y, flags);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_POPUP, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, seat, serial, parent, x, y, flags);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Map the surface as a maximized surface.
  *
@@ -3214,14 +3310,14 @@ wl_shell_surface_set_popup(struct wl_shell_surface *wl_shell_surface, struct wl_
  * The details depend on the compositor implementation.
  */
 static inline void
-wl_shell_surface_set_maximized(struct wl_shell_surface *wl_shell_surface, struct wl_output *output)
+poor_wl_shell_surface_set_maximized(struct poor_wl_shell_surface *poor_wl_shell_surface, struct poor_wl_output *output)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_MAXIMIZED, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, output);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_MAXIMIZED, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, output);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Set a short title for the surface.
  *
@@ -3232,14 +3328,14 @@ wl_shell_surface_set_maximized(struct wl_shell_surface *wl_shell_surface, struct
  * The string must be encoded in UTF-8.
  */
 static inline void
-wl_shell_surface_set_title(struct wl_shell_surface *wl_shell_surface, const char *title)
+poor_wl_shell_surface_set_title(struct poor_wl_shell_surface *poor_wl_shell_surface, const char *title)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_TITLE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, title);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_TITLE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, title);
 }
 
 /**
- * @ingroup iface_wl_shell_surface
+ * @ingroup iface_poor_wl_shell_surface
  *
  * Set a class for the surface.
  *
@@ -3249,37 +3345,45 @@ wl_shell_surface_set_title(struct wl_shell_surface *wl_shell_surface, const char
  * the application's .desktop file as the class.
  */
 static inline void
-wl_shell_surface_set_class(struct wl_shell_surface *wl_shell_surface, const char *class_)
+poor_wl_shell_surface_set_class(struct poor_wl_shell_surface *poor_wl_shell_surface, const char *class_)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_shell_surface,
-			 WL_SHELL_SURFACE_SET_CLASS, NULL, wl_proxy_get_version((struct wl_proxy *) wl_shell_surface), 0, class_);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_shell_surface,
+			 POOR_WL_SHELL_SURFACE_SET_CLASS, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_shell_surface), 0, class_);
 }
 
-#ifndef WL_SURFACE_ERROR_ENUM
-#define WL_SURFACE_ERROR_ENUM
+#ifndef POOR_WL_SURFACE_ERROR_ENUM
+#define POOR_WL_SURFACE_ERROR_ENUM
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  * wl_surface error values
  *
  * These errors can be emitted in response to wl_surface requests.
  */
-enum wl_surface_error {
+enum poor_wl_surface_error {
 	/**
 	 * buffer scale value is invalid
 	 */
-	WL_SURFACE_ERROR_INVALID_SCALE = 0,
+	POOR_WL_SURFACE_ERROR_INVALID_SCALE = 0,
 	/**
 	 * buffer transform value is invalid
 	 */
-	WL_SURFACE_ERROR_INVALID_TRANSFORM = 1,
+	POOR_WL_SURFACE_ERROR_INVALID_TRANSFORM = 1,
 };
-#endif /* WL_SURFACE_ERROR_ENUM */
+#endif /* POOR_WL_SURFACE_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_surface
- * @struct wl_surface_listener
+ * @ingroup iface_poor_wl_surface
+ * @struct poor_wl_surface
  */
-struct wl_surface_listener {
+struct poor_wl_surface {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_surface
+ * @struct poor_wl_surface_listener
+ */
+struct poor_wl_surface_listener {
 	/**
 	 * surface enters an output
 	 *
@@ -3292,8 +3396,8 @@ struct wl_surface_listener {
 	 * @param output output entered by the surface
 	 */
 	void (*enter)(void *data,
-		      struct wl_surface *wl_surface,
-		      struct wl_output *output);
+		      struct poor_wl_surface *poor_wl_surface,
+		      struct poor_wl_output *output);
 	/**
 	 * surface leaves an output
 	 *
@@ -3303,116 +3407,116 @@ struct wl_surface_listener {
 	 * @param output output left by the surface
 	 */
 	void (*leave)(void *data,
-		      struct wl_surface *wl_surface,
-		      struct wl_output *output);
+		      struct poor_wl_surface *poor_wl_surface,
+		      struct poor_wl_output *output);
 };
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
 static inline int
-wl_surface_add_listener(struct wl_surface *wl_surface,
-			const struct wl_surface_listener *listener, void *data)
+poor_wl_surface_add_listener(struct poor_wl_surface *poor_wl_surface,
+			     const struct poor_wl_surface_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_surface,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_surface,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_SURFACE_DESTROY 0
-#define WL_SURFACE_ATTACH 1
-#define WL_SURFACE_DAMAGE 2
-#define WL_SURFACE_FRAME 3
-#define WL_SURFACE_SET_OPAQUE_REGION 4
-#define WL_SURFACE_SET_INPUT_REGION 5
-#define WL_SURFACE_COMMIT 6
-#define WL_SURFACE_SET_BUFFER_TRANSFORM 7
-#define WL_SURFACE_SET_BUFFER_SCALE 8
-#define WL_SURFACE_DAMAGE_BUFFER 9
+#define POOR_WL_SURFACE_DESTROY 0
+#define POOR_WL_SURFACE_ATTACH 1
+#define POOR_WL_SURFACE_DAMAGE 2
+#define POOR_WL_SURFACE_FRAME 3
+#define POOR_WL_SURFACE_SET_OPAQUE_REGION 4
+#define POOR_WL_SURFACE_SET_INPUT_REGION 5
+#define POOR_WL_SURFACE_COMMIT 6
+#define POOR_WL_SURFACE_SET_BUFFER_TRANSFORM 7
+#define POOR_WL_SURFACE_SET_BUFFER_SCALE 8
+#define POOR_WL_SURFACE_DAMAGE_BUFFER 9
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_ENTER_SINCE_VERSION 1
+#define POOR_WL_SURFACE_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_LEAVE_SINCE_VERSION 1
+#define POOR_WL_SURFACE_LEAVE_SINCE_VERSION 1
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SURFACE_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_ATTACH_SINCE_VERSION 1
+#define POOR_WL_SURFACE_ATTACH_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DAMAGE_SINCE_VERSION 1
+#define POOR_WL_SURFACE_DAMAGE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_FRAME_SINCE_VERSION 1
+#define POOR_WL_SURFACE_FRAME_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_OPAQUE_REGION_SINCE_VERSION 1
+#define POOR_WL_SURFACE_SET_OPAQUE_REGION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_INPUT_REGION_SINCE_VERSION 1
+#define POOR_WL_SURFACE_SET_INPUT_REGION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_COMMIT_SINCE_VERSION 1
+#define POOR_WL_SURFACE_COMMIT_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION 2
+#define POOR_WL_SURFACE_SET_BUFFER_TRANSFORM_SINCE_VERSION 2
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION 3
+#define POOR_WL_SURFACE_SET_BUFFER_SCALE_SINCE_VERSION 3
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  */
-#define WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION 4
+#define POOR_WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION 4
 
-/** @ingroup iface_wl_surface */
+/** @ingroup iface_poor_wl_surface */
 static inline void
-wl_surface_set_user_data(struct wl_surface *wl_surface, void *user_data)
+poor_wl_surface_set_user_data(struct poor_wl_surface *poor_wl_surface, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_surface, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_surface, user_data);
 }
 
-/** @ingroup iface_wl_surface */
+/** @ingroup iface_poor_wl_surface */
 static inline void *
-wl_surface_get_user_data(struct wl_surface *wl_surface)
+poor_wl_surface_get_user_data(struct poor_wl_surface *poor_wl_surface)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_surface);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_surface);
 }
 
 static inline uint32_t
-wl_surface_get_version(struct wl_surface *wl_surface)
+poor_wl_surface_get_version(struct poor_wl_surface *poor_wl_surface)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_surface);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * Deletes the surface and invalidates its object ID.
  */
 static inline void
-wl_surface_destroy(struct wl_surface *wl_surface)
+poor_wl_surface_destroy(struct poor_wl_surface *poor_wl_surface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * Set a buffer as the content of this surface.
  *
@@ -3455,14 +3559,14 @@ wl_surface_destroy(struct wl_surface *wl_surface)
  * following wl_surface.commit will remove the surface content.
  */
 static inline void
-wl_surface_attach(struct wl_surface *wl_surface, struct wl_buffer *buffer, int32_t x, int32_t y)
+poor_wl_surface_attach(struct poor_wl_surface *poor_wl_surface, struct poor_wl_buffer *buffer, int32_t x, int32_t y)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_ATTACH, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, buffer, x, y);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_ATTACH, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, buffer, x, y);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request is used to describe the regions where the pending
  * buffer is different from the current surface contents, and where
@@ -3487,14 +3591,14 @@ wl_surface_attach(struct wl_surface *wl_surface, struct wl_buffer *buffer, int32
  * and is probably the preferred and intuitive way of doing this.
  */
 static inline void
-wl_surface_damage(struct wl_surface *wl_surface, int32_t x, int32_t y, int32_t width, int32_t height)
+poor_wl_surface_damage(struct poor_wl_surface *poor_wl_surface, int32_t x, int32_t y, int32_t width, int32_t height)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_DAMAGE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, x, y, width, height);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_DAMAGE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, x, y, width, height);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * Request a notification when it is a good time to start drawing a new
  * frame, by creating a frame callback. This is useful for throttling
@@ -3529,15 +3633,15 @@ wl_surface_damage(struct wl_surface *wl_surface, int32_t x, int32_t y, int32_t w
  * The callback_data passed in the callback is the current time, in
  * milliseconds, with an undefined base.
  */
-static inline struct wl_callback *
-wl_surface_frame(struct wl_surface *wl_surface, struct wl_proxy *callback)
+static inline struct poor_wl_callback *
+poor_wl_surface_frame(struct poor_wl_surface *poor_wl_surface, struct poor_wl_callback *callback)
 {
-	return (struct wl_callback *) wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_FRAME, &wl_callback_interface, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, callback);
+	return (struct poor_wl_callback *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_FRAME, &poor_wl_callback_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, callback);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request sets the region of the surface that contains
  * opaque content.
@@ -3565,14 +3669,14 @@ wl_surface_frame(struct wl_surface *wl_surface, struct wl_proxy *callback)
  * region to be set to empty.
  */
 static inline void
-wl_surface_set_opaque_region(struct wl_surface *wl_surface, struct wl_region *region)
+poor_wl_surface_set_opaque_region(struct poor_wl_surface *poor_wl_surface, struct poor_wl_region *region)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_SET_OPAQUE_REGION, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, region);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_SET_OPAQUE_REGION, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, region);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request sets the region of the surface that can receive
  * pointer and touch events.
@@ -3598,14 +3702,14 @@ wl_surface_set_opaque_region(struct wl_surface *wl_surface, struct wl_region *re
  * to infinite.
  */
 static inline void
-wl_surface_set_input_region(struct wl_surface *wl_surface, struct wl_region *region)
+poor_wl_surface_set_input_region(struct poor_wl_surface *poor_wl_surface, struct poor_wl_region *region)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_SET_INPUT_REGION, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, region);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_SET_INPUT_REGION, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, region);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * Surface state (input, opaque, and damage regions, attached buffers,
  * etc.) is double-buffered. Protocol requests modify the pending state,
@@ -3626,14 +3730,14 @@ wl_surface_set_input_region(struct wl_surface *wl_surface, struct wl_region *reg
  * Other interfaces may add further double-buffered surface state.
  */
 static inline void
-wl_surface_commit(struct wl_surface *wl_surface)
+poor_wl_surface_commit(struct poor_wl_surface *poor_wl_surface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_COMMIT, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_COMMIT, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request sets an optional transformation on how the compositor
  * interprets the contents of the buffer attached to the surface. The
@@ -3666,14 +3770,14 @@ wl_surface_commit(struct wl_surface *wl_surface)
  * is raised.
  */
 static inline void
-wl_surface_set_buffer_transform(struct wl_surface *wl_surface, int32_t transform)
+poor_wl_surface_set_buffer_transform(struct poor_wl_surface *poor_wl_surface, int32_t transform)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_SET_BUFFER_TRANSFORM, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, transform);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_SET_BUFFER_TRANSFORM, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, transform);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request sets an optional scaling factor on how the compositor
  * interprets the contents of the buffer attached to the window.
@@ -3700,14 +3804,14 @@ wl_surface_set_buffer_transform(struct wl_surface *wl_surface, int32_t transform
  * raised.
  */
 static inline void
-wl_surface_set_buffer_scale(struct wl_surface *wl_surface, int32_t scale)
+poor_wl_surface_set_buffer_scale(struct poor_wl_surface *poor_wl_surface, int32_t scale)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_SET_BUFFER_SCALE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, scale);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_SET_BUFFER_SCALE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, scale);
 }
 
 /**
- * @ingroup iface_wl_surface
+ * @ingroup iface_poor_wl_surface
  *
  * This request is used to describe the regions where the pending
  * buffer is different from the current surface contents, and where
@@ -3743,42 +3847,50 @@ wl_surface_set_buffer_scale(struct wl_surface *wl_surface, int32_t scale)
  * after receiving the wl_surface.commit.
  */
 static inline void
-wl_surface_damage_buffer(struct wl_surface *wl_surface, int32_t x, int32_t y, int32_t width, int32_t height)
+poor_wl_surface_damage_buffer(struct poor_wl_surface *poor_wl_surface, int32_t x, int32_t y, int32_t width, int32_t height)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_surface,
-			 WL_SURFACE_DAMAGE_BUFFER, NULL, wl_proxy_get_version((struct wl_proxy *) wl_surface), 0, x, y, width, height);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_surface,
+			 POOR_WL_SURFACE_DAMAGE_BUFFER, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_surface), 0, x, y, width, height);
 }
 
-#ifndef WL_SEAT_CAPABILITY_ENUM
-#define WL_SEAT_CAPABILITY_ENUM
+#ifndef POOR_WL_SEAT_CAPABILITY_ENUM
+#define POOR_WL_SEAT_CAPABILITY_ENUM
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  * seat capability bitmask
  *
  * This is a bitmask of capabilities this seat has; if a member is
  * set, then it is present on the seat.
  */
-enum wl_seat_capability {
+enum poor_wl_seat_capability {
 	/**
 	 * the seat has pointer devices
 	 */
-	WL_SEAT_CAPABILITY_POINTER = 1,
+	POOR_WL_SEAT_CAPABILITY_POINTER = 1,
 	/**
 	 * the seat has one or more keyboards
 	 */
-	WL_SEAT_CAPABILITY_KEYBOARD = 2,
+	POOR_WL_SEAT_CAPABILITY_KEYBOARD = 2,
 	/**
 	 * the seat has touch devices
 	 */
-	WL_SEAT_CAPABILITY_TOUCH = 4,
+	POOR_WL_SEAT_CAPABILITY_TOUCH = 4,
 };
-#endif /* WL_SEAT_CAPABILITY_ENUM */
+#endif /* POOR_WL_SEAT_CAPABILITY_ENUM */
 
 /**
- * @ingroup iface_wl_seat
- * @struct wl_seat_listener
+ * @ingroup iface_poor_wl_seat
+ * @struct poor_wl_seat
  */
-struct wl_seat_listener {
+struct poor_wl_seat {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_seat
+ * @struct poor_wl_seat_listener
+ */
+struct poor_wl_seat_listener {
 	/**
 	 * seat capabilities changed
 	 *
@@ -3810,7 +3922,7 @@ struct wl_seat_listener {
 	 * @param capabilities capabilities of the seat
 	 */
 	void (*capabilities)(void *data,
-			     struct wl_seat *wl_seat,
+			     struct poor_wl_seat *poor_wl_seat,
 			     uint32_t capabilities);
 	/**
 	 * unique identifier for this seat
@@ -3822,81 +3934,81 @@ struct wl_seat_listener {
 	 * @since 2
 	 */
 	void (*name)(void *data,
-		     struct wl_seat *wl_seat,
+		     struct poor_wl_seat *poor_wl_seat,
 		     const char *name);
 };
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
 static inline int
-wl_seat_add_listener(struct wl_seat *wl_seat,
-		     const struct wl_seat_listener *listener, void *data)
+poor_wl_seat_add_listener(struct poor_wl_seat *poor_wl_seat,
+			  const struct poor_wl_seat_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_seat,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_seat,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_SEAT_GET_POINTER 0
-#define WL_SEAT_GET_KEYBOARD 1
-#define WL_SEAT_GET_TOUCH 2
-#define WL_SEAT_RELEASE 3
+#define POOR_WL_SEAT_GET_POINTER 0
+#define POOR_WL_SEAT_GET_KEYBOARD 1
+#define POOR_WL_SEAT_GET_TOUCH 2
+#define POOR_WL_SEAT_RELEASE 3
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_CAPABILITIES_SINCE_VERSION 1
+#define POOR_WL_SEAT_CAPABILITIES_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_NAME_SINCE_VERSION 2
+#define POOR_WL_SEAT_NAME_SINCE_VERSION 2
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_POINTER_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_POINTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_KEYBOARD_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_KEYBOARD_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_GET_TOUCH_SINCE_VERSION 1
+#define POOR_WL_SEAT_GET_TOUCH_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  */
-#define WL_SEAT_RELEASE_SINCE_VERSION 5
+#define POOR_WL_SEAT_RELEASE_SINCE_VERSION 5
 
-/** @ingroup iface_wl_seat */
+/** @ingroup iface_poor_wl_seat */
 static inline void
-wl_seat_set_user_data(struct wl_seat *wl_seat, void *user_data)
+poor_wl_seat_set_user_data(struct poor_wl_seat *poor_wl_seat, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_seat, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_seat, user_data);
 }
 
-/** @ingroup iface_wl_seat */
+/** @ingroup iface_poor_wl_seat */
 static inline void *
-wl_seat_get_user_data(struct wl_seat *wl_seat)
+poor_wl_seat_get_user_data(struct poor_wl_seat *poor_wl_seat)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_seat);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_seat);
 }
 
 static inline uint32_t
-wl_seat_get_version(struct wl_seat *wl_seat)
+poor_wl_seat_get_version(struct poor_wl_seat *poor_wl_seat)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_seat);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_seat);
 }
 
-/** @ingroup iface_wl_seat */
+/** @ingroup iface_poor_wl_seat */
 static inline void
-wl_seat_destroy(struct wl_seat *wl_seat)
+poor_wl_seat_destroy(struct poor_wl_seat *poor_wl_seat)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_seat);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_seat);
 }
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  *
  * The ID provided will be initialized to the wl_pointer interface
  * for this seat.
@@ -3906,15 +4018,15 @@ wl_seat_destroy(struct wl_seat *wl_seat)
  * It is a protocol violation to issue this request on a seat that has
  * never had the pointer capability.
  */
-static inline struct wl_pointer *
-wl_seat_get_pointer(struct wl_seat *wl_seat, struct wl_proxy *id)
+static inline struct poor_wl_pointer *
+poor_wl_seat_get_pointer(struct poor_wl_seat *poor_wl_seat, struct poor_wl_pointer *id)
 {
-	return (struct wl_pointer *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_POINTER, &wl_pointer_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
+	return (struct poor_wl_pointer *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_seat,
+			 POOR_WL_SEAT_GET_POINTER, &poor_wl_pointer_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_seat), 0, id);
 }
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  *
  * The ID provided will be initialized to the wl_keyboard interface
  * for this seat.
@@ -3924,15 +4036,15 @@ wl_seat_get_pointer(struct wl_seat *wl_seat, struct wl_proxy *id)
  * It is a protocol violation to issue this request on a seat that has
  * never had the keyboard capability.
  */
-static inline struct wl_keyboard *
-wl_seat_get_keyboard(struct wl_seat *wl_seat, struct wl_proxy *id)
+static inline struct poor_wl_keyboard *
+poor_wl_seat_get_keyboard(struct poor_wl_seat *poor_wl_seat, struct poor_wl_keyboard *id)
 {
-	return (struct wl_keyboard *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_KEYBOARD, &wl_keyboard_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
+	return (struct poor_wl_keyboard *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_seat,
+			 POOR_WL_SEAT_GET_KEYBOARD, &poor_wl_keyboard_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_seat), 0, id);
 }
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  *
  * The ID provided will be initialized to the wl_touch interface
  * for this seat.
@@ -3942,81 +4054,81 @@ wl_seat_get_keyboard(struct wl_seat *wl_seat, struct wl_proxy *id)
  * It is a protocol violation to issue this request on a seat that has
  * never had the touch capability.
  */
-static inline struct wl_touch *
-wl_seat_get_touch(struct wl_seat *wl_seat, struct wl_proxy *id)
+static inline struct poor_wl_touch *
+poor_wl_seat_get_touch(struct poor_wl_seat *poor_wl_seat, struct poor_wl_touch *id)
 {
-	return (struct wl_touch *) wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_GET_TOUCH, &wl_touch_interface, wl_proxy_get_version((struct wl_proxy *) wl_seat), 0, id);
+	return (struct poor_wl_touch *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_seat,
+			 POOR_WL_SEAT_GET_TOUCH, &poor_wl_touch_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_seat), 0, id);
 }
 
 /**
- * @ingroup iface_wl_seat
+ * @ingroup iface_poor_wl_seat
  *
  * Using this request a client can tell the server that it is not going to
  * use the seat object anymore.
  */
 static inline void
-wl_seat_release(struct wl_seat *wl_seat)
+poor_wl_seat_release(struct poor_wl_seat *poor_wl_seat)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_seat,
-			 WL_SEAT_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_seat), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_seat,
+			 POOR_WL_SEAT_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_seat), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifndef WL_POINTER_ERROR_ENUM
-#define WL_POINTER_ERROR_ENUM
-enum wl_pointer_error {
+#ifndef POOR_WL_POINTER_ERROR_ENUM
+#define POOR_WL_POINTER_ERROR_ENUM
+enum poor_wl_pointer_error {
 	/**
 	 * given wl_surface has another role
 	 */
-	WL_POINTER_ERROR_ROLE = 0,
+	POOR_WL_POINTER_ERROR_ROLE = 0,
 };
-#endif /* WL_POINTER_ERROR_ENUM */
+#endif /* POOR_WL_POINTER_ERROR_ENUM */
 
-#ifndef WL_POINTER_BUTTON_STATE_ENUM
-#define WL_POINTER_BUTTON_STATE_ENUM
+#ifndef POOR_WL_POINTER_BUTTON_STATE_ENUM
+#define POOR_WL_POINTER_BUTTON_STATE_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * physical button state
  *
  * Describes the physical state of a button that produced the button
  * event.
  */
-enum wl_pointer_button_state {
+enum poor_wl_pointer_button_state {
 	/**
 	 * the button is not pressed
 	 */
-	WL_POINTER_BUTTON_STATE_RELEASED = 0,
+	POOR_WL_POINTER_BUTTON_STATE_RELEASED = 0,
 	/**
 	 * the button is pressed
 	 */
-	WL_POINTER_BUTTON_STATE_PRESSED = 1,
+	POOR_WL_POINTER_BUTTON_STATE_PRESSED = 1,
 };
-#endif /* WL_POINTER_BUTTON_STATE_ENUM */
+#endif /* POOR_WL_POINTER_BUTTON_STATE_ENUM */
 
-#ifndef WL_POINTER_AXIS_ENUM
-#define WL_POINTER_AXIS_ENUM
+#ifndef POOR_WL_POINTER_AXIS_ENUM
+#define POOR_WL_POINTER_AXIS_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * axis types
  *
  * Describes the axis types of scroll events.
  */
-enum wl_pointer_axis {
+enum poor_wl_pointer_axis {
 	/**
 	 * vertical axis
 	 */
-	WL_POINTER_AXIS_VERTICAL_SCROLL = 0,
+	POOR_WL_POINTER_AXIS_VERTICAL_SCROLL = 0,
 	/**
 	 * horizontal axis
 	 */
-	WL_POINTER_AXIS_HORIZONTAL_SCROLL = 1,
+	POOR_WL_POINTER_AXIS_HORIZONTAL_SCROLL = 1,
 };
-#endif /* WL_POINTER_AXIS_ENUM */
+#endif /* POOR_WL_POINTER_AXIS_ENUM */
 
-#ifndef WL_POINTER_AXIS_SOURCE_ENUM
-#define WL_POINTER_AXIS_SOURCE_ENUM
+#ifndef POOR_WL_POINTER_AXIS_SOURCE_ENUM
+#define POOR_WL_POINTER_AXIS_SOURCE_ENUM
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  * axis source types
  *
  * Describes the source types for axis events. This indicates to the
@@ -4026,15 +4138,15 @@ enum wl_pointer_axis {
  * kinetic scrolling whereas a "wheel" source may be in discrete steps
  * of a number of lines.
  */
-enum wl_pointer_axis_source {
+enum poor_wl_pointer_axis_source {
 	/**
 	 * a physical wheel rotation
 	 */
-	WL_POINTER_AXIS_SOURCE_WHEEL = 0,
+	POOR_WL_POINTER_AXIS_SOURCE_WHEEL = 0,
 	/**
 	 * finger on a touch surface
 	 */
-	WL_POINTER_AXIS_SOURCE_FINGER = 1,
+	POOR_WL_POINTER_AXIS_SOURCE_FINGER = 1,
 	/**
 	 * continuous coordinate space
 	 *
@@ -4044,7 +4156,7 @@ enum wl_pointer_axis_source {
 	 * device is converted to scroll events while a button is held
 	 * down.
 	 */
-	WL_POINTER_AXIS_SOURCE_CONTINUOUS = 2,
+	POOR_WL_POINTER_AXIS_SOURCE_CONTINUOUS = 2,
 	/**
 	 * a physical wheel tilt
 	 *
@@ -4053,19 +4165,27 @@ enum wl_pointer_axis_source {
 	 * of the wheel.
 	 * @since 6
 	 */
-	WL_POINTER_AXIS_SOURCE_WHEEL_TILT = 3,
+	POOR_WL_POINTER_AXIS_SOURCE_WHEEL_TILT = 3,
 };
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SOURCE_WHEEL_TILT_SINCE_VERSION 6
-#endif /* WL_POINTER_AXIS_SOURCE_ENUM */
+#define POOR_WL_POINTER_AXIS_SOURCE_WHEEL_TILT_SINCE_VERSION 6
+#endif /* POOR_WL_POINTER_AXIS_SOURCE_ENUM */
 
 /**
- * @ingroup iface_wl_pointer
- * @struct wl_pointer_listener
+ * @ingroup iface_poor_wl_pointer
+ * @struct poor_wl_pointer
  */
-struct wl_pointer_listener {
+struct poor_wl_pointer {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_pointer
+ * @struct poor_wl_pointer_listener
+ */
+struct poor_wl_pointer_listener {
 	/**
 	 * enter event
 	 *
@@ -4081,11 +4201,11 @@ struct wl_pointer_listener {
 	 * @param surface_y surface-local y coordinate
 	 */
 	void (*enter)(void *data,
-		      struct wl_pointer *wl_pointer,
+		      struct poor_wl_pointer *poor_wl_pointer,
 		      uint32_t serial,
-		      struct wl_surface *surface,
-		      wl_fixed_t surface_x,
-		      wl_fixed_t surface_y);
+		      struct poor_wl_surface *surface,
+		      poor_wl_fixed_t surface_x,
+		      poor_wl_fixed_t surface_y);
 	/**
 	 * leave event
 	 *
@@ -4098,9 +4218,9 @@ struct wl_pointer_listener {
 	 * @param surface surface left by the pointer
 	 */
 	void (*leave)(void *data,
-		      struct wl_pointer *wl_pointer,
+		      struct poor_wl_pointer *poor_wl_pointer,
 		      uint32_t serial,
-		      struct wl_surface *surface);
+		      struct poor_wl_surface *surface);
 	/**
 	 * pointer motion event
 	 *
@@ -4112,10 +4232,10 @@ struct wl_pointer_listener {
 	 * @param surface_y surface-local y coordinate
 	 */
 	void (*motion)(void *data,
-		       struct wl_pointer *wl_pointer,
+		       struct poor_wl_pointer *poor_wl_pointer,
 		       uint32_t time,
-		       wl_fixed_t surface_x,
-		       wl_fixed_t surface_y);
+		       poor_wl_fixed_t surface_x,
+		       poor_wl_fixed_t surface_y);
 	/**
 	 * pointer button event
 	 *
@@ -4138,7 +4258,7 @@ struct wl_pointer_listener {
 	 * @param state physical state of the button
 	 */
 	void (*button)(void *data,
-		       struct wl_pointer *wl_pointer,
+		       struct poor_wl_pointer *poor_wl_pointer,
 		       uint32_t serial,
 		       uint32_t time,
 		       uint32_t button,
@@ -4167,10 +4287,10 @@ struct wl_pointer_listener {
 	 * @param value length of vector in surface-local coordinate space
 	 */
 	void (*axis)(void *data,
-		     struct wl_pointer *wl_pointer,
+		     struct poor_wl_pointer *poor_wl_pointer,
 		     uint32_t time,
 		     uint32_t axis,
-		     wl_fixed_t value);
+		     poor_wl_fixed_t value);
 	/**
 	 * end of a pointer event sequence
 	 *
@@ -4211,7 +4331,7 @@ struct wl_pointer_listener {
 	 * @since 5
 	 */
 	void (*frame)(void *data,
-		      struct wl_pointer *wl_pointer);
+		      struct poor_wl_pointer *poor_wl_pointer);
 	/**
 	 * axis source event
 	 *
@@ -4244,7 +4364,7 @@ struct wl_pointer_listener {
 	 * @since 5
 	 */
 	void (*axis_source)(void *data,
-			    struct wl_pointer *wl_pointer,
+			    struct poor_wl_pointer *poor_wl_pointer,
 			    uint32_t axis_source);
 	/**
 	 * axis stop event
@@ -4268,7 +4388,7 @@ struct wl_pointer_listener {
 	 * @since 5
 	 */
 	void (*axis_stop)(void *data,
-			  struct wl_pointer *wl_pointer,
+			  struct poor_wl_pointer *poor_wl_pointer,
 			  uint32_t time,
 			  uint32_t axis);
 	/**
@@ -4306,100 +4426,100 @@ struct wl_pointer_listener {
 	 * @since 5
 	 */
 	void (*axis_discrete)(void *data,
-			      struct wl_pointer *wl_pointer,
+			      struct poor_wl_pointer *poor_wl_pointer,
 			      uint32_t axis,
 			      int32_t discrete);
 };
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
 static inline int
-wl_pointer_add_listener(struct wl_pointer *wl_pointer,
-			const struct wl_pointer_listener *listener, void *data)
+poor_wl_pointer_add_listener(struct poor_wl_pointer *poor_wl_pointer,
+			     const struct poor_wl_pointer_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_pointer,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_pointer,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_POINTER_SET_CURSOR 0
-#define WL_POINTER_RELEASE 1
+#define POOR_WL_POINTER_SET_CURSOR 0
+#define POOR_WL_POINTER_RELEASE 1
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_ENTER_SINCE_VERSION 1
+#define POOR_WL_POINTER_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_LEAVE_SINCE_VERSION 1
+#define POOR_WL_POINTER_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_MOTION_SINCE_VERSION 1
+#define POOR_WL_POINTER_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_BUTTON_SINCE_VERSION 1
+#define POOR_WL_POINTER_BUTTON_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SINCE_VERSION 1
+#define POOR_WL_POINTER_AXIS_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_FRAME_SINCE_VERSION 5
+#define POOR_WL_POINTER_FRAME_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_SOURCE_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_SOURCE_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_STOP_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_STOP_SINCE_VERSION 5
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_AXIS_DISCRETE_SINCE_VERSION 5
+#define POOR_WL_POINTER_AXIS_DISCRETE_SINCE_VERSION 5
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_SET_CURSOR_SINCE_VERSION 1
+#define POOR_WL_POINTER_SET_CURSOR_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  */
-#define WL_POINTER_RELEASE_SINCE_VERSION 3
+#define POOR_WL_POINTER_RELEASE_SINCE_VERSION 3
 
-/** @ingroup iface_wl_pointer */
+/** @ingroup iface_poor_wl_pointer */
 static inline void
-wl_pointer_set_user_data(struct wl_pointer *wl_pointer, void *user_data)
+poor_wl_pointer_set_user_data(struct poor_wl_pointer *poor_wl_pointer, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_pointer, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_pointer, user_data);
 }
 
-/** @ingroup iface_wl_pointer */
+/** @ingroup iface_poor_wl_pointer */
 static inline void *
-wl_pointer_get_user_data(struct wl_pointer *wl_pointer)
+poor_wl_pointer_get_user_data(struct poor_wl_pointer *poor_wl_pointer)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_pointer);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_pointer);
 }
 
 static inline uint32_t
-wl_pointer_get_version(struct wl_pointer *wl_pointer)
+poor_wl_pointer_get_version(struct poor_wl_pointer *poor_wl_pointer)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_pointer);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_pointer);
 }
 
-/** @ingroup iface_wl_pointer */
+/** @ingroup iface_poor_wl_pointer */
 static inline void
-wl_pointer_destroy(struct wl_pointer *wl_pointer)
+poor_wl_pointer_destroy(struct poor_wl_pointer *poor_wl_pointer)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_pointer);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_pointer);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  *
  * Set the pointer surface, i.e., the surface that contains the
  * pointer image (cursor). This request gives the surface the role
@@ -4434,14 +4554,14 @@ wl_pointer_destroy(struct wl_pointer *wl_pointer)
  * undefined, and the wl_surface is unmapped.
  */
 static inline void
-wl_pointer_set_cursor(struct wl_pointer *wl_pointer, uint32_t serial, struct wl_surface *surface, int32_t hotspot_x, int32_t hotspot_y)
+poor_wl_pointer_set_cursor(struct poor_wl_pointer *poor_wl_pointer, uint32_t serial, struct poor_wl_surface *surface, int32_t hotspot_x, int32_t hotspot_y)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_pointer,
-			 WL_POINTER_SET_CURSOR, NULL, wl_proxy_get_version((struct wl_proxy *) wl_pointer), 0, serial, surface, hotspot_x, hotspot_y);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_pointer,
+			 POOR_WL_POINTER_SET_CURSOR, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_pointer), 0, serial, surface, hotspot_x, hotspot_y);
 }
 
 /**
- * @ingroup iface_wl_pointer
+ * @ingroup iface_poor_wl_pointer
  *
  * Using this request a client can tell the server that it is not going to
  * use the pointer object anymore.
@@ -4450,58 +4570,66 @@ wl_pointer_set_cursor(struct wl_pointer *wl_pointer, uint32_t serial, struct wl_
  * wl_pointer_destroy() after using this request.
  */
 static inline void
-wl_pointer_release(struct wl_pointer *wl_pointer)
+poor_wl_pointer_release(struct poor_wl_pointer *poor_wl_pointer)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_pointer,
-			 WL_POINTER_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_pointer), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_pointer,
+			 POOR_WL_POINTER_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_pointer), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifndef WL_KEYBOARD_KEYMAP_FORMAT_ENUM
-#define WL_KEYBOARD_KEYMAP_FORMAT_ENUM
+#ifndef POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM
+#define POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * keyboard mapping format
  *
  * This specifies the format of the keymap provided to the
  * client with the wl_keyboard.keymap event.
  */
-enum wl_keyboard_keymap_format {
+enum poor_wl_keyboard_keymap_format {
 	/**
 	 * no keymap; client must understand how to interpret the raw keycode
 	 */
-	WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP = 0,
+	POOR_WL_KEYBOARD_KEYMAP_FORMAT_NO_KEYMAP = 0,
 	/**
 	 * libxkbcommon compatible; to determine the xkb keycode, clients must add 8 to the key event keycode
 	 */
-	WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1 = 1,
+	POOR_WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1 = 1,
 };
-#endif /* WL_KEYBOARD_KEYMAP_FORMAT_ENUM */
+#endif /* POOR_WL_KEYBOARD_KEYMAP_FORMAT_ENUM */
 
-#ifndef WL_KEYBOARD_KEY_STATE_ENUM
-#define WL_KEYBOARD_KEY_STATE_ENUM
+#ifndef POOR_WL_KEYBOARD_KEY_STATE_ENUM
+#define POOR_WL_KEYBOARD_KEY_STATE_ENUM
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  * physical key state
  *
  * Describes the physical state of a key that produced the key event.
  */
-enum wl_keyboard_key_state {
+enum poor_wl_keyboard_key_state {
 	/**
 	 * key is not pressed
 	 */
-	WL_KEYBOARD_KEY_STATE_RELEASED = 0,
+	POOR_WL_KEYBOARD_KEY_STATE_RELEASED = 0,
 	/**
 	 * key is pressed
 	 */
-	WL_KEYBOARD_KEY_STATE_PRESSED = 1,
+	POOR_WL_KEYBOARD_KEY_STATE_PRESSED = 1,
 };
-#endif /* WL_KEYBOARD_KEY_STATE_ENUM */
+#endif /* POOR_WL_KEYBOARD_KEY_STATE_ENUM */
 
 /**
- * @ingroup iface_wl_keyboard
- * @struct wl_keyboard_listener
+ * @ingroup iface_poor_wl_keyboard
+ * @struct poor_wl_keyboard
  */
-struct wl_keyboard_listener {
+struct poor_wl_keyboard {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_keyboard
+ * @struct poor_wl_keyboard_listener
+ */
+struct poor_wl_keyboard_listener {
 	/**
 	 * keyboard mapping
 	 *
@@ -4512,7 +4640,7 @@ struct wl_keyboard_listener {
 	 * @param size keymap size, in bytes
 	 */
 	void (*keymap)(void *data,
-		       struct wl_keyboard *wl_keyboard,
+		       struct poor_wl_keyboard *poor_wl_keyboard,
 		       uint32_t format,
 		       int32_t fd,
 		       uint32_t size);
@@ -4526,10 +4654,10 @@ struct wl_keyboard_listener {
 	 * @param keys the currently pressed keys
 	 */
 	void (*enter)(void *data,
-		      struct wl_keyboard *wl_keyboard,
+		      struct poor_wl_keyboard *poor_wl_keyboard,
 		      uint32_t serial,
-		      struct wl_surface *surface,
-		      struct wl_array *keys);
+		      struct poor_wl_surface *surface,
+		      struct poor_wl_array *keys);
 	/**
 	 * leave event
 	 *
@@ -4542,9 +4670,9 @@ struct wl_keyboard_listener {
 	 * @param surface surface that lost keyboard focus
 	 */
 	void (*leave)(void *data,
-		      struct wl_keyboard *wl_keyboard,
+		      struct poor_wl_keyboard *poor_wl_keyboard,
 		      uint32_t serial,
-		      struct wl_surface *surface);
+		      struct poor_wl_surface *surface);
 	/**
 	 * key event
 	 *
@@ -4556,7 +4684,7 @@ struct wl_keyboard_listener {
 	 * @param state physical state of the key
 	 */
 	void (*key)(void *data,
-		    struct wl_keyboard *wl_keyboard,
+		    struct poor_wl_keyboard *poor_wl_keyboard,
 		    uint32_t serial,
 		    uint32_t time,
 		    uint32_t key,
@@ -4573,7 +4701,7 @@ struct wl_keyboard_listener {
 	 * @param group keyboard layout
 	 */
 	void (*modifiers)(void *data,
-			  struct wl_keyboard *wl_keyboard,
+			  struct poor_wl_keyboard *poor_wl_keyboard,
 			  uint32_t serial,
 			  uint32_t mods_depressed,
 			  uint32_t mods_latched,
@@ -4600,96 +4728,104 @@ struct wl_keyboard_listener {
 	 * @since 4
 	 */
 	void (*repeat_info)(void *data,
-			    struct wl_keyboard *wl_keyboard,
+			    struct poor_wl_keyboard *poor_wl_keyboard,
 			    int32_t rate,
 			    int32_t delay);
 };
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
 static inline int
-wl_keyboard_add_listener(struct wl_keyboard *wl_keyboard,
-			 const struct wl_keyboard_listener *listener, void *data)
+poor_wl_keyboard_add_listener(struct poor_wl_keyboard *poor_wl_keyboard,
+			      const struct poor_wl_keyboard_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_keyboard,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_keyboard,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_KEYBOARD_RELEASE 0
+#define POOR_WL_KEYBOARD_RELEASE 0
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_KEYMAP_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_KEYMAP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_ENTER_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_ENTER_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_LEAVE_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_LEAVE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_KEY_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_KEY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_MODIFIERS_SINCE_VERSION 1
+#define POOR_WL_KEYBOARD_MODIFIERS_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION 4
+#define POOR_WL_KEYBOARD_REPEAT_INFO_SINCE_VERSION 4
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
-#define WL_KEYBOARD_RELEASE_SINCE_VERSION 3
+#define POOR_WL_KEYBOARD_RELEASE_SINCE_VERSION 3
 
-/** @ingroup iface_wl_keyboard */
+/** @ingroup iface_poor_wl_keyboard */
 static inline void
-wl_keyboard_set_user_data(struct wl_keyboard *wl_keyboard, void *user_data)
+poor_wl_keyboard_set_user_data(struct poor_wl_keyboard *poor_wl_keyboard, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_keyboard, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_keyboard, user_data);
 }
 
-/** @ingroup iface_wl_keyboard */
+/** @ingroup iface_poor_wl_keyboard */
 static inline void *
-wl_keyboard_get_user_data(struct wl_keyboard *wl_keyboard)
+poor_wl_keyboard_get_user_data(struct poor_wl_keyboard *poor_wl_keyboard)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_keyboard);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_keyboard);
 }
 
 static inline uint32_t
-wl_keyboard_get_version(struct wl_keyboard *wl_keyboard)
+poor_wl_keyboard_get_version(struct poor_wl_keyboard *poor_wl_keyboard)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_keyboard);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_keyboard);
 }
 
-/** @ingroup iface_wl_keyboard */
+/** @ingroup iface_poor_wl_keyboard */
 static inline void
-wl_keyboard_destroy(struct wl_keyboard *wl_keyboard)
+poor_wl_keyboard_destroy(struct poor_wl_keyboard *poor_wl_keyboard)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_keyboard);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_keyboard);
 }
 
 /**
- * @ingroup iface_wl_keyboard
+ * @ingroup iface_poor_wl_keyboard
  */
 static inline void
-wl_keyboard_release(struct wl_keyboard *wl_keyboard)
+poor_wl_keyboard_release(struct poor_wl_keyboard *poor_wl_keyboard)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_keyboard,
-			 WL_KEYBOARD_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_keyboard), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_keyboard,
+			 POOR_WL_KEYBOARD_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_keyboard), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_touch
- * @struct wl_touch_listener
+ * @ingroup iface_poor_wl_touch
+ * @struct poor_wl_touch
  */
-struct wl_touch_listener {
+struct poor_wl_touch {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_touch
+ * @struct poor_wl_touch_listener
+ */
+struct poor_wl_touch_listener {
 	/**
 	 * touch down event and beginning of a touch sequence
 	 *
@@ -4705,13 +4841,13 @@ struct wl_touch_listener {
 	 * @param y surface-local y coordinate
 	 */
 	void (*down)(void *data,
-		     struct wl_touch *wl_touch,
+		     struct poor_wl_touch *poor_wl_touch,
 		     uint32_t serial,
 		     uint32_t time,
-		     struct wl_surface *surface,
+		     struct poor_wl_surface *surface,
 		     int32_t id,
-		     wl_fixed_t x,
-		     wl_fixed_t y);
+		     poor_wl_fixed_t x,
+		     poor_wl_fixed_t y);
 	/**
 	 * end of a touch event sequence
 	 *
@@ -4723,7 +4859,7 @@ struct wl_touch_listener {
 	 * @param id the unique ID of this touch point
 	 */
 	void (*up)(void *data,
-		   struct wl_touch *wl_touch,
+		   struct poor_wl_touch *poor_wl_touch,
 		   uint32_t serial,
 		   uint32_t time,
 		   int32_t id);
@@ -4737,11 +4873,11 @@ struct wl_touch_listener {
 	 * @param y surface-local y coordinate
 	 */
 	void (*motion)(void *data,
-		       struct wl_touch *wl_touch,
+		       struct poor_wl_touch *poor_wl_touch,
 		       uint32_t time,
 		       int32_t id,
-		       wl_fixed_t x,
-		       wl_fixed_t y);
+		       poor_wl_fixed_t x,
+		       poor_wl_fixed_t y);
 	/**
 	 * end of touch frame event
 	 *
@@ -4755,7 +4891,7 @@ struct wl_touch_listener {
 	 * unchanged from the previously known state.
 	 */
 	void (*frame)(void *data,
-		      struct wl_touch *wl_touch);
+		      struct poor_wl_touch *poor_wl_touch);
 	/**
 	 * touch session cancelled
 	 *
@@ -4767,7 +4903,7 @@ struct wl_touch_listener {
 	 * on this surface may reuse the touch point ID.
 	 */
 	void (*cancel)(void *data,
-		       struct wl_touch *wl_touch);
+		       struct poor_wl_touch *poor_wl_touch);
 	/**
 	 * update shape of touch point
 	 *
@@ -4803,10 +4939,10 @@ struct wl_touch_listener {
 	 * @since 6
 	 */
 	void (*shape)(void *data,
-		      struct wl_touch *wl_touch,
+		      struct poor_wl_touch *poor_wl_touch,
 		      int32_t id,
-		      wl_fixed_t major,
-		      wl_fixed_t minor);
+		      poor_wl_fixed_t major,
+		      poor_wl_fixed_t minor);
 	/**
 	 * update orientation of touch point
 	 *
@@ -4838,136 +4974,136 @@ struct wl_touch_listener {
 	 * @since 6
 	 */
 	void (*orientation)(void *data,
-			    struct wl_touch *wl_touch,
+			    struct poor_wl_touch *poor_wl_touch,
 			    int32_t id,
-			    wl_fixed_t orientation);
+			    poor_wl_fixed_t orientation);
 };
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
 static inline int
-wl_touch_add_listener(struct wl_touch *wl_touch,
-		      const struct wl_touch_listener *listener, void *data)
+poor_wl_touch_add_listener(struct poor_wl_touch *poor_wl_touch,
+			   const struct poor_wl_touch_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_touch,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_touch,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_TOUCH_RELEASE 0
+#define POOR_WL_TOUCH_RELEASE 0
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_DOWN_SINCE_VERSION 1
+#define POOR_WL_TOUCH_DOWN_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_UP_SINCE_VERSION 1
+#define POOR_WL_TOUCH_UP_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_MOTION_SINCE_VERSION 1
+#define POOR_WL_TOUCH_MOTION_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_FRAME_SINCE_VERSION 1
+#define POOR_WL_TOUCH_FRAME_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_CANCEL_SINCE_VERSION 1
+#define POOR_WL_TOUCH_CANCEL_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_SHAPE_SINCE_VERSION 6
+#define POOR_WL_TOUCH_SHAPE_SINCE_VERSION 6
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_ORIENTATION_SINCE_VERSION 6
+#define POOR_WL_TOUCH_ORIENTATION_SINCE_VERSION 6
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
-#define WL_TOUCH_RELEASE_SINCE_VERSION 3
+#define POOR_WL_TOUCH_RELEASE_SINCE_VERSION 3
 
-/** @ingroup iface_wl_touch */
+/** @ingroup iface_poor_wl_touch */
 static inline void
-wl_touch_set_user_data(struct wl_touch *wl_touch, void *user_data)
+poor_wl_touch_set_user_data(struct poor_wl_touch *poor_wl_touch, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_touch, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_touch, user_data);
 }
 
-/** @ingroup iface_wl_touch */
+/** @ingroup iface_poor_wl_touch */
 static inline void *
-wl_touch_get_user_data(struct wl_touch *wl_touch)
+poor_wl_touch_get_user_data(struct poor_wl_touch *poor_wl_touch)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_touch);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_touch);
 }
 
 static inline uint32_t
-wl_touch_get_version(struct wl_touch *wl_touch)
+poor_wl_touch_get_version(struct poor_wl_touch *poor_wl_touch)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_touch);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_touch);
 }
 
-/** @ingroup iface_wl_touch */
+/** @ingroup iface_poor_wl_touch */
 static inline void
-wl_touch_destroy(struct wl_touch *wl_touch)
+poor_wl_touch_destroy(struct poor_wl_touch *poor_wl_touch)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_touch);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_touch);
 }
 
 /**
- * @ingroup iface_wl_touch
+ * @ingroup iface_poor_wl_touch
  */
 static inline void
-wl_touch_release(struct wl_touch *wl_touch)
+poor_wl_touch_release(struct poor_wl_touch *poor_wl_touch)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_touch,
-			 WL_TOUCH_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_touch), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_touch,
+			 POOR_WL_TOUCH_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_touch), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#ifndef WL_OUTPUT_SUBPIXEL_ENUM
-#define WL_OUTPUT_SUBPIXEL_ENUM
+#ifndef POOR_WL_OUTPUT_SUBPIXEL_ENUM
+#define POOR_WL_OUTPUT_SUBPIXEL_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * subpixel geometry information
  *
  * This enumeration describes how the physical
  * pixels on an output are laid out.
  */
-enum wl_output_subpixel {
+enum poor_wl_output_subpixel {
 	/**
 	 * unknown geometry
 	 */
-	WL_OUTPUT_SUBPIXEL_UNKNOWN = 0,
+	POOR_WL_OUTPUT_SUBPIXEL_UNKNOWN = 0,
 	/**
 	 * no geometry
 	 */
-	WL_OUTPUT_SUBPIXEL_NONE = 1,
+	POOR_WL_OUTPUT_SUBPIXEL_NONE = 1,
 	/**
 	 * horizontal RGB
 	 */
-	WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB = 2,
+	POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_RGB = 2,
 	/**
 	 * horizontal BGR
 	 */
-	WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR = 3,
+	POOR_WL_OUTPUT_SUBPIXEL_HORIZONTAL_BGR = 3,
 	/**
 	 * vertical RGB
 	 */
-	WL_OUTPUT_SUBPIXEL_VERTICAL_RGB = 4,
+	POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_RGB = 4,
 	/**
 	 * vertical BGR
 	 */
-	WL_OUTPUT_SUBPIXEL_VERTICAL_BGR = 5,
+	POOR_WL_OUTPUT_SUBPIXEL_VERTICAL_BGR = 5,
 };
-#endif /* WL_OUTPUT_SUBPIXEL_ENUM */
+#endif /* POOR_WL_OUTPUT_SUBPIXEL_ENUM */
 
-#ifndef WL_OUTPUT_TRANSFORM_ENUM
-#define WL_OUTPUT_TRANSFORM_ENUM
+#ifndef POOR_WL_OUTPUT_TRANSFORM_ENUM
+#define POOR_WL_OUTPUT_TRANSFORM_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * transform from framebuffer to output
  *
  * This describes the transform that a compositor will apply to a
@@ -4982,68 +5118,76 @@ enum wl_output_subpixel {
  * compositor will still be able to scan out directly from client
  * surfaces.
  */
-enum wl_output_transform {
+enum poor_wl_output_transform {
 	/**
 	 * no transform
 	 */
-	WL_OUTPUT_TRANSFORM_NORMAL = 0,
+	POOR_WL_OUTPUT_TRANSFORM_NORMAL = 0,
 	/**
 	 * 90 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_90 = 1,
+	POOR_WL_OUTPUT_TRANSFORM_90 = 1,
 	/**
 	 * 180 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_180 = 2,
+	POOR_WL_OUTPUT_TRANSFORM_180 = 2,
 	/**
 	 * 270 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_270 = 3,
+	POOR_WL_OUTPUT_TRANSFORM_270 = 3,
 	/**
 	 * 180 degree flip around a vertical axis
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED = 4,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED = 4,
 	/**
 	 * flip and rotate 90 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_90 = 5,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_90 = 5,
 	/**
 	 * flip and rotate 180 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_180 = 6,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_180 = 6,
 	/**
 	 * flip and rotate 270 degrees counter-clockwise
 	 */
-	WL_OUTPUT_TRANSFORM_FLIPPED_270 = 7,
+	POOR_WL_OUTPUT_TRANSFORM_FLIPPED_270 = 7,
 };
-#endif /* WL_OUTPUT_TRANSFORM_ENUM */
+#endif /* POOR_WL_OUTPUT_TRANSFORM_ENUM */
 
-#ifndef WL_OUTPUT_MODE_ENUM
-#define WL_OUTPUT_MODE_ENUM
+#ifndef POOR_WL_OUTPUT_MODE_ENUM
+#define POOR_WL_OUTPUT_MODE_ENUM
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  * mode information
  *
  * These flags describe properties of an output mode.
  * They are used in the flags bitfield of the mode event.
  */
-enum wl_output_mode {
+enum poor_wl_output_mode {
 	/**
 	 * indicates this is the current mode
 	 */
-	WL_OUTPUT_MODE_CURRENT = 0x1,
+	POOR_WL_OUTPUT_MODE_CURRENT = 0x1,
 	/**
 	 * indicates this is the preferred mode
 	 */
-	WL_OUTPUT_MODE_PREFERRED = 0x2,
+	POOR_WL_OUTPUT_MODE_PREFERRED = 0x2,
 };
-#endif /* WL_OUTPUT_MODE_ENUM */
+#endif /* POOR_WL_OUTPUT_MODE_ENUM */
 
 /**
- * @ingroup iface_wl_output
- * @struct wl_output_listener
+ * @ingroup iface_poor_wl_output
+ * @struct poor_wl_output
  */
-struct wl_output_listener {
+struct poor_wl_output {
+	struct poor_wl_proxy proxy;
+};
+
+/**
+ * @ingroup iface_poor_wl_output
+ * @struct poor_wl_output_listener
+ */
+struct poor_wl_output_listener {
 	/**
 	 * properties of the output
 	 *
@@ -5060,7 +5204,7 @@ struct wl_output_listener {
 	 * @param transform transform that maps framebuffer to output
 	 */
 	void (*geometry)(void *data,
-			 struct wl_output *wl_output,
+			 struct poor_wl_output *poor_wl_output,
 			 int32_t x,
 			 int32_t y,
 			 int32_t physical_width,
@@ -5091,7 +5235,7 @@ struct wl_output_listener {
 	 * @param refresh vertical refresh rate in mHz
 	 */
 	void (*mode)(void *data,
-		     struct wl_output *wl_output,
+		     struct poor_wl_output *poor_wl_output,
 		     uint32_t flags,
 		     int32_t width,
 		     int32_t height,
@@ -5107,7 +5251,7 @@ struct wl_output_listener {
 	 * @since 2
 	 */
 	void (*done)(void *data,
-		     struct wl_output *wl_output);
+		     struct poor_wl_output *poor_wl_output);
 	/**
 	 * output scaling properties
 	 *
@@ -5131,218 +5275,234 @@ struct wl_output_listener {
 	 * @since 2
 	 */
 	void (*scale)(void *data,
-		      struct wl_output *wl_output,
+		      struct poor_wl_output *poor_wl_output,
 		      int32_t factor);
 };
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
 static inline int
-wl_output_add_listener(struct wl_output *wl_output,
-		       const struct wl_output_listener *listener, void *data)
+poor_wl_output_add_listener(struct poor_wl_output *poor_wl_output,
+			    const struct poor_wl_output_listener *listener, void *data)
 {
-	return wl_proxy_add_listener((struct wl_proxy *) wl_output,
+	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_output,
 				     (void (**)(void)) listener, data);
 }
 
-#define WL_OUTPUT_RELEASE 0
+#define POOR_WL_OUTPUT_RELEASE 0
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_GEOMETRY_SINCE_VERSION 1
+#define POOR_WL_OUTPUT_GEOMETRY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_MODE_SINCE_VERSION 1
+#define POOR_WL_OUTPUT_MODE_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_DONE_SINCE_VERSION 2
+#define POOR_WL_OUTPUT_DONE_SINCE_VERSION 2
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_SCALE_SINCE_VERSION 2
+#define POOR_WL_OUTPUT_SCALE_SINCE_VERSION 2
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  */
-#define WL_OUTPUT_RELEASE_SINCE_VERSION 3
+#define POOR_WL_OUTPUT_RELEASE_SINCE_VERSION 3
 
-/** @ingroup iface_wl_output */
+/** @ingroup iface_poor_wl_output */
 static inline void
-wl_output_set_user_data(struct wl_output *wl_output, void *user_data)
+poor_wl_output_set_user_data(struct poor_wl_output *poor_wl_output, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_output, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_output, user_data);
 }
 
-/** @ingroup iface_wl_output */
+/** @ingroup iface_poor_wl_output */
 static inline void *
-wl_output_get_user_data(struct wl_output *wl_output)
+poor_wl_output_get_user_data(struct poor_wl_output *poor_wl_output)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_output);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_output);
 }
 
 static inline uint32_t
-wl_output_get_version(struct wl_output *wl_output)
+poor_wl_output_get_version(struct poor_wl_output *poor_wl_output)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_output);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_output);
 }
 
-/** @ingroup iface_wl_output */
+/** @ingroup iface_poor_wl_output */
 static inline void
-wl_output_destroy(struct wl_output *wl_output)
+poor_wl_output_destroy(struct poor_wl_output *poor_wl_output)
 {
-	wl_proxy_destroy((struct wl_proxy *) wl_output);
+	poor_wl_proxy_destroy((struct poor_wl_proxy *) poor_wl_output);
 }
 
 /**
- * @ingroup iface_wl_output
+ * @ingroup iface_poor_wl_output
  *
  * Using this request a client can tell the server that it is not going to
  * use the output object anymore.
  */
 static inline void
-wl_output_release(struct wl_output *wl_output)
+poor_wl_output_release(struct poor_wl_output *poor_wl_output)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_output,
-			 WL_OUTPUT_RELEASE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_output), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_output,
+			 POOR_WL_OUTPUT_RELEASE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_output), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
-#define WL_REGION_DESTROY 0
-#define WL_REGION_ADD 1
-#define WL_REGION_SUBTRACT 2
+/**
+ * @ingroup iface_poor_wl_region
+ * @struct poor_wl_region
+ */
+struct poor_wl_region {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_REGION_DESTROY 0
+#define POOR_WL_REGION_ADD 1
+#define POOR_WL_REGION_SUBTRACT 2
 
 
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_DESTROY_SINCE_VERSION 1
+#define POOR_WL_REGION_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_ADD_SINCE_VERSION 1
+#define POOR_WL_REGION_ADD_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  */
-#define WL_REGION_SUBTRACT_SINCE_VERSION 1
+#define POOR_WL_REGION_SUBTRACT_SINCE_VERSION 1
 
-/** @ingroup iface_wl_region */
+/** @ingroup iface_poor_wl_region */
 static inline void
-wl_region_set_user_data(struct wl_region *wl_region, void *user_data)
+poor_wl_region_set_user_data(struct poor_wl_region *poor_wl_region, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_region, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_region, user_data);
 }
 
-/** @ingroup iface_wl_region */
+/** @ingroup iface_poor_wl_region */
 static inline void *
-wl_region_get_user_data(struct wl_region *wl_region)
+poor_wl_region_get_user_data(struct poor_wl_region *poor_wl_region)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_region);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_region);
 }
 
 static inline uint32_t
-wl_region_get_version(struct wl_region *wl_region)
+poor_wl_region_get_version(struct poor_wl_region *poor_wl_region)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_region);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_region);
 }
 
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  *
  * Destroy the region.  This will invalidate the object ID.
  */
 static inline void
-wl_region_destroy(struct wl_region *wl_region)
+poor_wl_region_destroy(struct poor_wl_region *poor_wl_region)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_region,
-			 WL_REGION_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_region), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_region,
+			 POOR_WL_REGION_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_region), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  *
  * Add the specified rectangle to the region.
  */
 static inline void
-wl_region_add(struct wl_region *wl_region, int32_t x, int32_t y, int32_t width, int32_t height)
+poor_wl_region_add(struct poor_wl_region *poor_wl_region, int32_t x, int32_t y, int32_t width, int32_t height)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_region,
-			 WL_REGION_ADD, NULL, wl_proxy_get_version((struct wl_proxy *) wl_region), 0, x, y, width, height);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_region,
+			 POOR_WL_REGION_ADD, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_region), 0, x, y, width, height);
 }
 
 /**
- * @ingroup iface_wl_region
+ * @ingroup iface_poor_wl_region
  *
  * Subtract the specified rectangle from the region.
  */
 static inline void
-wl_region_subtract(struct wl_region *wl_region, int32_t x, int32_t y, int32_t width, int32_t height)
+poor_wl_region_subtract(struct poor_wl_region *poor_wl_region, int32_t x, int32_t y, int32_t width, int32_t height)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_region,
-			 WL_REGION_SUBTRACT, NULL, wl_proxy_get_version((struct wl_proxy *) wl_region), 0, x, y, width, height);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_region,
+			 POOR_WL_REGION_SUBTRACT, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_region), 0, x, y, width, height);
 }
 
-#ifndef WL_SUBCOMPOSITOR_ERROR_ENUM
-#define WL_SUBCOMPOSITOR_ERROR_ENUM
-enum wl_subcompositor_error {
+#ifndef POOR_WL_SUBCOMPOSITOR_ERROR_ENUM
+#define POOR_WL_SUBCOMPOSITOR_ERROR_ENUM
+enum poor_wl_subcompositor_error {
 	/**
 	 * the to-be sub-surface is invalid
 	 */
-	WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE = 0,
+	POOR_WL_SUBCOMPOSITOR_ERROR_BAD_SURFACE = 0,
 };
-#endif /* WL_SUBCOMPOSITOR_ERROR_ENUM */
+#endif /* POOR_WL_SUBCOMPOSITOR_ERROR_ENUM */
 
-#define WL_SUBCOMPOSITOR_DESTROY 0
-#define WL_SUBCOMPOSITOR_GET_SUBSURFACE 1
+/**
+ * @ingroup iface_poor_wl_subcompositor
+ * @struct poor_wl_subcompositor
+ */
+struct poor_wl_subcompositor {
+	struct poor_wl_proxy proxy;
+};
+
+#define POOR_WL_SUBCOMPOSITOR_DESTROY 0
+#define POOR_WL_SUBCOMPOSITOR_GET_SUBSURFACE 1
 
 
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  */
-#define WL_SUBCOMPOSITOR_DESTROY_SINCE_VERSION 1
+#define POOR_WL_SUBCOMPOSITOR_DESTROY_SINCE_VERSION 1
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  */
-#define WL_SUBCOMPOSITOR_GET_SUBSURFACE_SINCE_VERSION 1
+#define POOR_WL_SUBCOMPOSITOR_GET_SUBSURFACE_SINCE_VERSION 1
 
-/** @ingroup iface_wl_subcompositor */
+/** @ingroup iface_poor_wl_subcompositor */
 static inline void
-wl_subcompositor_set_user_data(struct wl_subcompositor *wl_subcompositor, void *user_data)
+poor_wl_subcompositor_set_user_data(struct poor_wl_subcompositor *poor_wl_subcompositor, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_subcompositor, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_subcompositor, user_data);
 }
 
-/** @ingroup iface_wl_subcompositor */
+/** @ingroup iface_poor_wl_subcompositor */
 static inline void *
-wl_subcompositor_get_user_data(struct wl_subcompositor *wl_subcompositor)
+poor_wl_subcompositor_get_user_data(struct poor_wl_subcompositor *poor_wl_subcompositor)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_subcompositor);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_subcompositor);
 }
 
 static inline uint32_t
-wl_subcompositor_get_version(struct wl_subcompositor *wl_subcompositor)
+poor_wl_subcompositor_get_version(struct poor_wl_subcompositor *poor_wl_subcompositor)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_subcompositor);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subcompositor);
 }
 
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  *
  * Informs the server that the client will not be using this
  * protocol object anymore. This does not affect any other
  * objects, wl_subsurface objects included.
  */
 static inline void
-wl_subcompositor_destroy(struct wl_subcompositor *wl_subcompositor)
+poor_wl_subcompositor_destroy(struct poor_wl_subcompositor *poor_wl_subcompositor)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subcompositor,
-			 WL_SUBCOMPOSITOR_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subcompositor), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subcompositor,
+			 POOR_WL_SUBCOMPOSITOR_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subcompositor), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_subcompositor
+ * @ingroup iface_poor_wl_subcompositor
  *
  * Create a sub-surface interface for the given surface, and
  * associate it with the given parent surface. This turns a
@@ -5352,78 +5512,86 @@ wl_subcompositor_destroy(struct wl_subcompositor *wl_subcompositor)
  * must not have an existing wl_subsurface object. Otherwise a protocol
  * error is raised.
  */
-static inline struct wl_subsurface *
-wl_subcompositor_get_subsurface(struct wl_subcompositor *wl_subcompositor, struct wl_proxy *id, struct wl_surface *surface, struct wl_surface *parent)
+static inline struct poor_wl_subsurface *
+poor_wl_subcompositor_get_subsurface(struct poor_wl_subcompositor *poor_wl_subcompositor, struct poor_wl_subsurface *id, struct poor_wl_surface *surface, struct poor_wl_surface *parent)
 {
-	return (struct wl_subsurface *) wl_proxy_marshal_flags((struct wl_proxy *) wl_subcompositor,
-			 WL_SUBCOMPOSITOR_GET_SUBSURFACE, &wl_subsurface_interface, wl_proxy_get_version((struct wl_proxy *) wl_subcompositor), 0, id, surface, parent);
+	return (struct poor_wl_subsurface *) poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subcompositor,
+			 POOR_WL_SUBCOMPOSITOR_GET_SUBSURFACE, &poor_wl_subsurface_interface, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subcompositor), 0, id, surface, parent);
 }
 
-#ifndef WL_SUBSURFACE_ERROR_ENUM
-#define WL_SUBSURFACE_ERROR_ENUM
-enum wl_subsurface_error {
+#ifndef POOR_WL_SUBSURFACE_ERROR_ENUM
+#define POOR_WL_SUBSURFACE_ERROR_ENUM
+enum poor_wl_subsurface_error {
 	/**
 	 * wl_surface is not a sibling or the parent
 	 */
-	WL_SUBSURFACE_ERROR_BAD_SURFACE = 0,
+	POOR_WL_SUBSURFACE_ERROR_BAD_SURFACE = 0,
 };
-#endif /* WL_SUBSURFACE_ERROR_ENUM */
-
-#define WL_SUBSURFACE_DESTROY 0
-#define WL_SUBSURFACE_SET_POSITION 1
-#define WL_SUBSURFACE_PLACE_ABOVE 2
-#define WL_SUBSURFACE_PLACE_BELOW 3
-#define WL_SUBSURFACE_SET_SYNC 4
-#define WL_SUBSURFACE_SET_DESYNC 5
-
+#endif /* POOR_WL_SUBSURFACE_ERROR_ENUM */
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
+ * @struct poor_wl_subsurface
  */
-#define WL_SUBSURFACE_DESTROY_SINCE_VERSION 1
-/**
- * @ingroup iface_wl_subsurface
- */
-#define WL_SUBSURFACE_SET_POSITION_SINCE_VERSION 1
-/**
- * @ingroup iface_wl_subsurface
- */
-#define WL_SUBSURFACE_PLACE_ABOVE_SINCE_VERSION 1
-/**
- * @ingroup iface_wl_subsurface
- */
-#define WL_SUBSURFACE_PLACE_BELOW_SINCE_VERSION 1
-/**
- * @ingroup iface_wl_subsurface
- */
-#define WL_SUBSURFACE_SET_SYNC_SINCE_VERSION 1
-/**
- * @ingroup iface_wl_subsurface
- */
-#define WL_SUBSURFACE_SET_DESYNC_SINCE_VERSION 1
+struct poor_wl_subsurface {
+	struct poor_wl_proxy proxy;
+};
 
-/** @ingroup iface_wl_subsurface */
+#define POOR_WL_SUBSURFACE_DESTROY 0
+#define POOR_WL_SUBSURFACE_SET_POSITION 1
+#define POOR_WL_SUBSURFACE_PLACE_ABOVE 2
+#define POOR_WL_SUBSURFACE_PLACE_BELOW 3
+#define POOR_WL_SUBSURFACE_SET_SYNC 4
+#define POOR_WL_SUBSURFACE_SET_DESYNC 5
+
+
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_DESTROY_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_SET_POSITION_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_PLACE_ABOVE_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_PLACE_BELOW_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_SET_SYNC_SINCE_VERSION 1
+/**
+ * @ingroup iface_poor_wl_subsurface
+ */
+#define POOR_WL_SUBSURFACE_SET_DESYNC_SINCE_VERSION 1
+
+/** @ingroup iface_poor_wl_subsurface */
 static inline void
-wl_subsurface_set_user_data(struct wl_subsurface *wl_subsurface, void *user_data)
+poor_wl_subsurface_set_user_data(struct poor_wl_subsurface *poor_wl_subsurface, void *user_data)
 {
-	wl_proxy_set_user_data((struct wl_proxy *) wl_subsurface, user_data);
+	poor_wl_proxy_set_user_data((struct poor_wl_proxy *) poor_wl_subsurface, user_data);
 }
 
-/** @ingroup iface_wl_subsurface */
+/** @ingroup iface_poor_wl_subsurface */
 static inline void *
-wl_subsurface_get_user_data(struct wl_subsurface *wl_subsurface)
+poor_wl_subsurface_get_user_data(struct poor_wl_subsurface *poor_wl_subsurface)
 {
-	return wl_proxy_get_user_data((struct wl_proxy *) wl_subsurface);
+	return poor_wl_proxy_get_user_data((struct poor_wl_proxy *) poor_wl_subsurface);
 }
 
 static inline uint32_t
-wl_subsurface_get_version(struct wl_subsurface *wl_subsurface)
+poor_wl_subsurface_get_version(struct poor_wl_subsurface *poor_wl_subsurface)
 {
-	return wl_proxy_get_version((struct wl_proxy *) wl_subsurface);
+	return poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * The sub-surface interface is removed from the wl_surface object
  * that was turned into a sub-surface with a
@@ -5432,14 +5600,14 @@ wl_subsurface_get_version(struct wl_subsurface *wl_subsurface)
  * a sub-surface. The wl_surface is unmapped.
  */
 static inline void
-wl_subsurface_destroy(struct wl_subsurface *wl_subsurface)
+poor_wl_subsurface_destroy(struct poor_wl_subsurface *poor_wl_subsurface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_DESTROY, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), WL_MARSHAL_FLAG_DESTROY);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_DESTROY, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), POOR_WL_MARSHAL_FLAG_DESTROY);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * This schedules a sub-surface position change.
  * The sub-surface will be moved so that its origin (top left
@@ -5459,14 +5627,14 @@ wl_subsurface_destroy(struct wl_subsurface *wl_subsurface)
  * The initial position is 0, 0.
  */
 static inline void
-wl_subsurface_set_position(struct wl_subsurface *wl_subsurface, int32_t x, int32_t y)
+poor_wl_subsurface_set_position(struct poor_wl_subsurface *poor_wl_subsurface, int32_t x, int32_t y)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_SET_POSITION, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), 0, x, y);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_SET_POSITION, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), 0, x, y);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * This sub-surface is taken from the stack, and put back just
  * above the reference surface, changing the z-order of the sub-surfaces.
@@ -5485,27 +5653,27 @@ wl_subsurface_set_position(struct wl_subsurface *wl_subsurface, int32_t x, int32
  * of its siblings and parent.
  */
 static inline void
-wl_subsurface_place_above(struct wl_subsurface *wl_subsurface, struct wl_surface *sibling)
+poor_wl_subsurface_place_above(struct poor_wl_subsurface *poor_wl_subsurface, struct poor_wl_surface *sibling)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_PLACE_ABOVE, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), 0, sibling);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_PLACE_ABOVE, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), 0, sibling);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * The sub-surface is placed just below the reference surface.
  * See wl_subsurface.place_above.
  */
 static inline void
-wl_subsurface_place_below(struct wl_subsurface *wl_subsurface, struct wl_surface *sibling)
+poor_wl_subsurface_place_below(struct poor_wl_subsurface *poor_wl_subsurface, struct poor_wl_surface *sibling)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_PLACE_BELOW, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), 0, sibling);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_PLACE_BELOW, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), 0, sibling);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * Change the commit behaviour of the sub-surface to synchronized
  * mode, also described as the parent dependent mode.
@@ -5522,14 +5690,14 @@ wl_subsurface_place_below(struct wl_subsurface *wl_subsurface, struct wl_surface
  * See wl_subsurface for the recursive effect of this mode.
  */
 static inline void
-wl_subsurface_set_sync(struct wl_subsurface *wl_subsurface)
+poor_wl_subsurface_set_sync(struct poor_wl_subsurface *poor_wl_subsurface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_SET_SYNC, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), 0);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_SET_SYNC, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), 0);
 }
 
 /**
- * @ingroup iface_wl_subsurface
+ * @ingroup iface_poor_wl_subsurface
  *
  * Change the commit behaviour of the sub-surface to desynchronized
  * mode, also described as independent or freely running mode.
@@ -5552,10 +5720,10 @@ wl_subsurface_set_sync(struct wl_subsurface *wl_subsurface)
  * the cached state is applied on set_desync.
  */
 static inline void
-wl_subsurface_set_desync(struct wl_subsurface *wl_subsurface)
+poor_wl_subsurface_set_desync(struct poor_wl_subsurface *poor_wl_subsurface)
 {
-	wl_proxy_marshal_flags((struct wl_proxy *) wl_subsurface,
-			 WL_SUBSURFACE_SET_DESYNC, NULL, wl_proxy_get_version((struct wl_proxy *) wl_subsurface), 0);
+	poor_wl_proxy_marshal_flags((struct poor_wl_proxy *) poor_wl_subsurface,
+			 POOR_WL_SUBSURFACE_SET_DESYNC, NULL, poor_wl_proxy_get_version((struct poor_wl_proxy *) poor_wl_subsurface), 0);
 }
 
 #ifdef  __cplusplus

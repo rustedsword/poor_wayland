@@ -27,7 +27,7 @@
 
 #define _POSIX_C_SOURCE 200809L
 
-#include "wayland-version.h"
+#include "poor_wayland_version.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -52,9 +52,9 @@
  * the Git commit that 'git blame' for this comment points to for more. */
 #include <expat.h>
 
-#include "wayland-util.h"
+#include "poor_wayland_util.h"
 
-#define PROGRAM_NAME "wayland-scanner"
+#define PROGRAM_NAME "poor_wayland_scanner"
 
 enum side {
 	CLIENT,
@@ -83,8 +83,8 @@ usage(int ret)
 			"    -v,  --version               print the wayland library version that\n"
 			"                                 the scanner was built against.\n"
 			"    -c,  --include-core-only     include the core version of the headers,\n"
-			"                                 that is e.g. wayland-client-core.h instead\n"
-			"                                 of wayland-client.h.\n"
+			"                                 that is e.g. poor_wayland_client_core.h instead\n"
+			"                                 of poor_wayland_client.h.\n"
 			"    -s,  --strict                exit immediately with an error if DTD\n"
 			"                                 verification fails.\n");
 	exit(ret);
@@ -93,7 +93,7 @@ usage(int ret)
 static int
 scanner_version(int ret)
 {
-	fprintf(stderr, "%s %s\n", PROGRAM_NAME, WAYLAND_VERSION);
+	fprintf(stderr, "%s %s\n", PROGRAM_NAME, POOR_WAYLAND_VERSION);
 	exit(ret);
 }
 
@@ -164,7 +164,7 @@ struct description {
 struct protocol {
 	char *name;
 	char *uppercase_name;
-	struct wl_list interface_list;
+	struct poor_wl_list interface_list;
 	int type_index;
 	int null_run_length;
 	char *copyright;
@@ -172,16 +172,18 @@ struct protocol {
 	bool core_headers;
 };
 
+/* 'name' is the C name, with the prefix, and 'wire_name' the name in the protocol */
 struct interface {
 	struct location loc;
 	char *name;
+	char *wire_name;
 	char *uppercase_name;
 	int version;
 	int since, deprecated_since;
-	struct wl_list request_list;
-	struct wl_list event_list;
-	struct wl_list enumeration_list;
-	struct wl_list link;
+	struct poor_wl_list request_list;
+	struct poor_wl_list event_list;
+	struct poor_wl_list enumeration_list;
+	struct poor_wl_list link;
 	struct description *description;
 };
 
@@ -189,8 +191,8 @@ struct message {
 	struct location loc;
 	char *name;
 	char *uppercase_name;
-	struct wl_list arg_list;
-	struct wl_list link;
+	struct poor_wl_list arg_list;
+	struct poor_wl_list link;
 	int new_id_count;
 	int type_index;
 	int all_null;
@@ -215,7 +217,7 @@ struct arg {
 	enum arg_type type;
 	int nullable;
 	char *interface_name;
-	struct wl_list link;
+	struct poor_wl_list link;
 	char *summary;
 	char *enumeration_name;
 };
@@ -223,8 +225,8 @@ struct arg {
 struct enumeration {
 	char *name;
 	char *uppercase_name;
-	struct wl_list entry_list;
-	struct wl_list link;
+	struct poor_wl_list entry_list;
+	struct poor_wl_list link;
 	struct description *description;
 	bool bitfield;
 	int since;
@@ -236,7 +238,7 @@ struct entry {
 	char *value;
 	char *summary;
 	int since, deprecated_since;
-	struct wl_list link;
+	struct poor_wl_list link;
 	struct description *description;
 };
 
@@ -327,6 +329,19 @@ xstrdup(const char *s)
 	return fail_on_null(strdup(s));
 }
 
+#define C_PREFIX "poor_"
+
+static char *
+prefixed_dup(const char *src)
+{
+	char *p = fail_on_null(malloc(strlen(C_PREFIX) + strlen(src) + 1));
+
+	strcpy(p, C_PREFIX);
+	strcat(p, src);
+
+	return p;
+}
+
 static char *
 uppercase_dup(const char *src)
 {
@@ -358,7 +373,7 @@ static const char *indent(int n)
 }
 
 static void
-desc_dump(char *desc, const char *fmt, ...) WL_PRINTF(2, 3);
+desc_dump(char *desc, const char *fmt, ...) POOR_WL_PRINTF(2, 3);
 
 static void
 desc_dump(char *desc, const char *fmt, ...)
@@ -470,7 +485,7 @@ create_message(struct location loc, const char *name)
 	message->loc = loc;
 	message->name = xstrdup(name);
 	message->uppercase_name = uppercase_dup(name);
-	wl_list_init(&message->arg_list);
+	poor_wl_list_init(&message->arg_list);
 
 	return message;
 }
@@ -542,7 +557,7 @@ free_message(struct message *message)
 	free(message->uppercase_name);
 	free_description(message->description);
 
-	wl_list_for_each_safe(a, a_next, &message->arg_list, link)
+	poor_wl_list_for_each_safe(a, a_next, &message->arg_list, link)
 		free_arg(a);
 
 	free(message);
@@ -558,7 +573,7 @@ create_enumeration(const char *name)
 	enumeration->uppercase_name = uppercase_dup(name);
 	enumeration->since = 1;
 
-	wl_list_init(&enumeration->entry_list);
+	poor_wl_list_init(&enumeration->entry_list);
 
 	return enumeration;
 }
@@ -597,7 +612,7 @@ free_enumeration(struct enumeration *enumeration)
 	free(enumeration->uppercase_name);
 	free_description(enumeration->description);
 
-	wl_list_for_each_safe(e, e_next, &enumeration->entry_list, link)
+	poor_wl_list_for_each_safe(e, e_next, &enumeration->entry_list, link)
 		free_entry(e);
 
 	free(enumeration);
@@ -610,13 +625,14 @@ create_interface(struct location loc, const char *name, int version)
 
 	interface = xzalloc(sizeof *interface);
 	interface->loc = loc;
-	interface->name = xstrdup(name);
-	interface->uppercase_name = uppercase_dup(name);
+	interface->name = prefixed_dup(name);
+	interface->wire_name = xstrdup(name);
+	interface->uppercase_name = uppercase_dup(interface->name);
 	interface->version = version;
 	interface->since = 1;
-	wl_list_init(&interface->request_list);
-	wl_list_init(&interface->event_list);
-	wl_list_init(&interface->enumeration_list);
+	poor_wl_list_init(&interface->request_list);
+	poor_wl_list_init(&interface->event_list);
+	poor_wl_list_init(&interface->enumeration_list);
 
 	return interface;
 }
@@ -628,14 +644,15 @@ free_interface(struct interface *interface)
 	struct enumeration *e, *next_e;
 
 	free(interface->name);
+	free(interface->wire_name);
 	free(interface->uppercase_name);
 	free_description(interface->description);
 
-	wl_list_for_each_safe(m, next_m, &interface->request_list, link)
+	poor_wl_list_for_each_safe(m, next_m, &interface->request_list, link)
 		free_message(m);
-	wl_list_for_each_safe(m, next_m, &interface->event_list, link)
+	poor_wl_list_for_each_safe(m, next_m, &interface->event_list, link)
 		free_message(m);
-	wl_list_for_each_safe(e, next_e, &interface->enumeration_list, link)
+	poor_wl_list_for_each_safe(e, next_e, &interface->enumeration_list, link)
 		free_enumeration(e);
 
 	free(interface);
@@ -817,8 +834,8 @@ start_element(void *data, const char *element_name, const char **atts)
 			fail(&ctx->loc, "no protocol name given");
 
 		validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
-		ctx->protocol->name = xstrdup(name);
-		ctx->protocol->uppercase_name = uppercase_dup(name);
+		ctx->protocol->name = prefixed_dup(name);
+		ctx->protocol->uppercase_name = uppercase_dup(ctx->protocol->name);
 	} else if (strcmp(element_name, "copyright") == 0) {
 
 	} else if (strcmp(element_name, "interface") == 0) {
@@ -845,7 +862,7 @@ start_element(void *data, const char *element_name, const char **atts)
 		validate_identifier(&ctx->loc, name, STANDALONE_IDENT);
 		interface = create_interface(ctx->loc, name, version);
 		ctx->interface = interface;
-		wl_list_insert(ctx->protocol->interface_list.prev,
+		poor_wl_list_insert(ctx->protocol->interface_list.prev,
 			       &interface->link);
 	} else if (strcmp(element_name, "request") == 0 ||
 		   strcmp(element_name, "event") == 0) {
@@ -856,10 +873,10 @@ start_element(void *data, const char *element_name, const char **atts)
 		message = create_message(ctx->loc, name);
 
 		if (strcmp(element_name, "request") == 0)
-			wl_list_insert(ctx->interface->request_list.prev,
+			poor_wl_list_insert(ctx->interface->request_list.prev,
 				       &message->link);
 		else
-			wl_list_insert(ctx->interface->event_list.prev,
+			poor_wl_list_insert(ctx->interface->event_list.prev,
 				       &message->link);
 
 		if (type != NULL && strcmp(type, "destructor") == 0)
@@ -900,7 +917,7 @@ start_element(void *data, const char *element_name, const char **atts)
 				validate_identifier(&ctx->loc,
 						    interface_name,
 						    STANDALONE_IDENT);
-				arg->interface_name = xstrdup(interface_name);
+				arg->interface_name = prefixed_dup(interface_name);
 			}
 			break;
 		default:
@@ -930,7 +947,7 @@ start_element(void *data, const char *element_name, const char **atts)
 		if (summary)
 			arg->summary = xstrdup(summary);
 
-		wl_list_insert(ctx->message->arg_list.prev, &arg->link);
+		poor_wl_list_insert(ctx->message->arg_list.prev, &arg->link);
 	} else if (strcmp(element_name, "enum") == 0) {
 		if (name == NULL)
 			fail(&ctx->loc, "no enum name given");
@@ -947,7 +964,7 @@ start_element(void *data, const char *element_name, const char **atts)
 			     "invalid value (%s) for bitfield attribute (only true/false are accepted)",
 			     bitfield);
 
-		wl_list_insert(ctx->interface->enumeration_list.prev,
+		poor_wl_list_insert(ctx->interface->enumeration_list.prev,
 			       &enumeration->link);
 
 		ctx->enumeration = enumeration;
@@ -975,7 +992,7 @@ start_element(void *data, const char *element_name, const char **atts)
 			entry->summary = xstrdup(summary);
 		else
 			entry->summary = NULL;
-		wl_list_insert(ctx->enumeration->entry_list.prev,
+		poor_wl_list_insert(ctx->enumeration->entry_list.prev,
 			       &entry->link);
 		ctx->entry = entry;
 	} else if (strcmp(element_name, "description") == 0) {
@@ -1018,15 +1035,15 @@ find_enumeration(struct protocol *protocol,
 	if (idx > 0) {
 		enum_name = enum_attribute + idx + 1;
 
-		wl_list_for_each(i, &protocol->interface_list, link)
-			if (strncmp(i->name, enum_attribute, idx) == 0)
-				wl_list_for_each(e, &i->enumeration_list, link)
+		poor_wl_list_for_each(i, &protocol->interface_list, link)
+			if (strncmp(i->wire_name, enum_attribute, idx) == 0)
+				poor_wl_list_for_each(e, &i->enumeration_list, link)
 					if (strcmp(e->name, enum_name) == 0)
 						return e;
 	} else if (interface) {
 		enum_name = enum_attribute;
 
-		wl_list_for_each(e, &interface->enumeration_list, link)
+		poor_wl_list_for_each(e, &interface->enumeration_list, link)
 			if (strcmp(e->name, enum_name) == 0)
 				return e;
 	}
@@ -1037,13 +1054,13 @@ find_enumeration(struct protocol *protocol,
 static void
 verify_arguments(struct parse_context *ctx,
 		 struct interface *interface,
-		 struct wl_list *messages,
-		 struct wl_list *enumerations)
+		 struct poor_wl_list *messages,
+		 struct poor_wl_list *enumerations)
 {
 	struct message *m;
-	wl_list_for_each(m, messages, link) {
+	poor_wl_list_for_each(m, messages, link) {
 		struct arg *a;
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			struct enumeration *e;
 
 			if (!a->enumeration_name)
@@ -1099,7 +1116,7 @@ end_element(void *data, const XML_Char *name)
 		   strcmp(name, "event") == 0) {
 		ctx->message = NULL;
 	} else if (strcmp(name, "enum") == 0) {
-		if (wl_list_empty(&ctx->enumeration->entry_list)) {
+		if (poor_wl_list_empty(&ctx->enumeration->entry_list)) {
 			fail(&ctx->loc, "enumeration %s was empty",
 			     ctx->enumeration->name);
 		}
@@ -1109,7 +1126,7 @@ end_element(void *data, const XML_Char *name)
 	} else if (strcmp(name, "protocol") == 0) {
 		struct interface *i;
 
-		wl_list_for_each(i, &ctx->protocol->interface_list, link) {
+		poor_wl_list_for_each(i, &ctx->protocol->interface_list, link) {
 			verify_arguments(ctx, i, &i->request_list, &i->enumeration_list);
 			verify_arguments(ctx, i, &i->event_list, &i->enumeration_list);
 		}
@@ -1159,16 +1176,16 @@ format_text_to_comment(const char *text, bool standalone_comment)
 }
 
 static void
-emit_opcodes(struct wl_list *message_list, struct interface *interface)
+emit_opcodes(struct poor_wl_list *message_list, struct interface *interface)
 {
 	struct message *m;
 	int opcode;
 
-	if (wl_list_empty(message_list))
+	if (poor_wl_list_empty(message_list))
 		return;
 
 	opcode = 0;
-	wl_list_for_each(m, message_list, link)
+	poor_wl_list_for_each(m, message_list, link)
 		printf("#define %s_%s %d\n",
 		       interface->uppercase_name, m->uppercase_name, opcode++);
 
@@ -1176,11 +1193,11 @@ emit_opcodes(struct wl_list *message_list, struct interface *interface)
 }
 
 static void
-emit_opcode_versions(struct wl_list *message_list, struct interface *interface)
+emit_opcode_versions(struct poor_wl_list *message_list, struct interface *interface)
 {
 	struct message *m;
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		printf("/**\n * @ingroup iface_%s\n */\n", interface->name);
 		printf("#define %s_%s_SINCE_VERSION %d\n",
 		       interface->uppercase_name, m->uppercase_name, m->since);
@@ -1203,7 +1220,7 @@ emit_type(struct arg *a)
 		printf("uint32_t ");
 		break;
 	case FIXED:
-		printf("wl_fixed_t ");
+		printf("poor_wl_fixed_t ");
 		break;
 	case STRING:
 		printf("const char *");
@@ -1212,13 +1229,30 @@ emit_type(struct arg *a)
 		printf("struct %s *", a->interface_name);
 		break;
 	case ARRAY:
-		printf("struct wl_array *");
+		printf("struct poor_wl_array *");
 		break;
 	}
 }
 
+/* The client library defines the display, which holds more than its proxy */
 static void
-emit_stubs(struct wl_list *message_list, struct interface *interface)
+emit_proxy_struct(struct interface *interface)
+{
+	if (strcmp(interface->wire_name, "wl_display") == 0)
+		return;
+
+	printf("/**\n"
+	       " * @ingroup iface_%s\n"
+	       " * @struct %s\n"
+	       " */\n"
+	       "struct %s {\n"
+	       "\tstruct poor_wl_proxy proxy;\n"
+	       "};\n\n",
+	       interface->name, interface->name, interface->name);
+}
+
+static void
+emit_stubs(struct poor_wl_list *message_list, struct interface *interface)
 {
 	struct message *m;
 	struct arg *a, *ret;
@@ -1228,7 +1262,7 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 	printf("static inline void\n"
 	       "%s_set_user_data(struct %s *%s, void *user_data)\n"
 	       "{\n"
-	       "\twl_proxy_set_user_data((struct wl_proxy *) %s, user_data);\n"
+	       "\tpoor_wl_proxy_set_user_data((struct poor_wl_proxy *) %s, user_data);\n"
 	       "}\n\n",
 	       interface->name, interface->name, interface->name,
 	       interface->name);
@@ -1237,7 +1271,7 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 	printf("static inline void *\n"
 	       "%s_get_user_data(struct %s *%s)\n"
 	       "{\n"
-	       "\treturn wl_proxy_get_user_data((struct wl_proxy *) %s);\n"
+	       "\treturn poor_wl_proxy_get_user_data((struct poor_wl_proxy *) %s);\n"
 	       "}\n\n",
 	       interface->name, interface->name, interface->name,
 	       interface->name);
@@ -1245,14 +1279,14 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 	printf("static inline uint32_t\n"
 	       "%s_get_version(struct %s *%s)\n"
 	       "{\n"
-	       "\treturn wl_proxy_get_version((struct wl_proxy *) %s);\n"
+	       "\treturn poor_wl_proxy_get_version((struct poor_wl_proxy *) %s);\n"
 	       "}\n\n",
 	       interface->name, interface->name, interface->name,
 	       interface->name);
 
 	has_destructor = 0;
 	has_destroy = 0;
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		if (m->destructor)
 			has_destructor = 1;
 		if (strcmp(m->name, "destroy") == 0)
@@ -1266,22 +1300,22 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 		     interface->name);
 	}
 
-	if (!has_destroy && strcmp(interface->name, "wl_display") != 0) {
+	if (!has_destroy && strcmp(interface->wire_name, "wl_display") != 0) {
 		printf("/** @ingroup iface_%s */\n", interface->name);
 		printf("static inline void\n"
 		       "%s_destroy(struct %s *%s)\n"
 		       "{\n"
-		       "\twl_proxy_destroy("
-		       "(struct wl_proxy *) %s);\n"
+		       "\tpoor_wl_proxy_destroy("
+		       "(struct poor_wl_proxy *) %s);\n"
 		       "}\n\n",
 		       interface->name, interface->name, interface->name,
 		       interface->name);
 	}
 
-	if (wl_list_empty(message_list))
+	if (poor_wl_list_empty(message_list))
 		return;
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		if (m->new_id_count > 1) {
 			warn(&m->loc,
 			     "request '%s::%s' has more than "
@@ -1291,7 +1325,7 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 		}
 
 		ret = NULL;
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (a->type == NEW_ID)
 				ret = a;
 		}
@@ -1313,13 +1347,15 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 		       interface->name, m->name,
 		       interface->name, interface->name);
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (a->type == NEW_ID && a->interface_name == NULL)
-				printf(", const struct wl_interface *interface"
+				printf(", const struct poor_wl_interface *interface"
 				       ", uint32_t version");
 			printf(", ");
-			if (a->type == NEW_ID)
-				printf("struct wl_proxy *");
+			if (a->type == NEW_ID && a->interface_name == NULL)
+				printf("void *");
+			else if (a->type == NEW_ID)
+				printf("struct %s *", a->interface_name);
 			else
 				emit_type(a);
 			printf("%s", a->name);
@@ -1332,8 +1368,8 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 			printf("return (void *) ");
 		else if (ret)
 			printf("return (struct %s *) ", ret->interface_name);
-		printf("wl_proxy_marshal_flags("
-		       "(struct wl_proxy *) %s,\n"
+		printf("poor_wl_proxy_marshal_flags("
+		       "(struct poor_wl_proxy *) %s,\n"
 		       "\t\t\t %s_%s",
 		       interface->name,
 		       interface->uppercase_name,
@@ -1357,11 +1393,11 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 		if (ret && ret->interface_name == NULL)
 			printf(", version");
 		else
-			printf(", wl_proxy_get_version((struct wl_proxy *) %s)",
+			printf(", poor_wl_proxy_get_version((struct poor_wl_proxy *) %s)",
 			       interface->name);
-		printf(", %s", m->destructor ? "WL_MARSHAL_FLAG_DESTROY" : "0");
+		printf(", %s", m->destructor ? "POOR_WL_MARSHAL_FLAG_DESTROY" : "0");
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (a->type == NEW_ID && a->interface_name == NULL)
 				printf(", interface->name, version");
 			printf(", %s", a->name);
@@ -1373,37 +1409,37 @@ emit_stubs(struct wl_list *message_list, struct interface *interface)
 }
 
 static void
-emit_event_wrappers(struct wl_list *message_list, struct interface *interface)
+emit_event_wrappers(struct poor_wl_list *message_list, struct interface *interface)
 {
 	struct message *m;
 	struct arg *a;
 
 	/* We provide hand written functions for the display object */
-	if (strcmp(interface->name, "wl_display") == 0)
+	if (strcmp(interface->wire_name, "wl_display") == 0)
 		return;
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		printf("/**\n"
 		       " * @ingroup iface_%s\n"
 		       " * Sends an %s event to the client owning the resource.\n",
 		       interface->name,
 		       m->name);
 		printf(" * @param resource_ The client's resource\n");
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (a->summary)
 				printf(" * @param %s %s\n", a->name, a->summary);
 		}
 		printf(" */\n");
 		printf("static inline void\n"
-		       "%s_send_%s(struct wl_resource *resource_",
+		       "%s_send_%s(struct poor_wl_resource *resource_",
 		       interface->name, m->name);
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			printf(", ");
 			switch (a->type) {
 			case NEW_ID:
 			case OBJECT:
-				printf("struct wl_resource *");
+				printf("struct poor_wl_resource *");
 				break;
 			default:
 				emit_type(a);
@@ -1413,10 +1449,10 @@ emit_event_wrappers(struct wl_list *message_list, struct interface *interface)
 
 		printf(")\n"
 		       "{\n"
-		       "\twl_resource_post_event(resource_, %s_%s",
+		       "\tpoor_wl_resource_post_event(resource_, %s_%s",
 		       interface->uppercase_name, m->uppercase_name);
 
-		wl_list_for_each(a, &m->arg_list, link)
+		poor_wl_list_for_each(a, &m->arg_list, link)
 			printf(", %s", a->name);
 
 		printf(");\n");
@@ -1449,7 +1485,7 @@ emit_validator(struct interface *interface, struct enumeration *e)
 
 	if (e->bitfield) {
 		printf("	uint32_t valid = 0;\n");
-		wl_list_for_each(entry, &e->entry_list, link) {
+		poor_wl_list_for_each(entry, &e->entry_list, link) {
 			printf("	if (version >= %d)\n"
 			       "		valid |= %s_%s_%s;\n",
 			       entry->since,
@@ -1459,7 +1495,7 @@ emit_validator(struct interface *interface, struct enumeration *e)
 		printf("	return (value & ~valid) == 0;\n");
 	} else {
 		printf("	switch (value) {\n");
-		wl_list_for_each(entry, &e->entry_list, link) {
+		poor_wl_list_for_each(entry, &e->entry_list, link) {
 			printf("	case %s%s_%s_%s:\n"
 			       "		return version >= %d;\n",
 			       entry->value[0] == '-' ? "(uint32_t)" : "",
@@ -1482,7 +1518,7 @@ emit_enumerations(struct interface *interface, bool with_validators)
 	struct enumeration *e;
 	struct entry *entry;
 
-	wl_list_for_each(e, &interface->enumeration_list, link) {
+	poor_wl_list_for_each(e, &interface->enumeration_list, link) {
 		struct description *desc = e->description;
 
 		printf("#ifndef %s_%s_ENUM\n",
@@ -1499,7 +1535,7 @@ emit_enumerations(struct interface *interface, bool with_validators)
 			printf(" */\n");
 		}
 		printf("enum %s_%s {\n", interface->name, e->name);
-		wl_list_for_each(entry, &e->entry_list, link) {
+		poor_wl_list_for_each(entry, &e->entry_list, link) {
 			desc = entry->description;
 			if (entry->summary || entry->since > 1 || desc) {
 				printf("\t/**\n");
@@ -1525,7 +1561,7 @@ emit_enumerations(struct interface *interface, bool with_validators)
 		}
 		printf("};\n");
 
-		wl_list_for_each(entry, &e->entry_list, link) {
+		poor_wl_list_for_each(entry, &e->entry_list, link) {
 			if (entry->since == 1)
                             continue;
 
@@ -1546,13 +1582,13 @@ emit_enumerations(struct interface *interface, bool with_validators)
 }
 
 static void
-emit_structs(struct wl_list *message_list, struct interface *interface, enum side side)
+emit_structs(struct poor_wl_list *message_list, struct interface *interface, enum side side)
 {
 	struct message *m;
 	struct arg *a;
 	int n;
 
-	if (wl_list_empty(message_list))
+	if (poor_wl_list_empty(message_list))
 		return;
 
 	printf("/**\n");
@@ -1563,7 +1599,7 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 	printf("struct %s_%s {\n", interface->name,
 	       (side == SERVER) ? "interface" : "listener");
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		struct description *mdesc = m->description;
 
 		printf("\t/**\n");
@@ -1573,7 +1609,7 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 			printf("\t *\n");
 			desc_dump(mdesc->text, "\t * ");
 		}
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (side == SERVER && a->type == NEW_ID &&
 			    a->interface_name == NULL)
 				printf("\t * @param interface name of the objects interface\n"
@@ -1593,8 +1629,8 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 
 		n = strlen(m->name) + 17;
 		if (side == SERVER) {
-			printf("struct wl_client *client,\n"
-			       "%sstruct wl_resource *resource",
+			printf("struct poor_wl_client *client,\n"
+			       "%sstruct poor_wl_resource *resource",
 			       indent(n));
 		} else {
 			printf("void *data,\n"),
@@ -1602,11 +1638,11 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 			       indent(n), interface->name, interface->name);
 		}
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			printf(",\n%s", indent(n));
 
 			if (side == SERVER && a->type == OBJECT)
-				printf("struct wl_resource *");
+				printf("struct poor_wl_resource *");
 			else if (side == SERVER && a->type == NEW_ID && a->interface_name == NULL)
 				printf("const char *interface, uint32_t version, uint32_t ");
 			else if (side == CLIENT && a->type == OBJECT && a->interface_name == NULL)
@@ -1633,7 +1669,7 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 		   "%s_add_listener(struct %s *%s,\n"
 		   "%sconst struct %s_listener *listener, void *data)\n"
 		   "{\n"
-		   "\treturn wl_proxy_add_listener((struct wl_proxy *) %s,\n"
+		   "\treturn poor_wl_proxy_add_listener((struct poor_wl_proxy *) %s,\n"
 		   "%s(void (**)(void)) listener, data);\n"
 		   "}\n\n",
 		   interface->name, interface->name, interface->name,
@@ -1646,7 +1682,7 @@ emit_structs(struct wl_list *message_list, struct interface *interface, enum sid
 
 static void
 emit_types_forward_declarations(struct protocol *protocol,
-				struct wl_list *message_list,
+				struct poor_wl_list *message_list,
 				struct name_array *types)
 {
 	struct message *m;
@@ -1654,10 +1690,10 @@ emit_types_forward_declarations(struct protocol *protocol,
 	int length;
 	char **p;
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		length = 0;
 		m->all_null = 1;
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			length++;
 			if (a->type == NEW_ID && !a->interface_name)
 				// adds implicit string and uint arguments
@@ -1695,9 +1731,9 @@ static const char *
 get_include_name(bool core, enum side side)
 {
 	if (side == SERVER)
-		return core ? "wayland-server-core.h" : "wayland-server.h";
+		return core ? "poor_wayland_server_core.h" : "poor_wayland_server.h";
 	else
-		return core ? "wayland-client-core.h" : "wayland-client.h";
+		return core ? "poor_wayland_client_core.h" : "poor_wayland_client.h";
 }
 
 static void
@@ -1723,7 +1759,7 @@ emit_mainpage_blurb(const struct protocol *protocol, enum side side)
 	}
 
 	printf(" * @section page_ifaces_%s Interfaces\n", protocol->name);
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		printf(" * - @subpage page_iface_%s - %s\n",
 		       i->name,
 		       i->description && i->description->summary ?  i->description->summary : "");
@@ -1748,7 +1784,7 @@ emit_header(struct protocol *protocol, enum side side)
 	const char *s = (side == SERVER) ? "SERVER" : "CLIENT";
 	char **p, *prev;
 
-	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, WAYLAND_VERSION);
+	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, POOR_WAYLAND_VERSION);
 
 	printf("#ifndef %s_%s_PROTOCOL_H\n"
 	       "#define %s_%s_PROTOCOL_H\n"
@@ -1763,18 +1799,18 @@ emit_header(struct protocol *protocol, enum side side)
 	       protocol->uppercase_name, s,
 	       get_include_name(protocol->core_headers, side));
 	if (side == SERVER)
-		printf("struct wl_client;\n"
-		       "struct wl_resource;\n\n");
+		printf("struct poor_wl_client;\n"
+		       "struct poor_wl_resource;\n\n");
 
 	emit_mainpage_blurb(protocol, side);
 
 	name_array_init(&types);
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		emit_types_forward_declarations(protocol, &i->request_list, &types);
 		emit_types_forward_declarations(protocol, &i->event_list, &types);
 	}
 
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		p = fail_on_null(name_array_add(&types, sizeof *p));
 		*p = i->name;
 	}
@@ -1783,7 +1819,7 @@ emit_header(struct protocol *protocol, enum side side)
 		qsort(types.data, types.size / sizeof *p, sizeof *p, cmp_names);
 
 	prev = NULL;
-	wl_array_for_each(p, &types) {
+	poor_wl_array_for_each(p, &types) {
 		if (prev && strcmp(*p, prev) == 0)
 			continue;
 		printf("struct %s;\n", *p);
@@ -1792,7 +1828,7 @@ emit_header(struct protocol *protocol, enum side side)
 	name_array_release(&types);
 	printf("\n");
 
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		printf("#ifndef %s_INTERFACE\n", i->uppercase_name);
 		printf("#define %s_INTERFACE\n", i->uppercase_name);
 		printf("/**\n"
@@ -1813,14 +1849,14 @@ emit_header(struct protocol *protocol, enum side side)
 		if (i->description && i->description->text)
 			format_text_to_comment(i->description->text, false);
 		printf(" */\n");
-		printf("extern const struct wl_interface "
+		printf("extern const struct poor_wl_interface "
 		       "%s_interface;\n", i->name);
 		printf("#endif\n");
 	}
 
 	printf("\n");
 
-	wl_list_for_each_safe(i, i_next, &protocol->interface_list, link) {
+	poor_wl_list_for_each_safe(i, i_next, &protocol->interface_list, link) {
 
 		emit_enumerations(i, side == SERVER);
 
@@ -1831,6 +1867,7 @@ emit_header(struct protocol *protocol, enum side side)
 			emit_opcode_versions(&i->request_list, i);
 			emit_event_wrappers(&i->event_list, i);
 		} else {
+			emit_proxy_struct(i);
 			emit_structs(&i->event_list, i, side);
 			emit_opcodes(&i->request_list, i);
 			emit_opcode_versions(&i->event_list, i);
@@ -1853,7 +1890,7 @@ emit_enum_header(struct protocol *protocol)
 {
 	struct interface *i, *i_next;
 
-	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, WAYLAND_VERSION);
+	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, POOR_WAYLAND_VERSION);
 
 	printf("#ifndef %s_ENUM_PROTOCOL_H\n"
 	       "#define %s_ENUM_PROTOCOL_H\n"
@@ -1864,7 +1901,7 @@ emit_enum_header(struct protocol *protocol)
 	       protocol->uppercase_name,
 	       protocol->uppercase_name);
 
-	wl_list_for_each_safe(i, i_next, &protocol->interface_list, link) {
+	poor_wl_list_for_each_safe(i, i_next, &protocol->interface_list, link) {
 		emit_enumerations(i, false);
 
 		free_interface(i);
@@ -1887,12 +1924,12 @@ emit_null_run(struct protocol *protocol)
 }
 
 static void
-emit_types(struct protocol *protocol, struct wl_list *message_list)
+emit_types(struct protocol *protocol, struct poor_wl_list *message_list)
 {
 	struct message *m;
 	struct arg *a;
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		if (m->all_null) {
 			m->type_index = 0;
 			continue;
@@ -1901,7 +1938,7 @@ emit_types(struct protocol *protocol, struct wl_list *message_list)
 		m->type_index =
 			protocol->null_run_length + protocol->type_index;
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			protocol->type_index++;
 			if (a->type == NEW_ID && !a->interface_name) {
 				// adds implicit string and uint arguments
@@ -1927,26 +1964,26 @@ emit_types(struct protocol *protocol, struct wl_list *message_list)
 }
 
 static void
-emit_messages(const char *name, struct wl_list *message_list,
+emit_messages(const char *name, struct poor_wl_list *message_list,
 	      struct interface *interface, const char *suffix)
 {
 	struct message *m;
 	struct arg *a;
 
-	if (wl_list_empty(message_list))
+	if (poor_wl_list_empty(message_list))
 		return;
 
-	printf("static const struct wl_message "
+	printf("static const struct poor_wl_message "
 	       "%s_%s[] = {\n",
 	       interface->name, suffix);
 
-	wl_list_for_each(m, message_list, link) {
+	poor_wl_list_for_each(m, message_list, link) {
 		printf("\t{ \"%s\", \"", m->name);
 
 		if (m->since > 1)
 			printf("%d", m->since);
 
-		wl_list_for_each(a, &m->arg_list, link) {
+		poor_wl_list_for_each(a, &m->arg_list, link) {
 			if (is_nullable_type(a) && a->nullable)
 				printf("?");
 
@@ -1995,7 +2032,7 @@ emit_code(struct protocol *protocol, enum visibility vis)
 	struct name_array types;
 	char **p, *prev;
 
-	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, WAYLAND_VERSION);
+	printf("/* Generated by %s %s */\n\n", PROGRAM_NAME, POOR_WAYLAND_VERSION);
 
 	if (protocol->copyright)
 		format_text_to_comment(protocol->copyright, true);
@@ -2003,27 +2040,27 @@ emit_code(struct protocol *protocol, enum visibility vis)
 	printf("#include <stdbool.h>\n"
 	       "#include <stdlib.h>\n"
 	       "#include <stdint.h>\n"
-	       "#include \"wayland-util.h\"\n\n");
+	       "#include \"poor_wayland_util.h\"\n\n");
 
 	/* When building a shared library symbols must be exported, otherwise
 	 * we want to have the symbols hidden. */
 	if (vis == PRIVATE) {
-		symbol_visibility = "WL_PRIVATE";
+		symbol_visibility = "POOR_WL_PRIVATE";
 		printf("#ifndef __has_attribute\n"
 		       "# define __has_attribute(x) 0  /* Compatibility with non-clang compilers. */\n"
 		       "#endif\n\n");
 
 		printf("#if (__has_attribute(visibility) || defined(__GNUC__) && __GNUC__ >= 4)\n"
-		       "#define WL_PRIVATE __attribute__ ((visibility(\"hidden\")))\n"
+		       "#define POOR_WL_PRIVATE __attribute__ ((visibility(\"hidden\")))\n"
 		       "#else\n"
-		       "#define WL_PRIVATE\n"
+		       "#define POOR_WL_PRIVATE\n"
 		       "#endif\n\n");
 	} else {
-		symbol_visibility = "WL_EXPORT";
+		symbol_visibility = "POOR_WL_EXPORT";
 	}
 
 	name_array_init(&types);
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		emit_types_forward_declarations(protocol, &i->request_list, &types);
 		emit_types_forward_declarations(protocol, &i->event_list, &types);
 	}
@@ -2032,42 +2069,42 @@ emit_code(struct protocol *protocol, enum visibility vis)
 		qsort(types.data, types.size / sizeof *p, sizeof *p, cmp_names);
 
 	prev = NULL;
-	wl_array_for_each(p, &types) {
+	poor_wl_array_for_each(p, &types) {
 		if (prev && strcmp(*p, prev) == 0)
 			continue;
-		printf("extern const struct wl_interface %s_interface;\n", *p);
+		printf("extern const struct poor_wl_interface %s_interface;\n", *p);
 		prev = *p;
 	}
 	name_array_release(&types);
 	printf("\n");
 
-	printf("static const struct wl_interface *%s_types[] = {\n", protocol->name);
+	printf("static const struct poor_wl_interface *%s_types[] = {\n", protocol->name);
 	emit_null_run(protocol);
-	wl_list_for_each(i, &protocol->interface_list, link) {
+	poor_wl_list_for_each(i, &protocol->interface_list, link) {
 		emit_types(protocol, &i->request_list);
 		emit_types(protocol, &i->event_list);
 	}
 	printf("};\n\n");
 
-	wl_list_for_each_safe(i, next, &protocol->interface_list, link) {
+	poor_wl_list_for_each_safe(i, next, &protocol->interface_list, link) {
 
 		emit_messages(protocol->name, &i->request_list, i, "requests");
 		emit_messages(protocol->name, &i->event_list, i, "events");
 
-		printf("%s const struct wl_interface "
+		printf("%s const struct poor_wl_interface "
 		       "%s_interface = {\n"
 		       "\t\"%s\", %d,\n",
-		       symbol_visibility, i->name, i->name, i->version);
+		       symbol_visibility, i->name, i->wire_name, i->version);
 
-		if (!wl_list_empty(&i->request_list))
+		if (!poor_wl_list_empty(&i->request_list))
 			printf("\t%d, %s_requests,\n",
-			       wl_list_length(&i->request_list), i->name);
+			       poor_wl_list_length(&i->request_list), i->name);
 		else
 			printf("\t0, NULL,\n");
 
-		if (!wl_list_empty(&i->event_list))
+		if (!poor_wl_list_empty(&i->event_list))
 			printf("\t%d, %s_events,\n",
-			       wl_list_length(&i->event_list), i->name);
+			       poor_wl_list_length(&i->event_list), i->name);
 		else
 			printf("\t0, NULL,\n");
 
@@ -2187,7 +2224,7 @@ int main(int argc, char *argv[])
 
 	/* initialize protocol structure */
 	memset(&protocol, 0, sizeof protocol);
-	wl_list_init(&protocol.interface_list);
+	poor_wl_list_init(&protocol.interface_list);
 	protocol.core_headers = core_headers;
 
 	/* initialize context */

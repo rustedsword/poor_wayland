@@ -33,11 +33,19 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
 - A display is used from the thread of its loop only: there are no event
   queues, roundtrips or prepare_read. A roundtrip is a wl_display.sync whose
   callback continues the work.
-- Requests that create objects take the memory of the new proxy, e.g.
-  `wl_compositor_create_surface(compositor, &my_surface->proxy)`.
+- Every interface has a structure that holds its proxy, so objects can be
+  embedded, and requests that create objects take them, e.g.
+  `poor_wl_compositor_create_surface(&app->compositor, &app->surface)`.
+- Everything has a `poor_` prefix: libpoor_wayland_client,
+  libpoor_wayland_server, poor_wayland_scanner, the headers and all C names,
+  so it works next to the system libwayland, even in one process. Only the
+  protocol on the wire keeps its names.
 
 It needs Linux 6.11 or newer, liburing 2.7 or newer and a C23 compiler.
-wayland-cursor is not built.
+wayland-cursor and wayland-egl are not built.
+
+[examples/simple-shm.c](examples/simple-shm.c) is a small client, built with
+`-Dexamples=true`.
 
 Building the wayland libraries is fairly simple, aside from libffi,
 they don't have many dependencies:

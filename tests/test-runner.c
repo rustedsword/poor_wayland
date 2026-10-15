@@ -52,12 +52,12 @@
 
 /* when set to 1, check if tests are not leaking opened files.
  * It is turned on by default. It can be turned off by
- * WAYLAND_TEST_NO_LEAK_CHECK environment variable. */
+ * POOR_WAYLAND_TEST_NO_LEAK_CHECK environment variable. */
 int fd_leak_check_enabled;
 
 /* when this var is set to 0, every call to test_set_timeout() is
  * suppressed - handy when debugging the test. Can be set by
- * WAYLAND_TEST_NO_TIMEOUTS environment variable. */
+ * POOR_WAYLAND_TEST_NO_TIMEOUTS environment variable. */
 static int timeouts_enabled = 1;
 
 /* set to one if the output goes to the terminal */

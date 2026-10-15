@@ -33,26 +33,26 @@
 
 TEST(list_init)
 {
-	struct wl_list list;
+	struct poor_wl_list list;
 
-	wl_list_init(&list);
+	poor_wl_list_init(&list);
 	assert(list.next == &list);
 	assert(list.prev == &list);
-	assert(wl_list_empty(&list));
+	assert(poor_wl_list_empty(&list));
 }
 
 struct element {
 	int i;
-	struct wl_list link;
+	struct poor_wl_list link;
 };
 
 TEST(list_insert)
 {
-	struct wl_list list;
+	struct poor_wl_list list;
 	struct element e;
 
-	wl_list_init(&list);
-	wl_list_insert(&list, &e.link);
+	poor_wl_list_init(&list);
+	poor_wl_list_insert(&list, &e.link);
 	assert(list.next == &e.link);
 	assert(list.prev == &e.link);
 	assert(e.link.next == &list);
@@ -61,20 +61,20 @@ TEST(list_insert)
 
 TEST(list_length)
 {
-	struct wl_list list;
+	struct poor_wl_list list;
 	struct element e;
 
-	wl_list_init(&list);
-	assert(wl_list_length(&list) == 0);
-	wl_list_insert(&list, &e.link);
-	assert(wl_list_length(&list) == 1);
-	wl_list_remove(&e.link);
-	assert(wl_list_length(&list) == 0);
+	poor_wl_list_init(&list);
+	assert(poor_wl_list_length(&list) == 0);
+	poor_wl_list_insert(&list, &e.link);
+	assert(poor_wl_list_length(&list) == 1);
+	poor_wl_list_remove(&e.link);
+	assert(poor_wl_list_length(&list) == 0);
 }
 
 TEST(list_iterator)
 {
-	struct wl_list list;
+	struct poor_wl_list list;
 	struct element e1, e2, e3, e4, *e;
 	int reference[] = { 708090, 102030, 5588, 12 };
 	unsigned int i;
@@ -84,14 +84,14 @@ TEST(list_iterator)
 	e3.i = 5588;
 	e4.i = 12;
 
-	wl_list_init(&list);
-	wl_list_insert(list.prev, &e1.link);
-	wl_list_insert(list.prev, &e2.link);
-	wl_list_insert(list.prev, &e3.link);
-	wl_list_insert(list.prev, &e4.link);
+	poor_wl_list_init(&list);
+	poor_wl_list_insert(list.prev, &e1.link);
+	poor_wl_list_insert(list.prev, &e2.link);
+	poor_wl_list_insert(list.prev, &e3.link);
+	poor_wl_list_insert(list.prev, &e4.link);
 
 	i = 0;
-	wl_list_for_each(e, &list, link) {
+	poor_wl_list_for_each(e, &list, link) {
 		assert(i < ARRAY_SIZE(reference));
 		assert(e->i == reference[i]);
 		i++;
@@ -99,7 +99,7 @@ TEST(list_iterator)
 	assert(i == ARRAY_SIZE(reference));
 
 	i = 0;
-	wl_list_for_each_reverse(e, &list, link) {
+	poor_wl_list_for_each_reverse(e, &list, link) {
 		assert(i < ARRAY_SIZE(reference));
 		assert(e->i == reference[ARRAY_SIZE(reference) - i - 1]);
 		i++;
@@ -108,13 +108,13 @@ TEST(list_iterator)
 }
 
 static int
-validate_list(struct wl_list *list, int *reference, int length)
+validate_list(struct poor_wl_list *list, int *reference, int length)
 {
 	struct element *e;
 	int i;
 
 	i = 0;
-	wl_list_for_each(e, list, link) {
+	poor_wl_list_for_each(e, list, link) {
 		if (i >= length)
 			return 0;
 		if (e->i != reference[i])
@@ -130,7 +130,7 @@ validate_list(struct wl_list *list, int *reference, int length)
 
 TEST(list_remove)
 {
-	struct wl_list list;
+	struct poor_wl_list list;
 	struct element e1, e2, e3;
 	int reference1[] = { 17, 8888, 1000 }, reference2[] = { 17, 1000 };
 
@@ -138,19 +138,19 @@ TEST(list_remove)
 	e2.i = 8888;
 	e3.i = 1000;
 
-	wl_list_init(&list);
-	wl_list_insert(&list, &e1.link);
-	wl_list_insert(list.prev, &e2.link);
-	wl_list_insert(list.prev, &e3.link);
+	poor_wl_list_init(&list);
+	poor_wl_list_insert(&list, &e1.link);
+	poor_wl_list_insert(list.prev, &e2.link);
+	poor_wl_list_insert(list.prev, &e3.link);
 	assert(validate_list(&list, reference1, ARRAY_SIZE(reference1)));
 
-	wl_list_remove(&e2.link);
+	poor_wl_list_remove(&e2.link);
 	assert(validate_list(&list, reference2, ARRAY_SIZE(reference2)));
 }
 
 TEST(list_insert_list)
 {
-	struct wl_list list, other;
+	struct poor_wl_list list, other;
 	struct element e1, e2, e3, e4, e5, e6;
 	int reference1[] = { 17, 8888, 1000 };
 	int reference2[] = { 76543, 1, -500 };
@@ -160,22 +160,22 @@ TEST(list_insert_list)
 	e2.i = 8888;
 	e3.i = 1000;
 
-	wl_list_init(&list);
-	wl_list_insert(&list, &e1.link);
-	wl_list_insert(list.prev, &e2.link);
-	wl_list_insert(list.prev, &e3.link);
+	poor_wl_list_init(&list);
+	poor_wl_list_insert(&list, &e1.link);
+	poor_wl_list_insert(list.prev, &e2.link);
+	poor_wl_list_insert(list.prev, &e3.link);
 	assert(validate_list(&list, reference1, ARRAY_SIZE(reference1)));
 
 	e4.i = 76543;
 	e5.i = 1;
 	e6.i = -500;
 
-	wl_list_init(&other);
-	wl_list_insert(&other, &e4.link);
-	wl_list_insert(other.prev, &e5.link);
-	wl_list_insert(other.prev, &e6.link);
+	poor_wl_list_init(&other);
+	poor_wl_list_insert(&other, &e4.link);
+	poor_wl_list_insert(other.prev, &e5.link);
+	poor_wl_list_insert(other.prev, &e6.link);
 	assert(validate_list(&other, reference2, ARRAY_SIZE(reference2)));
 
-	wl_list_insert_list(list.next, &other);
+	poor_wl_list_insert_list(list.next, &other);
 	assert(validate_list(&list, reference3, ARRAY_SIZE(reference3)));
 }
