@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <ctype.h>
 #include <getopt.h>
 #include <limits.h>
@@ -55,6 +56,15 @@
 #include "poor_wayland_util.h"
 
 #define PROGRAM_NAME "poor_wayland_scanner"
+
+/* expat 2.9 deprecates the functions that return the position as XML_Size */
+#if XML_MAJOR_VERSION > 2 || (XML_MAJOR_VERSION == 2 && XML_MINOR_VERSION >= 9)
+#define current_line XML_GetCurrentLineNumber64
+#define current_column XML_GetCurrentColumnNumber64
+#else
+#define current_line XML_GetCurrentLineNumber
+#define current_column XML_GetCurrentColumnNumber
+#endif
 
 enum side {
 	CLIENT,
@@ -793,7 +803,7 @@ start_element(void *data, const char *element_name, const char **atts)
 	const char *frozen = NULL;
 	int i, version = 0;
 
-	ctx->loc.line_number = XML_GetCurrentLineNumber(ctx->parser);
+	ctx->loc.line_number = current_line(ctx->parser);
 	for (i = 0; atts[i]; i += 2) {
 		if (strcmp(atts[i], "name") == 0)
 			name = atts[i + 1];
@@ -2329,9 +2339,9 @@ int main(int argc, char *argv[])
 		}
 		if (XML_ParseBuffer(ctx.parser, len, len == 0) == 0) {
 			fprintf(stderr,
-				"Error parsing XML at line %ld col %ld: %s\n",
-				XML_GetCurrentLineNumber(ctx.parser),
-				XML_GetCurrentColumnNumber(ctx.parser),
+				"Error parsing XML at line %" PRIu64 " col %" PRIu64 ": %s\n",
+				(uint64_t)current_line(ctx.parser),
+				(uint64_t)current_column(ctx.parser),
 				XML_ErrorString(XML_GetErrorCode(ctx.parser)));
 			fclose(input);
 			exit(EXIT_FAILURE);

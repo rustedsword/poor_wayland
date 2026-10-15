@@ -16,6 +16,8 @@ configure_file(
 )
 
 
+mathlib_dep = cc.find_library('m', required: false)
+
 wayland_util = static_library(
 	'wayland-util',
 	sources: 'wayland-util.c'
@@ -24,7 +26,8 @@ wayland_util = static_library(
 # Whole, so both libraries export the poor_wl_list and poor_wl_array functions
 wayland_util_dep = declare_dependency(
 	link_whole: wayland_util,
-	include_directories: include_directories('.')
+	include_directories: include_directories('.'),
+	dependencies: mathlib_dep
 )
 
 if get_option('scanner')
@@ -90,7 +93,6 @@ endif
 if get_option('libraries')
 	# wayland libraries
 
-	mathlib_dep = cc.find_library('m', required: false)
 	threads_dep = dependency('threads', required: false)
 
 	wayland_private = static_library(

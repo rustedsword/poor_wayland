@@ -26,6 +26,14 @@
 
 constexpr uint64_t TIMEOUT_NS = 5'000'000'000;
 
+const char *__asan_default_options(void);
+
+/* Both libraries have the same tables of the core protocol, ASan sees them once for each */
+[[gnu::visibility("default")]] const char *__asan_default_options(void)
+{
+	return "detect_odr_violation=1";
+}
+
 struct client {
 	struct poor_wl_display display;
 	struct poor_loop *loop;
