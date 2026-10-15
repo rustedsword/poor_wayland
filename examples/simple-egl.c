@@ -36,7 +36,11 @@ static const char vertex_source[] =
 	"}\n";
 
 static const char fragment_source[] =
+	"#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+	"precision highp float;\n"
+	"#else\n"
 	"precision mediump float;\n"
+	"#endif\n"
 	"uniform float time;\n"
 	"void main() {\n"
 	"	vec2 p = floor(gl_FragCoord.xy);\n"
@@ -286,12 +290,12 @@ static void swapchain_device(struct poor_wl_swapchain *swapchain, dev_t device)
 	app->gbm_open = true;
 }
 
-/* Each frame asks for the next one */
+/* Each frame asks for the next one. The pattern repeats every 512 steps of time, which keeps floats small. */
 static void swapchain_frame(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer, uint32_t time)
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, target_of(app_of_swapchain(swapchain), buffer)->framebuffer);
 	glViewport(0, 0, buffer->width, buffer->height);
-	glUniform1f(app_of_swapchain(swapchain)->time_location, time / 8);
+	glUniform1f(app_of_swapchain(swapchain)->time_location, time / 8 % 512);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glFlush();
 	poor_wl_swapchain_present(swapchain, buffer);
