@@ -115,7 +115,7 @@ static uint64_t syncobj_query(uint32_t syncobj)
 {
 	uint64_t point;
 	struct drm_syncobj_timeline_array query = {
-		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1, .flags = 0
+		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1
 	};
 
 	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_QUERY, &query);
@@ -125,7 +125,7 @@ static uint64_t syncobj_query(uint32_t syncobj)
 static void syncobj_signal(uint32_t syncobj, uint64_t point)
 {
 	struct drm_syncobj_timeline_array signal = {
-		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1, .flags = 0
+		.handles = (uintptr_t)&syncobj, .points = (uintptr_t)&point, .count_handles = 1
 	};
 
 	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, &signal);
@@ -507,7 +507,7 @@ static const struct poor_wp_linux_drm_syncobj_timeline_v1_interface timeline_imp
 static void timeline_destroy(struct poor_wl_resource *resource)
 {
 	struct timeline *timeline = container_of(resource, struct timeline, resource.resource);
-	struct drm_syncobj_destroy destroy = { .handle = timeline->syncobj, .pad = 0 };
+	struct drm_syncobj_destroy destroy = { .handle = timeline->syncobj };
 
 	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_DESTROY, &destroy);
 	free(timeline);
@@ -583,7 +583,7 @@ static void syncobj_import_timeline(struct poor_wl_client *client, struct poor_w
 				    uint32_t id, int32_t fd)
 {
 	struct timeline *timeline = malloc(sizeof(*timeline));
-	struct drm_syncobj_handle import = { .handle = 0, .flags = 0, .fd = fd, .pad = 0 };
+	struct drm_syncobj_handle import = { .fd = fd };
 
 	assert(timeline);
 	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &import);

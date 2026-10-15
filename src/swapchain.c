@@ -49,7 +49,7 @@ static int drm_ioctl(int fd, unsigned long request, void *arg)
 
 static int syncobj_create(int drm_fd, uint32_t *handle)
 {
-	struct drm_syncobj_create create = { .handle = 0, .flags = 0 };
+	struct drm_syncobj_create create = {};
 
 	if (drm_ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_CREATE, &create) < 0)
 		return -errno;
@@ -59,7 +59,7 @@ static int syncobj_create(int drm_fd, uint32_t *handle)
 
 static void syncobj_destroy(int drm_fd, uint32_t handle)
 {
-	struct drm_syncobj_destroy destroy = { .handle = handle, .pad = 0 };
+	struct drm_syncobj_destroy destroy = { .handle = handle };
 
 	drm_ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_DESTROY, &destroy);
 }
@@ -67,25 +67,20 @@ static void syncobj_destroy(int drm_fd, uint32_t handle)
 static int syncobj_signal(int drm_fd, uint32_t handle, uint64_t point)
 {
 	struct drm_syncobj_timeline_array signal = {
-		.handles = (uintptr_t)&handle, .points = (uintptr_t)&point, .count_handles = 1, .flags = 0
+		.handles = (uintptr_t)&handle, .points = (uintptr_t)&point, .count_handles = 1
 	};
 
 	return drm_ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, &signal) < 0 ? -errno : 0;
 }
 
-/*
- * A sync_file goes to a timeline point through a binary syncobj. The 'point' of struct drm_syncobj_handle, which
- * headers before Linux 6.16 lack, stays zero.
- */
+/* A sync_file goes to a timeline point through a binary syncobj */
 static int syncobj_import_fence(struct poor_wl_swapchain *swapchain, uint32_t handle, uint64_t point, int fence)
 {
 	struct drm_syncobj_handle import = {
-		.handle = swapchain->import_syncobj, .flags = DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE, .fd = fence,
-		.pad = 0
+		.handle = swapchain->import_syncobj, .flags = DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE, .fd = fence
 	};
 	struct drm_syncobj_transfer transfer = {
-		.src_handle = swapchain->import_syncobj, .dst_handle = handle, .src_point = 0, .dst_point = point, .flags = 0,
-		.pad = 0
+		.src_handle = swapchain->import_syncobj, .dst_handle = handle, .dst_point = point
 	};
 
 	if (drm_ioctl(swapchain->drm_fd, DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &import) < 0 ||
@@ -102,7 +97,7 @@ static int buffer_timeline_init(struct poor_wl_swapchain *swapchain, struct poor
 
 	if (ret < 0)
 		return ret;
-	export = (struct drm_syncobj_handle){ .handle = buffer->syncobj, .flags = 0, .fd = -1, .pad = 0 };
+	export = (struct drm_syncobj_handle){ .handle = buffer->syncobj };
 	if (drm_ioctl(swapchain->drm_fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &export) < 0) {
 		ret = -errno;
 		syncobj_destroy(swapchain->drm_fd, buffer->syncobj);
@@ -118,9 +113,7 @@ static int buffer_timeline_init(struct poor_wl_swapchain *swapchain, struct poor
 static int buffer_set_points(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer, int fence)
 {
 	uint64_t acquire = buffer->point + 1, release = buffer->point + 2;
-	struct drm_syncobj_eventfd wait = {
-		.handle = buffer->syncobj, .flags = 0, .point = release, .fd = swapchain->eventfd, .pad = 0
-	};
+	struct drm_syncobj_eventfd wait = { .handle = buffer->syncobj, .point = release, .fd = swapchain->eventfd };
 	int ret = fence >= 0 ? syncobj_import_fence(swapchain, buffer->syncobj, acquire, fence) :
 			       syncobj_signal(swapchain->drm_fd, buffer->syncobj, acquire);
 
@@ -193,9 +186,7 @@ static void swapchain_check_releases(struct poor_wl_swapchain *swapchain)
 	struct poor_wl_swapchain_buffer *busy[POOR_WL_SWAPCHAIN_BUFFERS];
 	uint32_t handles[POOR_WL_SWAPCHAIN_BUFFERS];
 	uint64_t points[POOR_WL_SWAPCHAIN_BUFFERS];
-	struct drm_syncobj_timeline_array query = {
-		.handles = (uintptr_t)handles, .points = (uintptr_t)points, .count_handles = 0, .flags = 0
-	};
+	struct drm_syncobj_timeline_array query = { .handles = (uintptr_t)handles, .points = (uintptr_t)points };
 
 	for (unsigned i = 0; i < POOR_WL_SWAPCHAIN_BUFFERS; i++) {
 		if (swapchain->buffers[i].allocated && swapchain->buffers[i].busy) {
@@ -514,7 +505,7 @@ POOR_WL_EXPORT void poor_wl_swapchain_init(struct poor_wl_swapchain *swapchain, 
 POOR_WL_EXPORT int poor_wl_swapchain_set_syncobj(struct poor_wl_swapchain *swapchain,
 						 struct poor_wp_linux_drm_syncobj_manager_v1 *manager, int drm_fd)
 {
-	struct drm_get_cap cap = { .capability = DRM_CAP_SYNCOBJ_TIMELINE, .value = 0 };
+	struct drm_get_cap cap = { .capability = DRM_CAP_SYNCOBJ_TIMELINE };
 	int ret, fd;
 
 	assert(!swapchain->syncobj_manager && !swapchain->allocator);

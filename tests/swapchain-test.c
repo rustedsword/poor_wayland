@@ -149,16 +149,14 @@ static void swapchain_device(struct poor_wl_swapchain *swapchain, dev_t device)
 /* A sync_file of a signaled syncobj */
 static int signaled_fence(int drm_fd)
 {
-	struct drm_syncobj_create create = { .handle = 0, .flags = DRM_SYNCOBJ_CREATE_SIGNALED };
+	struct drm_syncobj_create create = { .flags = DRM_SYNCOBJ_CREATE_SIGNALED };
 	struct drm_syncobj_handle export;
 	struct drm_syncobj_destroy destroy;
 
 	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_CREATE, &create));
-	export = (struct drm_syncobj_handle){
-		.handle = create.handle, .flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE, .fd = -1, .pad = 0
-	};
+	export = (struct drm_syncobj_handle){ .handle = create.handle, .flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE };
 	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &export));
-	destroy = (struct drm_syncobj_destroy){ .handle = create.handle, .pad = 0 };
+	destroy = (struct drm_syncobj_destroy){ .handle = create.handle };
 	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_DESTROY, &destroy));
 	return export.fd;
 }
@@ -443,7 +441,7 @@ static void node_open_done(struct poor_loop *, struct poor_loop_op *, const stru
 /* The first render node, if it has timeline syncobjs */
 static int syncobj_device_open(struct poor_loop *loop)
 {
-	struct drm_get_cap cap = { .capability = DRM_CAP_SYNCOBJ_TIMELINE, .value = 0 };
+	struct drm_get_cap cap = { .capability = DRM_CAP_SYNCOBJ_TIMELINE };
 	struct poor_loop_op op;
 	struct io_uring_sqe *sqe;
 
