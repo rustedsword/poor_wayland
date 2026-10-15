@@ -583,7 +583,7 @@ static void syncobj_import_timeline(struct poor_wl_client *client, struct poor_w
 				    uint32_t id, int32_t fd)
 {
 	struct timeline *timeline = malloc(sizeof(*timeline));
-	struct drm_syncobj_handle import = { .handle = 0, .flags = 0, .fd = fd, .pad = 0, .point = 0 };
+	struct drm_syncobj_handle import = { .handle = 0, .flags = 0, .fd = fd, .pad = 0 };
 
 	assert(timeline);
 	syncobj_ioctl(DRM_IOCTL_SYNCOBJ_FD_TO_HANDLE, &import);

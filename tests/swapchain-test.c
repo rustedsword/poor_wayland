@@ -155,7 +155,7 @@ static int signaled_fence(int drm_fd)
 
 	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_CREATE, &create));
 	export = (struct drm_syncobj_handle){
-		.handle = create.handle, .flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE, .fd = -1, .pad = 0, .point = 0
+		.handle = create.handle, .flags = DRM_SYNCOBJ_HANDLE_TO_FD_FLAGS_EXPORT_SYNC_FILE, .fd = -1, .pad = 0
 	};
 	assert(!ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &export));
 	destroy = (struct drm_syncobj_destroy){ .handle = create.handle, .pad = 0 };

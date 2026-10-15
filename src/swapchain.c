@@ -73,12 +73,15 @@ static int syncobj_signal(int drm_fd, uint32_t handle, uint64_t point)
 	return drm_ioctl(drm_fd, DRM_IOCTL_SYNCOBJ_TIMELINE_SIGNAL, &signal) < 0 ? -errno : 0;
 }
 
-/* A sync_file goes to a timeline point through a binary syncobj */
+/*
+ * A sync_file goes to a timeline point through a binary syncobj. The 'point' of struct drm_syncobj_handle, which
+ * headers before Linux 6.16 lack, stays zero.
+ */
 static int syncobj_import_fence(struct poor_wl_swapchain *swapchain, uint32_t handle, uint64_t point, int fence)
 {
 	struct drm_syncobj_handle import = {
 		.handle = swapchain->import_syncobj, .flags = DRM_SYNCOBJ_FD_TO_HANDLE_FLAGS_IMPORT_SYNC_FILE, .fd = fence,
-		.pad = 0, .point = 0
+		.pad = 0
 	};
 	struct drm_syncobj_transfer transfer = {
 		.src_handle = swapchain->import_syncobj, .dst_handle = handle, .src_point = 0, .dst_point = point, .flags = 0,
@@ -99,7 +102,7 @@ static int buffer_timeline_init(struct poor_wl_swapchain *swapchain, struct poor
 
 	if (ret < 0)
 		return ret;
-	export = (struct drm_syncobj_handle){ .handle = buffer->syncobj, .flags = 0, .fd = -1, .pad = 0, .point = 0 };
+	export = (struct drm_syncobj_handle){ .handle = buffer->syncobj, .flags = 0, .fd = -1, .pad = 0 };
 	if (drm_ioctl(swapchain->drm_fd, DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD, &export) < 0) {
 		ret = -errno;
 		syncobj_destroy(swapchain->drm_fd, buffer->syncobj);
