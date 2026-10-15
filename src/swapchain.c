@@ -67,16 +67,17 @@ static const struct poor_wl_buffer_listener buffer_listener = {
 /* The tranches come in the order that the compositor prefers, the first one that the allocator manages is used */
 static int buffer_allocate(struct poor_wl_swapchain *swapchain, struct poor_wl_swapchain_buffer *buffer)
 {
+	const struct poor_wl_swapchain_tranche *tranche;
 	int ret = -ENOTSUP;
 
 	buffer->width = swapchain->width;
 	buffer->height = swapchain->height;
-	for (unsigned i = 0; i < swapchain->tranche_count && ret < 0; i++) {
-		const struct poor_wl_swapchain_tranche *tranche = &swapchain->tranches[i];
-
+	for (tranche = swapchain->tranches; tranche < swapchain->tranches + swapchain->tranche_count; tranche++) {
 		ret = swapchain->allocator->allocate(swapchain->allocator_data, buffer, swapchain->format, tranche->modifiers,
 						     tranche->count,
 						     tranche->flags & POOR_ZWP_LINUX_DMABUF_FEEDBACK_V1_TRANCHE_FLAGS_SCANOUT);
+		if (ret >= 0)
+			break;
 	}
 	if (ret < 0)
 		return ret;
@@ -84,6 +85,14 @@ static int buffer_allocate(struct poor_wl_swapchain *swapchain, struct poor_wl_s
 	buffer->allocator = swapchain->allocator;
 	buffer->allocator_data = swapchain->allocator_data;
 	poor_zwp_linux_dmabuf_v1_create_params(swapchain->dmabuf, &swapchain->params);
+	if (tranche->flags & POOR_ZWP_LINUX_DMABUF_FEEDBACK_V1_TRANCHE_FLAGS_SAMPLING &&
+	    poor_zwp_linux_buffer_params_v1_get_version(&swapchain->params) >=
+		    POOR_ZWP_LINUX_BUFFER_PARAMS_V1_SET_SAMPLING_DEVICE_SINCE_VERSION) {
+		dev_t device = tranche->device;
+		struct poor_wl_array array = { .size = sizeof(device), .alloc = sizeof(device), .data = &device };
+
+		poor_zwp_linux_buffer_params_v1_set_sampling_device(&swapchain->params, &array);
+	}
 	for (unsigned i = 0; i < buffer->plane_count; i++) {
 		poor_zwp_linux_buffer_params_v1_add(&swapchain->params, buffer->planes[i].fd, i, buffer->planes[i].offset,
 						    buffer->planes[i].stride, buffer->modifier >> 32, buffer->modifier & 0xffffffff);

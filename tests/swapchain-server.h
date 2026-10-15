@@ -33,6 +33,7 @@ struct swapchain_server_state {
 	uint32_t format, stride;
 	uint64_t modifier;
 	unsigned planes;
+	dev_t sampling_device;
 	bool display_done;
 };
 

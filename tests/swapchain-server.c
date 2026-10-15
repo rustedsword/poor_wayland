@@ -35,6 +35,7 @@ struct buffer {
 	uint32_t format, stride;
 	uint64_t modifier;
 	unsigned planes;
+	dev_t sampling_device;
 };
 
 struct frame {
@@ -54,6 +55,7 @@ struct params {
 	unsigned planes;
 	uint32_t stride;
 	uint64_t modifier;
+	dev_t sampling_device;
 };
 
 struct feedback {
@@ -181,6 +183,7 @@ static void surface_commit(struct poor_wl_client *, struct poor_wl_surface_resou
 		swapchain_server.stride = buffer->stride;
 		swapchain_server.modifier = buffer->modifier;
 		swapchain_server.planes = buffer->planes;
+		swapchain_server.sampling_device = buffer->sampling_device;
 	}
 	surface->frame_count = 0;
 	for (unsigned i = 0; i < count; i++) {
@@ -281,13 +284,24 @@ static void params_create_immed(struct poor_wl_client *client, struct poor_zwp_l
 	buffer->stride = params->stride;
 	buffer->modifier = params->modifier;
 	buffer->planes = params->planes;
+	buffer->sampling_device = params->sampling_device;
 	swapchain_server.buffers_created++;
+}
+
+static void params_set_sampling_device(struct poor_wl_client *, struct poor_zwp_linux_buffer_params_v1_resource *resource,
+				       struct poor_wl_array *device)
+{
+	struct params *params = container_of(resource, struct params, resource);
+
+	assert(device->size == sizeof(params->sampling_device));
+	memcpy(&params->sampling_device, device->data, sizeof(params->sampling_device));
 }
 
 static const struct poor_zwp_linux_buffer_params_v1_interface params_impl = {
 	.destroy = params_destroy_request,
 	.add = params_add,
 	.create_immed = params_create_immed,
+	.set_sampling_device = params_set_sampling_device,
 };
 
 static void feedback_destroy_request(struct poor_wl_client *, struct poor_zwp_linux_dmabuf_feedback_v1_resource *resource)
@@ -380,6 +394,7 @@ static void dmabuf_create_params(struct poor_wl_client *client, struct poor_zwp_
 	params->planes = 0;
 	params->stride = 0;
 	params->modifier = 0;
+	params->sampling_device = 0;
 }
 
 static void dmabuf_get_default_feedback(struct poor_wl_client *client, struct poor_zwp_linux_dmabuf_v1_resource *resource, uint32_t id)

@@ -363,6 +363,27 @@ TEST(device_of_sampling_tranche_without_main_device)
 	loop_fini(&loop);
 }
 
+/* Tranche 0 only scans out, so only buffers of tranche 1 name the device to import them to */
+TEST(sampling_tranche_sets_sampling_device)
+{
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	server_config(6);
+	swapchain_server_start(&loop);
+	client_start(&c, &loop, DRM_FORMAT_XRGB8888);
+	poor_wl_swapchain_set_allocator(&c.swapchain, &memfd_allocator, &c);
+	client_present(&c, 16, 16, 3);
+	assert(swapchain_server.modifier == I915_FORMAT_MOD_X_TILED && !swapchain_server.sampling_device);
+	c.fail_scanout = true;
+	client_present(&c, 32, 32, 3);
+	assert(swapchain_server.modifier == DRM_FORMAT_MOD_LINEAR && swapchain_server.sampling_device == makedev(226, 128));
+	client_stop(&c);
+	server_stop(&loop);
+	loop_fini(&loop);
+}
+
 TEST(format_without_tranche)
 {
 	struct poor_loop loop;
