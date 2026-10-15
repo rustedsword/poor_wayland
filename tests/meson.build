@@ -156,23 +156,6 @@ tests = {
 # Tests that run io_uring run with each ring setup
 ring_tests = [ 'connection-test', 'display-test', 'server-test' ]
 
-if build_swapchain
-	tests += {
-		'swapchain-test': {
-			'extra_sources': [
-				'swapchain-server.c',
-				wayland_client_protocol_h,
-				wayland_server_protocol_h,
-			] + swapchain_server_protocol_h,
-			'deps': [ wayland_client_dep, wayland_server_dep, wayland_swapchain_dep ],
-		},
-		'gbm-test': {
-			'deps': [ wayland_swapchain_dep ],
-		},
-	}
-	ring_tests += [ 'swapchain-test', 'gbm-test' ]
-endif
-
 foreach test_name, test_extras : tests
 	test_extra_sources = test_extras.get('extra_sources', [])
 	test_runtime_deps = test_extras.get('runtime_deps', [])

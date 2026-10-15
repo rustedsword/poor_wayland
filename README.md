@@ -48,21 +48,8 @@ It needs Linux 6.11 or newer, liburing 2.7 or newer and a C23 compiler.
 An installed poor_loop, which must be the latest one, is used if there is
 one, otherwise the submodule: `--force-fallback-for=poor_loop` forces it.
 
-libpoor_wayland_swapchain, built when libgbm is found, presents dmabufs on a
-surface. It follows the dmabuf feedback of the surface, gets buffers in the
-formats and modifiers that the compositor prefers from an allocator, GBM on
-the GPU that the feedback names or one of the caller, and tells when to render
-the next frame. EGL and Vulkan can't take poor_wayland's objects for their
-Wayland platforms, since Mesa drives those with the system libwayland, so they
-render into the buffers of the swapchain instead, with explicit synchronization
-through linux-drm-syncobj-v1 if the compositor has it.
-
-Vulkan apps should set `NODEVICE_SELECT=1`, or Mesa's device-select layer opens
-its own blocking connection with the system libwayland.
-
-[examples/simple-shm.c](examples/simple-shm.c) and
-[examples/simple-egl.c](examples/simple-egl.c), which draws with OpenGL ES
-through the swapchain, are small clients, built with `-Dexamples=true`.
+[poor_wayland_swapchain](https://github.com/rustedsword/poor_wayland_swapchain)
+presents dmabufs on surfaces for GPU rendering and has the example clients.
 
 Building the libraries is fairly simple, aside from libffi,
 they don't have many dependencies:

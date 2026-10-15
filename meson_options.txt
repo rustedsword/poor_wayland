@@ -10,15 +10,7 @@ option('tests',
   description: 'Compile Wayland tests',
   type: 'boolean',
   value: true)
-option('examples',
-  description: 'Compile the examples (requires the refs/wayland-protocols submodule)',
-  type: 'boolean',
-  value: false)
 option('dtd_validation',
   description: 'Validate the protocol DTD (requires libxml2)',
   type: 'boolean',
   value: true)
-option('swapchain',
-  description: 'Compile libpoor_wayland_swapchain (requires libgbm and the refs/wayland-protocols submodule)',
-  type: 'feature',
-  value: 'auto')
