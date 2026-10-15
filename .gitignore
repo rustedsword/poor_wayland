@@ -1,8 +1,5 @@
-*.announce
-*.sig
 *.swp
 *.log
-*.tar.xz
 *~
 cscope.out
 ctags

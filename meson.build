@@ -70,9 +70,6 @@ endif
 if get_option('examples')
 	subdir('examples')
 endif
-if get_option('documentation')
-	subdir('doc')
-endif
 
 if get_option('scanner')
 	install_data([

@@ -1,9 +1,0 @@
-[book]
-title = "Wayland"
-authors = ["Kristian Høgsberg"]
-language = "en"
-
-[output.html]
-git-repository-url = "https://gitlab.freedesktop.org/wayland/wayland"
-edit-url-template = "https://gitlab.freedesktop.org/wayland/wayland/-/edit/main/doc/book/{path}"
-site-url = "/docs/book/"

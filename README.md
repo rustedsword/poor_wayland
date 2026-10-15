@@ -47,16 +47,13 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
 It needs Linux 6.11 or newer, liburing 2.7 or newer and a C23 compiler.
 An installed poor_loop, which must be the latest one, is used if there is
 one, otherwise the submodule: `--force-fallback-for=poor_loop` forces it.
-wayland-cursor and wayland-egl are not built.
 
 [examples/simple-shm.c](examples/simple-shm.c) is a small client, built with
 `-Dexamples=true`.
 
-Building the wayland libraries is fairly simple, aside from libffi,
+Building the libraries is fairly simple, aside from libffi,
 they don't have many dependencies:
 
-    $ git clone https://gitlab.freedesktop.org/wayland/wayland
-    $ cd wayland
     $ meson setup build/ --prefix=PREFIX
     $ ninja -C build/ install
 

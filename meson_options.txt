@@ -14,23 +14,7 @@ option('examples',
   description: 'Compile the examples (requires the refs/wayland-protocols submodule)',
   type: 'boolean',
   value: false)
-option('documentation',
-  description: 'Build the documentation (requires Doxygen, dot, xmlto, xsltproc)',
-  type: 'boolean',
-  value: true)
-option('docbook_validation',
-  type: 'boolean',
-  value: false,
-  description: 'Validate the intermediate DocBook XML during the documentation build')
 option('dtd_validation',
   description: 'Validate the protocol DTD (requires libxml2)',
   type: 'boolean',
   value: true)
-option('book',
-  description: 'Build the Wayland Book (requires mdbook)',
-  type: 'boolean',
-  value: true)
-option('icon_directory',
-  description: 'Location used to look for cursors (defaults to ${datadir}/icons if unset)',
-  type: 'string',
-  value: '')
