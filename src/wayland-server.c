@@ -373,7 +373,7 @@ POOR_LOOP_GROUP_OP(client_on_send, loop, io, op, cqe)
 
 	poor_wl_connection_send_done(&client->connection, loop, cqe->res);
 	if (client->destroyed) {
-		if (cqe->res > 0 && poor_wl_connection_has_output(&client->connection))
+		if ((cqe->res > 0 || cqe->res == -ECANCELED) && poor_wl_connection_has_output(&client->connection))
 			client_send(client, MSG_DONTWAIT);
 		return;
 	}

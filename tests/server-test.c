@@ -758,6 +758,51 @@ TEST(client_stops_reading)
 	server_stop();
 }
 
+static poor_loop_complete_fn *send_complete;
+static struct peer *sending_peer;
+static bool send_cancelled;
+
+static bool send_waits(struct peer *p)
+{
+	return p->client.send_op.pending && !io_uring_sq_ready(&loop.ring) && !io_uring_cq_ready(&loop.ring);
+}
+
+static void read_after_cancel(struct poor_loop *, struct poor_loop_op *op, const struct io_uring_cqe *cqe)
+{
+	if (cqe->res == -ECANCELED) {
+		send_cancelled = true;
+		while (readable(sending_peer->fd))
+			assert(peer_read(sending_peer) > 0);
+	}
+	send_complete(&loop, op, cqe);
+}
+
+TEST(client_destroyed_while_sending)
+{
+	struct poor_wl_callback_resource callback;
+	int sndbuf = 4096;
+	struct peer p;
+
+	server_start();
+	peer_connect(&p);
+	assert(!setsockopt(poor_wl_client_get_fd(&p.client), SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)));
+	assert(!poor_wl_callback_resource_init(&callback, &p.client, 1, 0));
+	for (uint32_t serial = 0; !send_waits(&p); serial++) {
+		poor_wl_callback_send_done(&callback, serial);
+		run_for(1'000'000);
+	}
+	sending_peer = &p;
+	send_complete = p.client.send_op.complete;
+	p.client.send_op.complete = read_after_cancel;
+	poor_wl_client_post_implementation_error(&p.client, "bye");
+	poor_wl_client_destroy(&p.client);
+	run_until(p.done);
+	assert(send_cancelled);
+	expect_error(&p, 1, POOR_WL_DISPLAY_ERROR_IMPLEMENTATION);
+	peer_close(&p);
+	server_stop();
+}
+
 TEST(client_without_socket)
 {
 	struct peer p;
