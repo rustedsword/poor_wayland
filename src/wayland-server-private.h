@@ -30,6 +30,8 @@
 
 #include "poor_wayland_server_core.h"
 
+extern poor_wl_log_func_t poor_wl_server_log_handler;
+
 void
 poor_wl_priv_signal_init(struct poor_wl_priv_signal *signal);
 

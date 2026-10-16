@@ -39,6 +39,7 @@
 #include "wayland-private.h"
 #include "poor_wayland_server_display.h"
 #include "poor_wayland_server.h"
+#include "wayland-server-private.h"
 
 /*
  * The once is used to install the SIGBUS handler in the first call of poor_wl_shm_buffer_begin_access(), which can happen
@@ -366,8 +367,8 @@ POOR_WL_EXPORT int32_t poor_wl_shm_buffer_get_stride(const struct poor_wl_shm_bu
 POOR_WL_EXPORT void *poor_wl_shm_buffer_get_data(struct poor_wl_shm_buffer *buffer)
 {
 	if (buffer->mapping->external_refcount && buffer->mapping->size != buffer->mapping->new_size)
-		poor_wl_log("Buffer address requested when its parent pool has an external reference and a deferred resize "
-		       "pending.\n");
+		poor_wl_log(poor_wl_server_log_handler, "Buffer address requested when its parent pool has an external reference "
+			    "and a deferred resize pending.\n");
 	return buffer->mapping->data + buffer->offset;
 }
 

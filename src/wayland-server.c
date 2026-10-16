@@ -161,9 +161,9 @@ static bool verify_objects(struct poor_wl_resource *resource, uint32_t opcode, u
 			continue;
 		res = (struct poor_wl_resource *)args[i].o;
 		if (res && res->client != resource->client) {
-			poor_wl_log("compositor bug: The compositor tried to use an object from one client in a '%s.%s' for a different "
-			       "client.\n",
-			       object->interface->name, object->interface->events[opcode].name);
+			poor_wl_log(poor_wl_server_log_handler,
+				    "compositor bug: The compositor tried to use an object from one client in a '%s.%s' for a "
+				    "different client.\n", object->interface->name, object->interface->events[opcode].name);
 			return false;
 		}
 	}
@@ -181,7 +181,8 @@ static void handle_array(struct poor_wl_resource *resource, uint32_t opcode, uni
 		return;
 	}
 	if (!verify_objects(resource, opcode, args) ||
-	    poor_wl_closure_marshal(&closure, object, opcode, args, &object->interface->events[opcode]) < 0) {
+	    poor_wl_closure_marshal(&closure, poor_wl_server_log_handler, object, opcode, args,
+				    &object->interface->events[opcode]) < 0) {
 		poor_wl_message_close_fds(&object->interface->events[opcode], args, client->display->loop);
 		client_fail(client);
 		return;
@@ -256,7 +257,7 @@ POOR_WL_EXPORT void poor_wl_resource_post_error(struct poor_wl_resource *resourc
 
 static void destroy_client_with_error(struct poor_wl_client *client, const char *reason)
 {
-	poor_wl_log("%s (pid %u)\n", reason, client->cred.pid);
+	poor_wl_log(poor_wl_server_log_handler, "%s (pid %u)\n", reason, client->cred.pid);
 	poor_wl_client_destroy(client);
 }
 
@@ -320,7 +321,8 @@ static void client_dispatch(struct poor_wl_client *client)
 					       object->id, message->name, resource->version, since);
 			break;
 		}
-		if (poor_wl_connection_demarshal(connection, loop, size, &client->objects, message, &closure, &data) < 0) {
+		if (poor_wl_connection_demarshal(connection, loop, poor_wl_server_log_handler, size, &client->objects, message,
+						 &closure, &data) < 0) {
 			poor_wl_resource_post_error(client->display_resource, POOR_WL_DISPLAY_ERROR_INVALID_METHOD,
 					       "invalid arguments for %s#%u.%s", object->interface->name, object->id, message->name);
 			break;
@@ -390,7 +392,7 @@ POOR_LOOP_GROUP_OP(client_on_cred, loop, io, op, cqe)
 	if (client->destroyed)
 		return;
 	if (cqe->res < 0) {
-		poor_wl_log("failed to get client credentials: %s\n", strerror(-cqe->res));
+		poor_wl_log(poor_wl_server_log_handler, "failed to get client credentials: %s\n", strerror(-cqe->res));
 		poor_wl_client_destroy(client);
 		return;
 	}
@@ -662,7 +664,7 @@ POOR_WL_EXPORT void poor_wl_client_destroy(struct poor_wl_client *client)
 
 	if (client->destroyed) {
 		client->error = true;
-		poor_wl_log("poor_wl_client_destroy: encountered re-entrant client destruction.\n");
+		poor_wl_log(poor_wl_server_log_handler, "poor_wl_client_destroy: encountered re-entrant client destruction.\n");
 		return;
 	}
 	client->destroyed = true;
@@ -1027,8 +1029,9 @@ POOR_WL_EXPORT void poor_wl_display_destroy_clients(struct poor_wl_display *disp
 	while (!poor_wl_list_empty(&tmp_client_list))
 		poor_wl_client_destroy(poor_wl_client_from_link(tmp_client_list.next));
 	if (!poor_wl_list_empty(&display->client_list))
-		poor_wl_log("poor_wl_display_destroy_clients: cannot destroy all clients because new ones were created by destroy "
-		       "callbacks\n");
+		poor_wl_log(poor_wl_server_log_handler,
+			    "poor_wl_display_destroy_clients: cannot destroy all clients because new ones were created by "
+			    "destroy callbacks\n");
 }
 
 static void socket_lock(struct poor_wl_socket *socket)
@@ -1061,7 +1064,8 @@ static int socket_set_name(struct poor_wl_socket *socket, const char *name)
 	if (name[0] != '/') {
 		runtime_dir = getenv("XDG_RUNTIME_DIR");
 		if (!runtime_dir || runtime_dir[0] != '/') {
-			poor_wl_log("error: XDG_RUNTIME_DIR is invalid or not set in the environment\n");
+			poor_wl_log(poor_wl_server_log_handler,
+				    "error: XDG_RUNTIME_DIR is invalid or not set in the environment\n");
 			errno = ENOENT;
 			return -1;
 		}
@@ -1070,8 +1074,8 @@ static int socket_set_name(struct poor_wl_socket *socket, const char *name)
 	name_size = snprintf_array(socket->addr.sun_path, "%s%s%s", runtime_dir, separator, name) + 1;
 	assert(name_size > 0);
 	if (name_size > (int)ARRAY_SIZE(socket->addr.sun_path)) {
-		poor_wl_log("error: socket path \"%s%s%s\" plus null terminator exceeds %zu bytes\n", runtime_dir, separator, name,
-		       ARRAY_SIZE(socket->addr.sun_path));
+		poor_wl_log(poor_wl_server_log_handler, "error: socket path \"%s%s%s\" plus null terminator exceeds %zu bytes\n",
+			    runtime_dir, separator, name, ARRAY_SIZE(socket->addr.sun_path));
 		errno = ENAMETOOLONG;
 		return -1;
 	}
@@ -1129,13 +1133,14 @@ POOR_LOOP_GROUP_OP(socket_on_lock, loop, io, op, cqe)
 		return;
 	}
 	if (cqe->res < 0) {
-		poor_wl_log("unable to open lockfile %s check permissions\n", socket->lock_addr);
+		poor_wl_log(poor_wl_server_log_handler, "unable to open lockfile %s check permissions\n", socket->lock_addr);
 		socket_lock_failed(socket, -cqe->res);
 		return;
 	}
 	socket->fd_lock = cqe->res;
 	if (flock(socket->fd_lock, LOCK_EX | LOCK_NB) < 0) {
-		poor_wl_log("unable to lock lockfile %s, maybe another compositor is running\n", socket->lock_addr);
+		poor_wl_log(poor_wl_server_log_handler, "unable to lock lockfile %s, maybe another compositor is running\n",
+			    socket->lock_addr);
 		socket_lock_failed(socket, errno);
 		return;
 	}
@@ -1151,7 +1156,7 @@ POOR_LOOP_GROUP_OP(socket_on_stat, loop, io, op, cqe)
 	if (socket->closing)
 		return;
 	if (cqe->res < 0 && cqe->res != -ENOENT) {
-		poor_wl_log("did not manage to stat file %s\n", socket->addr.sun_path);
+		poor_wl_log(poor_wl_server_log_handler, "did not manage to stat file %s\n", socket->addr.sun_path);
 		socket_lock_failed(socket, -cqe->res);
 		return;
 	}
@@ -1198,12 +1203,12 @@ static void socket_bound(struct poor_wl_socket *socket)
 	if (socket->closing)
 		return;
 	if (socket->bind_error) {
-		poor_wl_log("bind() failed with error: %s\n", strerror(socket->bind_error));
+		poor_wl_log(poor_wl_server_log_handler, "bind() failed with error: %s\n", strerror(socket->bind_error));
 		socket_fail(socket, socket->bind_error);
 		return;
 	}
 	if (socket->listen_error) {
-		poor_wl_log("listen() failed with error: %s\n", strerror(socket->listen_error));
+		poor_wl_log(poor_wl_server_log_handler, "listen() failed with error: %s\n", strerror(socket->listen_error));
 		socket_fail(socket, socket->listen_error);
 		return;
 	}
@@ -1247,19 +1252,19 @@ POOR_LOOP_GROUP_OP(socket_on_accept, loop, io, op, cqe)
 	case -ENFILE:
 	case -ENOBUFS:
 	case -ENOMEM:
-		poor_wl_log("failed to accept: %s\n", strerror(-cqe->res));
+		poor_wl_log(poor_wl_server_log_handler, "failed to accept: %s\n", strerror(-cqe->res));
 		poor_loop_group_timer_arm(loop, io, &socket->timer, poor_loop_now() + ACCEPT_RETRY_NS);
 		return;
 	case -EBADF:
 	case -EINVAL:
 	case -ENOTSOCK:
 	case -EOPNOTSUPP:
-		poor_wl_log("failed to accept: %s\n", strerror(-cqe->res));
+		poor_wl_log(poor_wl_server_log_handler, "failed to accept: %s\n", strerror(-cqe->res));
 		socket_fail(socket, -cqe->res);
 		return;
 	}
 	if (cqe->res < 0)
-		poor_wl_log("failed to accept: %s\n", strerror(-cqe->res));
+		poor_wl_log(poor_wl_server_log_handler, "failed to accept: %s\n", strerror(-cqe->res));
 	else
 		socket->accept(socket, cqe->res);
 	if (!socket->closing)
@@ -1444,9 +1449,11 @@ POOR_WL_EXPORT int poor_wl_resource_init(struct poor_wl_resource *resource, stru
 	return 0;
 }
 
+poor_wl_log_func_t poor_wl_server_log_handler;
+
 POOR_WL_EXPORT void poor_wl_log_set_handler_server(poor_wl_log_func_t handler)
 {
-	poor_wl_log_handler = handler;
+	poor_wl_server_log_handler = handler;
 }
 
 /*

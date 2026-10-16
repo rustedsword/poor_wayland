@@ -114,7 +114,7 @@ static int send_message(struct endpoint *e, struct poor_wl_object *sender, uint3
 {
 	struct poor_wl_closure closure;
 
-	if (poor_wl_closure_marshal(&closure, sender, opcode, args, &test_messages[opcode]) < 0)
+	if (poor_wl_closure_marshal(&closure, nullptr, sender, opcode, args, &test_messages[opcode]) < 0)
 		return -1;
 	return poor_wl_closure_send(&closure, &e->connection, &loop);
 }
@@ -126,7 +126,7 @@ static int receive_message(struct endpoint *e, struct poor_wl_closure *closure, 
 	assert(poor_wl_connection_pending_input(&e->connection) >= ARRAY_SIZE_BYTES(header));
 	poor_wl_connection_copy(&e->connection, header);
 	assert((header[1] >> 16) <= poor_wl_connection_pending_input(&e->connection));
-	return poor_wl_connection_demarshal(&e->connection, &loop, header[1] >> 16, &e->map, &test_messages[header[1] & 0xffff],
+	return poor_wl_connection_demarshal(&e->connection, &loop, nullptr, header[1] >> 16, &e->map, &test_messages[header[1] & 0xffff],
 				       closure, data);
 }
 
@@ -210,7 +210,7 @@ static void demarshal_fails_impl(size_t count, const uint32_t (*words)[count], i
 	memcpy(server.in, *words, ARRAY_SIZE_BYTES(words));
 	server.connection.in.head = ARRAY_SIZE_BYTES(words);
 	poor_wl_connection_copy(&server.connection, header);
-	assert(poor_wl_connection_demarshal(&server.connection, &loop, header[1] >> 16, &server.map, &test_messages[header[1] & 0xffff],
+	assert(poor_wl_connection_demarshal(&server.connection, &loop, nullptr, header[1] >> 16, &server.map, &test_messages[header[1] & 0xffff],
 				       &closure, &data) == -1);
 	assert(errno == EINVAL);
 	poor_wl_connection_close_fds(&server.connection, &loop);
@@ -256,13 +256,13 @@ TEST(marshal_null_arguments)
 	struct poor_wl_closure closure;
 
 	args[0].o = nullptr;
-	assert(poor_wl_closure_marshal(&closure, &sender, 5, args, &test_messages[5]) == -1 && errno == EINVAL);
-	assert(poor_wl_closure_marshal(&closure, &sender, 4, args, &test_messages[4]) == -1 && errno == EINVAL);
+	assert(poor_wl_closure_marshal(&closure, nullptr, &sender, 5, args, &test_messages[5]) == -1 && errno == EINVAL);
+	assert(poor_wl_closure_marshal(&closure, nullptr, &sender, 4, args, &test_messages[4]) == -1 && errno == EINVAL);
 	args[0].a = nullptr;
-	assert(poor_wl_closure_marshal(&closure, &sender, 6, args, &test_messages[6]) == -1 && errno == EINVAL);
+	assert(poor_wl_closure_marshal(&closure, nullptr, &sender, 6, args, &test_messages[6]) == -1 && errno == EINVAL);
 	foreach_array_index(args, i)
 		args[i].u = i;
-	assert(poor_wl_closure_marshal(&closure, &sender, 7, args, &test_messages[7]) == -1 && errno == EINVAL);
+	assert(poor_wl_closure_marshal(&closure, nullptr, &sender, 7, args, &test_messages[7]) == -1 && errno == EINVAL);
 }
 
 TEST(lookup_unknown_object)
@@ -511,10 +511,8 @@ TEST(closure_print)
 	args[5].o = &new_object;
 	args[6].a = &array;
 	args[7].h = 2;
-	assert(!poor_wl_closure_marshal(&closure, &sender, 0, args, &test_messages[0]));
-	poor_wl_log_handler = log_to_buffer;
+	assert(!poor_wl_closure_marshal(&closure, log_to_buffer, &sender, 0, args, &test_messages[0]));
 	poor_wl_closure_print(&closure, &sender, true, false, nullptr, false);
-	poor_wl_log_handler = nullptr;
 	assert(strstr(log_buffer, " -> test#3.all(-5, 7, 1.25000000, \"str\", nil, new id test#4, array[3], fd 2)\n"));
 }
 
@@ -545,8 +543,7 @@ TEST(closure_print_details)
 	setenv("WAYLAND_DEBUG", "thread_id", 1);
 	args[0].s = nullptr;
 	args[1].o = &sender;
-	assert(!poor_wl_closure_marshal(&closure, &sender, 2, args, &test_messages[2]));
-	poor_wl_log_handler = log_to_buffer;
+	assert(!poor_wl_closure_marshal(&closure, log_to_buffer, &sender, 2, args, &test_messages[2]));
 	poor_wl_closure_print(&closure, &sender, false, true, nullptr, false);
 	assert(strstr(log_buffer, "TID#") && strstr(log_buffer, "discarded test#3.nullable(nil, test#3)\n"));
 	poor_wl_closure_print(&closure, &sender, false, false, nullptr, true);
@@ -559,8 +556,7 @@ TEST(closure_print_details)
 	args[5].o = &new_object;
 	args[6].a = &array;
 	args[7].h = 1;
-	assert(!poor_wl_closure_marshal(&closure, &sender, 0, args, &test_messages[0]));
+	assert(!poor_wl_closure_marshal(&closure, log_to_buffer, &sender, 0, args, &test_messages[0]));
 	poor_wl_closure_print(&closure, &sender, false, false, no_id, false);
-	poor_wl_log_handler = nullptr;
 	assert(strstr(log_buffer, "test#3.all(0, 0, -0.50000000, \"s\", nil, new id test#nil, array[0], fd 1)\n"));
 }

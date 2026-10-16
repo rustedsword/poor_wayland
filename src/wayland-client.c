@@ -51,6 +51,7 @@ poor_loop_group_attach(poor_wl_display_io, struct poor_wl_display, io, recv_op, 
 poor_loop_group_attach(poor_wl_display_io, struct poor_wl_display, io, send_op, display_on_send);
 poor_loop_group_attach(poor_wl_display_io, struct poor_wl_display, io, timer, display_on_timer);
 
+static poor_wl_log_func_t log_handler;
 static bool debug_client;
 static bool debug_color;
 
@@ -171,7 +172,7 @@ POOR_WL_EXPORT void poor_wl_proxy_destroy(struct poor_wl_proxy *proxy)
 POOR_WL_EXPORT int poor_wl_proxy_add_listener(struct poor_wl_proxy *proxy, void (**implementation)(void), void *data)
 {
 	if (proxy->object.implementation || proxy->dispatcher) {
-		poor_wl_log("proxy %p already has listener\n", (void *)proxy);
+		poor_wl_log(log_handler, "proxy %p already has listener\n", (void *)proxy);
 		return -1;
 	}
 	proxy->object.implementation = implementation;
@@ -189,7 +190,7 @@ POOR_WL_EXPORT int poor_wl_proxy_add_dispatcher(struct poor_wl_proxy *proxy, poo
 				      void *data)
 {
 	if (proxy->object.implementation || proxy->dispatcher) {
-		poor_wl_log("proxy %p already has listener\n", (void *)proxy);
+		poor_wl_log(log_handler, "proxy %p already has listener\n", (void *)proxy);
 		return -1;
 	}
 	proxy->object.implementation = implementation;
@@ -231,15 +232,17 @@ POOR_WL_EXPORT struct poor_wl_proxy *poor_wl_proxy_marshal_array_flags(struct po
 	}
 	if (display->last_error)
 		goto unsent;
-	if (poor_wl_closure_marshal(&closure, &proxy->object, opcode, args, message) < 0) {
-		poor_wl_log("Error marshalling request for %s.%s: %s\n", proxy->object.interface->name, message->name, strerror(errno));
+	if (poor_wl_closure_marshal(&closure, log_handler, &proxy->object, opcode, args, message) < 0) {
+		poor_wl_log(log_handler, "Error marshalling request for %s.%s: %s\n", proxy->object.interface->name,
+			    message->name, strerror(errno));
 		display_fatal_error(display, errno);
 		goto unsent;
 	}
 	if (debug_client)
 		poor_wl_closure_print(&closure, &proxy->object, true, false, nullptr, debug_color);
 	if (poor_wl_closure_send(&closure, &display->connection, display->loop) < 0) {
-		poor_wl_log("Error sending request for %s.%s: %s\n", proxy->object.interface->name, message->name, strerror(errno));
+		poor_wl_log(log_handler, "Error sending request for %s.%s: %s\n", proxy->object.interface->name, message->name,
+			    strerror(errno));
 		display_fatal_error(display, errno);
 		goto out;
 	}
@@ -258,10 +261,10 @@ static void display_handle_error(void *, struct poor_wl_display *display, void *
 	struct poor_wl_proxy *proxy = object;
 
 	if (proxy) {
-		poor_wl_log("%s#%u: error %d: %s\n", proxy->object.interface->name, proxy->object.id, code, message);
+		poor_wl_log(log_handler, "%s#%u: error %d: %s\n", proxy->object.interface->name, proxy->object.id, code, message);
 		display_protocol_error(display, code, proxy->object.id, proxy->object.interface);
 	} else {
-		poor_wl_log("[destroyed object]: error %d: %s\n", code, message);
+		poor_wl_log(log_handler, "[destroyed object]: error %d: %s\n", code, message);
 		display_protocol_error(display, code, 0, nullptr);
 	}
 }
@@ -275,7 +278,7 @@ static void display_handle_delete_id(void *, struct poor_wl_display *display, ui
 	else if (proxy)
 		proxy->flags |= POOR_WL_PROXY_FLAG_ID_DELETED;
 	else
-		poor_wl_log("error: received delete_id for unknown id (%u)\n", id);
+		poor_wl_log(log_handler, "error: received delete_id for unknown id (%u)\n", id);
 }
 
 static const struct poor_wl_display_listener display_listener = {
@@ -295,7 +298,7 @@ static int display_set_address(struct poor_wl_display *display, const char *name
 		name = "wayland-0";
 	path_is_absolute = name[0] == '/';
 	if ((!runtime_dir || runtime_dir[0] != '/') && !path_is_absolute) {
-		poor_wl_log("error: XDG_RUNTIME_DIR is invalid or not set in the environment.\n");
+		poor_wl_log(log_handler, "error: XDG_RUNTIME_DIR is invalid or not set in the environment.\n");
 		errno = ENOENT;
 		return -1;
 	}
@@ -307,11 +310,11 @@ static int display_set_address(struct poor_wl_display *display, const char *name
 	assert(name_size > 0);
 	if (name_size > (int)ARRAY_SIZE(display->addr.sun_path)) {
 		if (!path_is_absolute)
-			poor_wl_log("error: socket path \"%s/%s\" plus null terminator exceeds %zu bytes\n", runtime_dir, name,
-			       ARRAY_SIZE(display->addr.sun_path));
+			poor_wl_log(log_handler, "error: socket path \"%s/%s\" plus null terminator exceeds %zu bytes\n",
+				    runtime_dir, name, ARRAY_SIZE(display->addr.sun_path));
 		else
-			poor_wl_log("error: socket path \"%s\" plus null terminator exceeds %zu bytes\n", name,
-			       ARRAY_SIZE(display->addr.sun_path));
+			poor_wl_log(log_handler, "error: socket path \"%s\" plus null terminator exceeds %zu bytes\n", name,
+				    ARRAY_SIZE(display->addr.sun_path));
 		errno = ENAMETOOLONG;
 		return -1;
 	}
@@ -421,7 +424,7 @@ static int create_proxies(struct poor_wl_display *display, struct poor_wl_proxy 
 			continue;
 		proxy = display->new_proxy ? display->new_proxy(display, sender, interface) : nullptr;
 		if (!proxy) {
-			poor_wl_log("no proxy for new %s#%u\n", interface->name, closure->args[i].n);
+			poor_wl_log(log_handler, "no proxy for new %s#%u\n", interface->name, closure->args[i].n);
 			errno = ENOMEM;
 			return -1;
 		}
@@ -444,7 +447,7 @@ static void log_discarded(uint32_t id, uint32_t opcode, bool zombie, int fds, ui
 	struct timespec tp;
 
 	clock_gettime(CLOCK_REALTIME, &tp);
-	poor_wl_log("%s[%02u:%02u:%02u.%06u] %sdiscarded %s[%s]%s#%u%s.[event %u]%s(%d fd, %u byte)\n",
+	poor_wl_log(log_handler, "%s[%02u:%02u:%02u.%06u] %sdiscarded %s[%s]%s#%u%s.[event %u]%s(%d fd, %u byte)\n",
 	       debug_color ? POOR_WL_DEBUG_COLOR_GREEN : "", (unsigned)((tp.tv_sec / 3600) % 24), (unsigned)((tp.tv_sec / 60) % 60),
 	       (unsigned)(tp.tv_sec % 60), (unsigned)(tp.tv_nsec / 1000), debug_color ? POOR_WL_DEBUG_COLOR_RED : "",
 	       debug_color ? POOR_WL_DEBUG_COLOR_BLUE : "", zombie ? "zombie" : "unknown", debug_color ? POOR_WL_DEBUG_COLOR_MAGENTA : "",
@@ -469,7 +472,7 @@ static int display_dispatch_message(struct poor_wl_display *display, uint32_t le
 	opcode = p[1] & 0xffff;
 	size = p[1] >> 16;
 	if (size > POOR_WL_MAX_MESSAGE_SIZE) {
-		poor_wl_log("Message length %u exceeds limit %d\n", size, POOR_WL_MAX_MESSAGE_SIZE);
+		poor_wl_log(log_handler, "Message length %u exceeds limit %d\n", size, POOR_WL_MAX_MESSAGE_SIZE);
 		errno = E2BIG;
 		return -1;
 	}
@@ -488,12 +491,13 @@ static int display_dispatch_message(struct poor_wl_display *display, uint32_t le
 		return size;
 	}
 	if (opcode >= (uint32_t)proxy->object.interface->event_count) {
-		poor_wl_log("interface '%s' has no event %u\n", proxy->object.interface->name, opcode);
+		poor_wl_log(log_handler, "interface '%s' has no event %u\n", proxy->object.interface->name, opcode);
 		errno = EPROTO;
 		return -1;
 	}
 	message = &proxy->object.interface->events[opcode];
-	if (poor_wl_connection_demarshal(connection, display->loop, size, &display->objects, message, &closure, &data) < 0)
+	if (poor_wl_connection_demarshal(connection, display->loop, log_handler, size, &display->objects, message, &closure,
+					 &data) < 0)
 		return -1;
 	if (create_proxies(display, proxy, &closure) < 0 || poor_wl_closure_lookup_objects(&closure, &display->objects) < 0) {
 		poor_wl_closure_close_fds(&closure, display->loop);
@@ -747,5 +751,5 @@ POOR_WL_EXPORT struct poor_wl_display *poor_wl_proxy_get_display(struct poor_wl_
 
 POOR_WL_EXPORT void poor_wl_log_set_handler_client(poor_wl_log_func_t handler)
 {
-	poor_wl_log_handler = handler;
+	log_handler = handler;
 }

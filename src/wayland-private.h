@@ -97,7 +97,9 @@ void poor_wl_connection_copy_impl(const struct poor_wl_connection *connection, v
 #define poor_wl_connection_copy(connection, arrm) poor_wl_connection_copy_impl(connection, auto_arr(arrm), ARRAY_SIZE_BYTES(arrm))
 void poor_wl_connection_consume(struct poor_wl_connection *connection, size_t size);
 
+/* 'log' is the log handler of the side of the connection, the client or the server */
 struct poor_wl_closure {
+	poor_wl_log_func_t log;
 	int count;
 	const struct poor_wl_message *message;
 	uint32_t opcode;
@@ -122,12 +124,13 @@ int poor_wl_message_count_fds(const struct poor_wl_message *message);
 int poor_wl_message_get_since(const struct poor_wl_message *message);
 void poor_wl_argument_from_va_list(const char *signature, union poor_wl_argument *args, int count, va_list ap);
 
-int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_object *sender, uint32_t opcode, const union poor_wl_argument *args,
-		       const struct poor_wl_message *message);
+int poor_wl_closure_marshal(struct poor_wl_closure *closure, poor_wl_log_func_t log, struct poor_wl_object *sender,
+			    uint32_t opcode, const union poor_wl_argument *args, const struct poor_wl_message *message);
 int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_connection *connection, struct poor_loop *loop);
 void poor_wl_message_close_fds(const struct poor_wl_message *message, const union poor_wl_argument *args, struct poor_loop *loop);
-int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct poor_loop *loop, uint32_t size, struct poor_wl_map *objects,
-			    const struct poor_wl_message *message, struct poor_wl_closure *closure, struct poor_wl_closure_data *data);
+int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct poor_loop *loop, poor_wl_log_func_t log,
+				 uint32_t size, struct poor_wl_map *objects, const struct poor_wl_message *message,
+				 struct poor_wl_closure *closure, struct poor_wl_closure_data *data);
 bool poor_wl_object_is_zombie(struct poor_wl_map *map, uint32_t id);
 int poor_wl_closure_lookup_objects(struct poor_wl_closure *closure, struct poor_wl_map *objects);
 
@@ -143,9 +146,7 @@ bool poor_wl_check_env_token(const char *env, const char *token);
 void poor_wl_closure_print(const struct poor_wl_closure *closure, const struct poor_wl_object *target, bool send, bool discarded,
 		      uint32_t (*n_parse)(const union poor_wl_argument *arg), bool color);
 
-extern poor_wl_log_func_t poor_wl_log_handler;
-
-void poor_wl_log(const char *fmt, ...) POOR_WL_PRINTF(1, 2);
+void poor_wl_log(poor_wl_log_func_t handler, const char *fmt, ...) POOR_WL_PRINTF(2, 3);
 [[noreturn]] void poor_wl_abort(const char *fmt, ...) POOR_WL_PRINTF(1, 2);
 
 /* A ring that fails to submit can't run the connection anymore */

@@ -211,16 +211,14 @@ void poor_wl_map_for_each(struct poor_wl_map *map, poor_wl_iterator_func_t func,
 		for_each_helper(map->server_entries, &map->server_count, func, data);
 }
 
-poor_wl_log_func_t poor_wl_log_handler;
-
-void poor_wl_log(const char *fmt, ...)
+void poor_wl_log(poor_wl_log_func_t handler, const char *fmt, ...)
 {
 	va_list argp;
 
-	if (!poor_wl_log_handler)
+	if (!handler)
 		return;
 	va_start(argp, fmt);
-	poor_wl_log_handler(fmt, argp);
+	handler(fmt, argp);
 	va_end(argp);
 }
 

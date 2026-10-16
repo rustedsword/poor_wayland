@@ -365,7 +365,7 @@ static int closure_init(struct poor_wl_closure *closure, const struct poor_wl_me
 	int count = arg_count_for_signature(message->signature);
 
 	if (count > POOR_WL_CLOSURE_MAX_ARGS) {
-		poor_wl_log("too many args (%d) for %s (signature %s)\n", count, message->name, message->signature);
+		poor_wl_log(closure->log, "too many args (%d) for %s (signature %s)\n", count, message->name, message->signature);
 		errno = EINVAL;
 		return -1;
 	}
@@ -374,21 +374,22 @@ static int closure_init(struct poor_wl_closure *closure, const struct poor_wl_me
 	return 0;
 }
 
-static int null_argument(const struct poor_wl_message *message, size_t i)
+static int null_argument(const struct poor_wl_closure *closure, size_t i)
 {
-	poor_wl_log("error marshalling arguments for %s (signature %s): null value passed for arg %zu\n", message->name,
-	       message->signature, i);
+	poor_wl_log(closure->log, "error marshalling arguments for %s (signature %s): null value passed for arg %zu\n",
+		    closure->message->name, closure->message->signature, i);
 	errno = EINVAL;
 	return -1;
 }
 
 /* The fds stay with the caller until poor_wl_closure_send() takes them */
-int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_object *sender, uint32_t opcode, const union poor_wl_argument *args,
-		       const struct poor_wl_message *message)
+int poor_wl_closure_marshal(struct poor_wl_closure *closure, poor_wl_log_func_t log, struct poor_wl_object *sender,
+			    uint32_t opcode, const union poor_wl_argument *args, const struct poor_wl_message *message)
 {
 	const char *signature = message->signature;
 	struct argument_details arg;
 
+	closure->log = log;
 	if (closure_init(closure, message) < 0)
 		return -1;
 	foreach_array_index(arrview_first(closure->count, closure->args), i) {
@@ -402,20 +403,20 @@ int poor_wl_closure_marshal(struct poor_wl_closure *closure, struct poor_wl_obje
 			break;
 		case POOR_WL_ARG_STRING:
 			if (!arg.nullable && !args[i].s)
-				return null_argument(message, i);
+				return null_argument(closure, i);
 			break;
 		case POOR_WL_ARG_OBJECT:
 			if (!arg.nullable && !args[i].o)
-				return null_argument(message, i);
+				return null_argument(closure, i);
 			break;
 		case POOR_WL_ARG_NEW_ID:
 			if (!args[i].o)
-				return null_argument(message, i);
+				return null_argument(closure, i);
 			closure->args[i].n = args[i].o->id;
 			break;
 		case POOR_WL_ARG_ARRAY:
 			if (!args[i].a)
-				return null_argument(message, i);
+				return null_argument(closure, i);
 			break;
 		default:
 			poor_wl_abort("unhandled format code: '%c'\n", arg.type);
@@ -493,7 +494,8 @@ static int serialize_closure(const struct poor_wl_closure *closure, size_t count
 	return size;
 
 overflow:
-	poor_wl_log("message %s (signature %s) exceeds %d bytes\n", message->name, message->signature, POOR_WL_MAX_MESSAGE_SIZE);
+	poor_wl_log(closure->log, "message %s (signature %s) exceeds %d bytes\n", message->name, message->signature,
+		    POOR_WL_MAX_MESSAGE_SIZE);
 	errno = E2BIG;
 	return -1;
 }
@@ -520,8 +522,8 @@ int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_c
 	int size = serialize_closure(closure, ARRAY_SIZE(buffer), &buffer, &nfds);
 
 	if (size >= 0 && ((uint32_t)size > ring_free(&connection->out) || nfds > fds_free(&connection->fds_out))) {
-		poor_wl_log("no room for %s: %d bytes and %u fds queued\n", closure->message->name, ring_used(&connection->out),
-		       fds_used(&connection->fds_out));
+		poor_wl_log(closure->log, "no room for %s: %d bytes and %u fds queued\n", closure->message->name,
+			    ring_used(&connection->out), fds_used(&connection->fds_out));
 		errno = E2BIG;
 		size = -1;
 	}
@@ -540,8 +542,9 @@ int poor_wl_closure_send(const struct poor_wl_closure *closure, struct poor_wl_c
 	return 0;
 }
 
-int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct poor_loop *loop, uint32_t size, struct poor_wl_map *objects,
-			    const struct poor_wl_message *message, struct poor_wl_closure *closure, struct poor_wl_closure_data *data)
+int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct poor_loop *loop, poor_wl_log_func_t log,
+				 uint32_t size, struct poor_wl_map *objects, const struct poor_wl_message *message,
+				 struct poor_wl_closure *closure, struct poor_wl_closure_data *data)
 {
 	uint32_t *p = data->words, *next, *end, length, length_in_u32, id;
 	struct poor_wl_array *array_extra = data->arrays;
@@ -550,8 +553,9 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 	char *s;
 
 	assert(size <= ARRAY_SIZE_BYTES(data->words));
+	closure->log = log;
 	if (size < 2 * sizeof(*p)) {
-		poor_wl_log("message too short, invalid header\n");
+		poor_wl_log(closure->log, "message too short, invalid header\n");
 		poor_wl_connection_consume(connection, size);
 		errno = EINVAL;
 		return -1;
@@ -577,8 +581,8 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type != POOR_WL_ARG_FD && p >= end) {
-			poor_wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
-			       message->signature);
+			poor_wl_log(closure->log, "message too short, object (%d), message %s(%s)\n", closure->sender_id,
+				    message->name, message->signature);
 			errno = EINVAL;
 			goto err;
 		}
@@ -595,8 +599,8 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 		case POOR_WL_ARG_STRING:
 			length = *p++;
 			if (length == 0 && !arg.nullable) {
-				poor_wl_log("NULL string received on non-nullable type, message %s(%s)\n", message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "NULL string received on non-nullable type, message %s(%s)\n",
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
@@ -606,21 +610,22 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			}
 			length_in_u32 = div_roundup(length, sizeof(*p));
 			if ((uint32_t)(end - p) < length_in_u32) {
-				poor_wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "message too short, object (%d), message %s(%s)\n", closure->sender_id,
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			next = p + length_in_u32;
 			s = (char *)p;
 			if (s[length - 1] != '\0') {
-				poor_wl_log("string not nul-terminated, message %s(%s)\n", message->name, message->signature);
+				poor_wl_log(closure->log, "string not nul-terminated, message %s(%s)\n", message->name,
+					    message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			if (strlen(s) != length - 1) {
-				poor_wl_log("string has embedded nul at offset %zu, message %s(%s)\n", strlen(s), message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "string has embedded nul at offset %zu, message %s(%s)\n", strlen(s),
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
@@ -631,8 +636,8 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			id = *p++;
 			closure->args[i].n = id;
 			if (id == 0 && !arg.nullable) {
-				poor_wl_log("NULL object received on non-nullable type, message %s(%s)\n", message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "NULL object received on non-nullable type, message %s(%s)\n",
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
@@ -641,14 +646,14 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			id = *p++;
 			closure->args[i].n = id;
 			if (id == 0) {
-				poor_wl_log("NULL new ID received on non-nullable type, message %s(%s)\n", message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "NULL new ID received on non-nullable type, message %s(%s)\n",
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
 			if (poor_wl_map_reserve_new(objects, id) < 0) {
-				poor_wl_log("not a valid new object id (%u), message %s(%s): %s\n", id, message->name, message->signature,
-				       strerror(errno));
+				poor_wl_log(closure->log, "not a valid new object id (%u), message %s(%s): %s\n", id,
+					    message->name, message->signature, strerror(errno));
 				goto err;
 			}
 			break;
@@ -656,8 +661,8 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			length = *p++;
 			length_in_u32 = div_roundup(length, sizeof(*p));
 			if ((uint32_t)(end - p) < length_in_u32) {
-				poor_wl_log("message too short, object (%d), message %s(%s)\n", closure->sender_id, message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "message too short, object (%d), message %s(%s)\n", closure->sender_id,
+					    message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
@@ -670,8 +675,8 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 			break;
 		case POOR_WL_ARG_FD:
 			if (!fds_used(&connection->fds_in)) {
-				poor_wl_log("file descriptor expected, object (%d), message %s(%s)\n", closure->sender_id, message->name,
-				       message->signature);
+				poor_wl_log(closure->log, "file descriptor expected, object (%d), message %s(%s)\n",
+					    closure->sender_id, message->name, message->signature);
 				errno = EINVAL;
 				goto err;
 			}
@@ -713,13 +718,13 @@ int poor_wl_closure_lookup_objects(struct poor_wl_closure *closure, struct poor_
 		if (poor_wl_object_is_zombie(objects, id)) {
 			object = nullptr;
 		} else if (!object && id) {
-			poor_wl_log("unknown object (%u), message %s(%s)\n", id, message->name, message->signature);
+			poor_wl_log(closure->log, "unknown object (%u), message %s(%s)\n", id, message->name, message->signature);
 			errno = EINVAL;
 			return -1;
 		}
 		if (object && message->types[i] && !poor_wl_interface_equal(object->interface, message->types[i])) {
-			poor_wl_log("invalid object (%u), type (%s), message %s(%s)\n", id, object->interface->name, message->name,
-			       message->signature);
+			poor_wl_log(closure->log, "invalid object (%u), type (%s), message %s(%s)\n", id, object->interface->name,
+				    message->name, message->signature);
 			errno = EINVAL;
 			return -1;
 		}
@@ -951,5 +956,5 @@ void poor_wl_closure_print(const struct poor_wl_closure *closure, const struct p
 		}
 	}
 	buffer_print(&b, ")%s\n", color ? POOR_WL_DEBUG_COLOR_RESET : "");
-	poor_wl_log("%s", b.data);
+	poor_wl_log(closure->log, "%s", b.data);
 }
