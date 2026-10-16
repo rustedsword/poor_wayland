@@ -345,6 +345,7 @@ static void client_dispatch(struct poor_wl_client *client)
 POOR_LOOP_GROUP_OP(client_on_recv, loop, io, op, cqe)
 {
 	struct poor_wl_client *client = client_of(io);
+	int ret = cqe->res > 0 ? poor_wl_connection_recv_done(&client->connection, loop, cqe->res) : 0;
 
 	if (client->destroyed)
 		return;
@@ -352,7 +353,7 @@ POOR_LOOP_GROUP_OP(client_on_recv, loop, io, op, cqe)
 		poor_wl_client_destroy(client);
 		return;
 	}
-	if (cqe->res < 0 || poor_wl_connection_recv_done(&client->connection, loop, cqe->res) < 0) {
+	if (cqe->res < 0 || ret < 0) {
 		destroy_client_with_error(client, "failed to read client connection");
 		return;
 	}

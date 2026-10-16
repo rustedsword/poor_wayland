@@ -534,6 +534,7 @@ static void display_dispatch(struct poor_wl_display *display)
 POOR_LOOP_GROUP_OP(display_on_recv, loop, io, op, cqe)
 {
 	struct poor_wl_display *display = display_of(io);
+	int ret = cqe->res > 0 ? poor_wl_connection_recv_done(&display->connection, loop, cqe->res) : 0;
 
 	if (display->closing)
 		return;
@@ -541,7 +542,7 @@ POOR_LOOP_GROUP_OP(display_on_recv, loop, io, op, cqe)
 		display_fatal_error(display, cqe->res ? -cqe->res : EPIPE);
 		return;
 	}
-	if (poor_wl_connection_recv_done(&display->connection, loop, cqe->res) < 0) {
+	if (ret < 0) {
 		display_fatal_error(display, errno);
 		return;
 	}

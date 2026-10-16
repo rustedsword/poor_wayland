@@ -1673,3 +1673,18 @@ TEST(server_stops_reading)
 	poor_loop_close_fd_or_submit(&loop, fd, 0);
 	loop_fini(&loop);
 }
+
+TEST(disconnect_after_fds_arrived)
+{
+	static const uint32_t delete_id[] = { 1, 12 << 16 | DISPLAY_DELETE_ID, 77 };
+	struct poor_loop loop;
+	struct client c;
+	int fd;
+
+	loop_init(&loop);
+	fd = connect_raw(&c, &loop);
+	write_words_with_fds(fd, delete_id, 1);
+	client_disconnect(&c);
+	poor_loop_close_fd_or_submit(&loop, fd, 0);
+	loop_fini(&loop);
+}

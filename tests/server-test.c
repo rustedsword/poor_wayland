@@ -695,6 +695,21 @@ TEST(client_destroyed_before_credentials)
 	server_stop();
 }
 
+TEST(client_destroyed_after_fds_arrived)
+{
+	int fds[] = { STDERR_FILENO };
+	struct peer p;
+
+	server_start();
+	peer_connect(&p);
+	run_until(p.client.ready);
+	SEND_FDS(&p, fds, 1, DISPLAY_SYNC, peer_new_id(&p));
+	poor_wl_client_destroy(&p.client);
+	run_until(p.done);
+	peer_close(&p);
+	server_stop();
+}
+
 TEST(client_hangup)
 {
 	struct peer p;
