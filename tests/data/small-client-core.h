@@ -166,6 +166,34 @@ struct poor_intf_A_listener {
 			   void *any);
 };
 
+/** @ingroup iface_poor_intf_A */
+static inline int
+poor_intf_A_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			   const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_intf_A_listener *listener = (const struct poor_intf_A_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->hey)
+			return -1;
+		listener->hey(proxy->user_data, (struct poor_intf_A *) proxy);
+		return 0;
+	case 1:
+		if (!listener->yo)
+			return -1;
+		listener->yo(proxy->user_data, (struct poor_intf_A *) proxy);
+		return 0;
+	case 2:
+		if (!listener->any_object)
+			return -1;
+		listener->any_object(proxy->user_data, (struct poor_intf_A *) proxy, args[0].o);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_intf_A
  */
@@ -173,8 +201,8 @@ static inline int
 poor_intf_A_add_listener(struct poor_intf_A *poor_intf_A,
 			 const struct poor_intf_A_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_intf_A,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_intf_A,
+					    poor_intf_A_dispatch_event, listener, data);
 }
 
 #define POOR_INTF_A_RQ1 0

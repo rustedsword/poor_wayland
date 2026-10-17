@@ -1174,6 +1174,21 @@ TEST(proxy_dispatcher)
 	loop_fini(&loop);
 }
 
+FAIL_TEST(event_without_handler)
+{
+	static const struct poor_test_global_listener partial = { global_echoed, global_child_spawned, nullptr };
+	struct poor_loop loop;
+	struct client c;
+
+	loop_init(&loop);
+	test_server_start(&loop);
+	client_connect_fd(&c, &loop, test_server_connect());
+	client_bind_global(&c, 2);
+	poor_test_global_add_listener(&c.global, &partial, &c);
+	poor_test_global_flood(&c.global, 1, 3);
+	client_roundtrip(&c);
+}
+
 static void write_words_impl(int fd, size_t count, const uint32_t (*words)[count])
 {
 	assert(write_array(fd, words) == (ssize_t)ARRAY_SIZE_BYTES(words));

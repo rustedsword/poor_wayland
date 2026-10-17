@@ -334,10 +334,9 @@ static void client_dispatch(struct poor_wl_client *client)
 			break;
 		}
 		log_closure(resource, &closure, false);
-		if (resource->dispatcher)
-			poor_wl_closure_dispatch(&closure, resource->dispatcher, object, opcode);
-		else
-			poor_wl_closure_invoke(&closure, POOR_WL_CLOSURE_INVOKE_SERVER, object, opcode, client);
+		if (!resource->dispatcher)
+			poor_wl_abort("Implementation of resource %d of %s is NULL\n", object->id, object->interface->name);
+		poor_wl_closure_dispatch(&closure, resource->dispatcher, object, opcode);
 	}
 }
 
@@ -454,7 +453,8 @@ static void bind_display(struct poor_wl_client *client, struct poor_wl_display *
 	client->display_resource = &client->display_object.resource;
 	ret = poor_wl_resource_init(client->display_resource, client, &poor_wl_display_interface, 1, 1);
 	assert(!ret);
-	poor_wl_resource_set_implementation(client->display_resource, &display_interface, display, destroy_client_display_resource);
+	poor_wl_resource_set_dispatcher(client->display_resource, poor_wl_display_dispatch_request, &display_interface, display,
+					destroy_client_display_resource);
 }
 
 POOR_WL_EXPORT void poor_wl_client_init(struct poor_wl_client *client, struct poor_wl_display *display, int fd,
@@ -1403,15 +1403,6 @@ POOR_WL_EXPORT void poor_wl_display_add_client_created_listener(struct poor_wl_d
 POOR_WL_EXPORT struct poor_wl_listener *poor_wl_display_get_destroy_listener(struct poor_wl_display *display, poor_wl_notify_func_t notify)
 {
 	return poor_wl_priv_signal_get(&display->destroy_signal, notify);
-}
-
-POOR_WL_EXPORT void poor_wl_resource_set_implementation(struct poor_wl_resource *resource, const void *implementation, void *data,
-					      poor_wl_resource_destroy_func_t destroy)
-{
-	resource->object.implementation = implementation;
-	resource->data = data;
-	resource->destroy = destroy;
-	resource->dispatcher = nullptr;
 }
 
 POOR_WL_EXPORT void poor_wl_resource_set_dispatcher(struct poor_wl_resource *resource, poor_wl_dispatcher_func_t dispatcher,

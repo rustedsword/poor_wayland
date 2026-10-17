@@ -646,12 +646,6 @@ poor_wl_resource_init(struct poor_wl_resource *resource, struct poor_wl_client *
 		 int version, uint32_t id);
 
 void
-poor_wl_resource_set_implementation(struct poor_wl_resource *resource,
-			       const void *implementation,
-			       void *data,
-			       poor_wl_resource_destroy_func_t destroy);
-
-void
 poor_wl_resource_set_dispatcher(struct poor_wl_resource *resource,
 			   poor_wl_dispatcher_func_t dispatcher,
 			   const void *implementation,

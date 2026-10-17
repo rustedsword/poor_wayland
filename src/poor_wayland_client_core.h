@@ -46,7 +46,8 @@ extern "C" {
  * compositor. The proxy is responsible for converting requests made by the
  * clients with \ref poor_wl_proxy_marshal_flags() into Wayland's wire format.
  * Events coming from the compositor are also handled by the proxy, which will
- * in turn call the handler set with \ref poor_wl_proxy_add_listener().
+ * in turn call the listener set with the add_listener function of its
+ * interface, such as poor_wl_surface_add_listener().
  *
  * Proxies live in memory of the caller. Every interface has a structure
  * that holds its proxy, such as struct poor_wl_surface, and a request that
@@ -111,10 +112,6 @@ poor_wl_proxy_marshal_array_flags(struct poor_wl_proxy *proxy, uint32_t opcode,
 
 void
 poor_wl_proxy_destroy(struct poor_wl_proxy *proxy);
-
-int
-poor_wl_proxy_add_listener(struct poor_wl_proxy *proxy,
-		      void (**implementation)(void), void *data);
 
 const void *
 poor_wl_proxy_get_listener(struct poor_wl_proxy *proxy);

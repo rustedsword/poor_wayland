@@ -165,31 +165,16 @@ POOR_WL_EXPORT void poor_wl_proxy_destroy(struct poor_wl_proxy *proxy)
 		poor_wl_map_insert_at(&display->objects, POOR_WL_MAP_ENTRY_ZOMBIE, proxy->object.id, (void *)proxy->object.interface);
 }
 
-/*
- * Set the proxy's listener and user data. \c implementation is a vector of function pointers, \c implementation[n]
- * handles the event with opcode \c n. Fails if a listener is set already.
- */
-POOR_WL_EXPORT int poor_wl_proxy_add_listener(struct poor_wl_proxy *proxy, void (**implementation)(void), void *data)
-{
-	if (proxy->object.implementation || proxy->dispatcher) {
-		poor_wl_log(log_handler, "proxy %p already has listener\n", (void *)proxy);
-		return -1;
-	}
-	proxy->object.implementation = implementation;
-	proxy->user_data = data;
-	return 0;
-}
-
 POOR_WL_EXPORT const void *poor_wl_proxy_get_listener(struct poor_wl_proxy *proxy)
 {
 	return proxy->object.implementation;
 }
 
-/* Set a dispatcher with its implementation, for language bindings. Fails if a listener is set already. */
+/* Set a dispatcher with its implementation, as the add_listener functions do. Fails if a listener is set already. */
 POOR_WL_EXPORT int poor_wl_proxy_add_dispatcher(struct poor_wl_proxy *proxy, poor_wl_dispatcher_func_t dispatcher, const void *implementation,
 				      void *data)
 {
-	if (proxy->object.implementation || proxy->dispatcher) {
+	if (proxy->dispatcher) {
 		poor_wl_log(log_handler, "proxy %p already has listener\n", (void *)proxy);
 		return -1;
 	}
@@ -354,8 +339,7 @@ static void display_init(struct poor_wl_display *display, struct poor_loop *loop
 	poor_wl_map_insert_at(&display->objects, 0, 0, nullptr);
 	proxy_init(&display->proxy, display, &poor_wl_display_interface, 0);
 	display->proxy.object.id = poor_wl_map_insert_new(&display->objects, 0, &display->proxy);
-	display->proxy.object.implementation = (void (**)(void))&display_listener;
-	display->proxy.user_data = display;
+	poor_wl_display_add_listener(display, &display_listener, display);
 	display->loop = loop;
 	display->error = error;
 	display->done = done;
@@ -504,12 +488,9 @@ static int display_dispatch_message(struct poor_wl_display *display, uint32_t le
 		return -1;
 	}
 	if (debug_client)
-		poor_wl_closure_print(&closure, &proxy->object, false, !proxy->dispatcher && !proxy->object.implementation,
-				 id_from_object, debug_color);
+		poor_wl_closure_print(&closure, &proxy->object, false, !proxy->dispatcher, id_from_object, debug_color);
 	if (proxy->dispatcher)
 		poor_wl_closure_dispatch(&closure, proxy->dispatcher, &proxy->object, opcode);
-	else if (proxy->object.implementation)
-		poor_wl_closure_invoke(&closure, POOR_WL_CLOSURE_INVOKE_CLIENT, &proxy->object, opcode, proxy->user_data);
 	else
 		poor_wl_closure_close_fds(&closure, display->loop);
 	return size;

@@ -50,7 +50,6 @@ if get_option('libraries')
 	# bundled with the submodule are used if they aren't installed either.
 	poor_loop_dep = dependency('poor_loop', fallback: 'poor_loop')
 	liburing_dep = dependency('liburing', version: '>=2.7', include_type: 'system')
-	ffi_dep = dependency('libffi')
 endif
 poor_base_dep = dependency('poor_base', fallback: 'poor_loop')
 

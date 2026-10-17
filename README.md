@@ -41,6 +41,8 @@ The libraries run on io_uring through [poor_loop](subprojects/poor_loop):
 - On the server, every interface has a structure that holds its resource,
   e.g. `struct poor_wl_surface_resource`, which request handlers and event
   functions take, so an event can't be sent on the wrong kind of object.
+- The scanner generates a dispatcher for every interface, which calls the
+  listeners and request handlers directly, so there is no libffi.
 - Everything has a `poor_` prefix: libpoor_wayland_client,
   libpoor_wayland_server, poor_wayland_scanner, the headers and all C names,
   so it works next to the system libwayland, even in one process. Only the
@@ -53,8 +55,7 @@ one, otherwise the submodule: `--force-fallback-for=poor_loop` forces it.
 [poor_wayland_swapchain](https://github.com/rustedsword/poor_wayland_swapchain)
 presents dmabufs on surfaces for GPU rendering and has the example clients.
 
-Building the libraries is fairly simple, aside from libffi,
-they don't have many dependencies:
+Building the libraries is fairly simple, they don't have many dependencies:
 
     $ meson setup build/ --prefix=PREFIX
     $ ninja -C build/ install

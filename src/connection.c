@@ -30,7 +30,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <ffi.h>
 #include <poor_stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -733,57 +732,6 @@ int poor_wl_closure_lookup_objects(struct poor_wl_closure *closure, struct poor_
 	return 0;
 }
 
-static void convert_arguments_to_ffi(const char *signature, uint32_t flags, union poor_wl_argument *args, int count,
-				     ffi_type **ffi_types, void **ffi_args)
-{
-	struct argument_details arg;
-
-	foreach_array_index(array_ptr(args, count), i) {
-		signature = get_next_argument(signature, &arg);
-		switch (arg.type) {
-		case POOR_WL_ARG_INT:
-			ffi_types[i] = &ffi_type_sint32;
-			ffi_args[i] = &args[i].i;
-			break;
-		case POOR_WL_ARG_UINT:
-			ffi_types[i] = &ffi_type_uint32;
-			ffi_args[i] = &args[i].u;
-			break;
-		case POOR_WL_ARG_FIXED:
-			ffi_types[i] = &ffi_type_sint32;
-			ffi_args[i] = &args[i].f;
-			break;
-		case POOR_WL_ARG_STRING:
-			ffi_types[i] = &ffi_type_pointer;
-			ffi_args[i] = &args[i].s;
-			break;
-		case POOR_WL_ARG_OBJECT:
-			ffi_types[i] = &ffi_type_pointer;
-			ffi_args[i] = &args[i].o;
-			break;
-		case POOR_WL_ARG_NEW_ID:
-			if (flags & POOR_WL_CLOSURE_INVOKE_CLIENT) {
-				ffi_types[i] = &ffi_type_pointer;
-				ffi_args[i] = &args[i].o;
-			} else {
-				ffi_types[i] = &ffi_type_uint32;
-				ffi_args[i] = &args[i].n;
-			}
-			break;
-		case POOR_WL_ARG_ARRAY:
-			ffi_types[i] = &ffi_type_pointer;
-			ffi_args[i] = &args[i].a;
-			break;
-		case POOR_WL_ARG_FD:
-			ffi_types[i] = &ffi_type_sint32;
-			ffi_args[i] = &args[i].h;
-			break;
-		default:
-			poor_wl_abort("unknown type\n");
-		}
-	}
-}
-
 /* The implementation owns the fds now */
 static void closure_clear_fds(struct poor_wl_closure *closure)
 {
@@ -797,30 +745,10 @@ static void closure_clear_fds(struct poor_wl_closure *closure)
 	}
 }
 
-void poor_wl_closure_invoke(struct poor_wl_closure *closure, uint32_t flags, struct poor_wl_object *target, uint32_t opcode, void *data)
-{
-	ffi_type *ffi_types[POOR_WL_CLOSURE_MAX_ARGS + 2];
-	void *ffi_args[POOR_WL_CLOSURE_MAX_ARGS + 2];
-	void (*const *implementation)(void) = target->implementation;
-	ffi_cif cif;
-
-	ffi_types[0] = &ffi_type_pointer;
-	ffi_args[0] = &data;
-	ffi_types[1] = &ffi_type_pointer;
-	ffi_args[1] = &target;
-	convert_arguments_to_ffi(closure->message->signature, flags, closure->args, closure->count, ffi_types + 2, ffi_args + 2);
-	ffi_prep_cif(&cif, FFI_DEFAULT_ABI, closure->count + 2, &ffi_type_void, ffi_types);
-	if (!implementation)
-		poor_wl_abort("Implementation of resource %d of %s is NULL\n", target->id, target->interface->name);
-	if (!implementation[opcode])
-		poor_wl_abort("listener function for opcode %u of %s is NULL\n", opcode, target->interface->name);
-	ffi_call(&cif, implementation[opcode], nullptr, ffi_args);
-	closure_clear_fds(closure);
-}
-
 void poor_wl_closure_dispatch(struct poor_wl_closure *closure, poor_wl_dispatcher_func_t dispatcher, struct poor_wl_object *target, uint32_t opcode)
 {
-	dispatcher(target->implementation, target, opcode, closure->message, closure->args);
+	if (dispatcher(target->implementation, target, opcode, closure->message, closure->args) < 0)
+		poor_wl_abort("listener function for opcode %u of %s is NULL\n", opcode, target->interface->name);
 	closure_clear_fds(closure);
 }
 

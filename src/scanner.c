@@ -1294,12 +1294,13 @@ emit_resource_init(struct poor_wl_list *message_list, struct interface *interfac
 	       "%sconst struct %s_interface *implementation, void *data,\n"
 	       "%spoor_wl_resource_destroy_func_t destroy)\n"
 	       "{\n"
-	       "\tpoor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);\n"
+	       "\tpoor_wl_resource_set_dispatcher(&resource->resource, %s_dispatch_request, implementation, data, destroy);\n"
 	       "}\n\n",
 	       interface->name,
 	       interface->name, interface->name,
 	       indent(29 + strlen(interface->name)), interface->name,
-	       indent(29 + strlen(interface->name)));
+	       indent(29 + strlen(interface->name)),
+	       interface->name);
 }
 
 /* The client library defines the display, which holds more than its proxy */
@@ -1649,6 +1650,115 @@ emit_enumerations(struct interface *interface, bool with_validators)
 	}
 }
 
+static bool
+messages_have_args(struct poor_wl_list *message_list)
+{
+	struct message *m;
+
+	poor_wl_list_for_each(m, message_list, link)
+		if (!poor_wl_list_empty(&m->arg_list))
+			return true;
+
+	return false;
+}
+
+static void
+emit_dispatcher(struct poor_wl_list *message_list, struct interface *interface, enum side side)
+{
+	const char *direction = side == SERVER ? "request" : "event";
+	const char *handlers = side == SERVER ? "impl" : "listener";
+	struct message *m;
+	struct arg *a;
+	int opcode = 0, i;
+
+	printf("/** @ingroup iface_%s */\n"
+	       "static inline int\n"
+	       "%s_dispatch_%s(const void *implementation, void *target, uint32_t opcode,\n"
+	       "%sconst struct poor_wl_message *, union poor_wl_argument *%s)\n"
+	       "{\n",
+	       interface->name,
+	       interface->name, direction,
+	       indent(11 + strlen(interface->name) + strlen(direction)),
+	       messages_have_args(message_list) ? "args" : "");
+
+	if (side == SERVER)
+		printf("\tconst struct %s_interface *impl = (const struct %s_interface *) implementation;\n"
+		       "\tstruct poor_wl_resource *resource = (struct poor_wl_resource *) target;\n\n",
+		       interface->name, interface->name);
+	else
+		printf("\tconst struct %s_listener *listener = (const struct %s_listener *) implementation;\n"
+		       "\tstruct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;\n\n",
+		       interface->name, interface->name);
+
+	printf("\tswitch (opcode) {\n");
+	poor_wl_list_for_each(m, message_list, link) {
+		printf("\tcase %d:\n"
+		       "\t\tif (!%s->%s)\n"
+		       "\t\t\treturn -1;\n",
+		       opcode++, handlers, m->name);
+		if (side == SERVER)
+			printf("\t\timpl->%s(resource->client, (struct %s_resource *) resource",
+			       m->name, interface->name);
+		else
+			printf("\t\tlistener->%s(proxy->user_data, (struct %s *) proxy",
+			       m->name, interface->name);
+
+		i = 0;
+		poor_wl_list_for_each(a, &m->arg_list, link) {
+			printf(", ");
+			switch (a->type) {
+			case INT:
+				printf("args[%d].i", i);
+				break;
+			case UNSIGNED:
+				printf("args[%d].u", i);
+				break;
+			case FIXED:
+				printf("args[%d].f", i);
+				break;
+			case STRING:
+				printf("args[%d].s", i);
+				break;
+			case ARRAY:
+				printf("args[%d].a", i);
+				break;
+			case FD:
+				printf("args[%d].h", i);
+				break;
+			case OBJECT:
+				if (side == SERVER) {
+					printf("(");
+					emit_resource_type(a);
+					printf(") args[%d].o", i);
+				} else if (a->interface_name) {
+					printf("(struct %s *) args[%d].o", a->interface_name, i);
+				} else {
+					printf("args[%d].o", i);
+				}
+				break;
+			case NEW_ID:
+				if (side == CLIENT) {
+					printf("(struct %s *) args[%d].o", a->interface_name, i);
+					break;
+				}
+				/* The signature of an untyped new_id has the interface and the version first */
+				if (!a->interface_name) {
+					printf("args[%d].s, args[%d].u, ", i, i + 1);
+					i += 2;
+				}
+				printf("args[%d].n", i);
+				break;
+			}
+			i++;
+		}
+		printf(");\n"
+		       "\t\treturn 0;\n");
+	}
+	printf("\t}\n"
+	       "\treturn -1;\n"
+	       "}\n\n");
+}
+
 static void
 emit_structs(struct poor_wl_list *message_list, struct interface *interface, enum side side)
 {
@@ -1729,6 +1839,8 @@ emit_structs(struct poor_wl_list *message_list, struct interface *interface, enu
 
 	printf("};\n\n");
 
+	emit_dispatcher(message_list, interface, side);
+
 	if (side == CLIENT) {
 	    printf("/**\n"
 		   " * @ingroup iface_%s\n"
@@ -1737,14 +1849,14 @@ emit_structs(struct poor_wl_list *message_list, struct interface *interface, enu
 		   "%s_add_listener(struct %s *%s,\n"
 		   "%sconst struct %s_listener *listener, void *data)\n"
 		   "{\n"
-		   "\treturn poor_wl_proxy_add_listener((struct poor_wl_proxy *) %s,\n"
-		   "%s(void (**)(void)) listener, data);\n"
+		   "\treturn poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) %s,\n"
+		   "%s%s_dispatch_event, listener, data);\n"
 		   "}\n\n",
 		   interface->name, interface->name, interface->name,
 		   indent(14 + strlen(interface->name)),
 		   interface->name,
 		   interface->name,
-		   indent(37));
+		   indent(44), interface->name);
 	}
 }
 

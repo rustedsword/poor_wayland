@@ -78,8 +78,8 @@ if get_option('scanner')
 	)
 endif
 
-client_deps = [ wayland_client_dep, wayland_private_dep, wayland_util_dep, ffi_dep ]
-server_deps = [ wayland_server_dep, wayland_private_dep, wayland_util_dep, ffi_dep ]
+client_deps = [ wayland_client_dep, wayland_private_dep, wayland_util_dep ]
+server_deps = [ wayland_server_dep, wayland_private_dep, wayland_util_dep ]
 
 tests = {
 	'array-test': {
@@ -117,7 +117,7 @@ tests = {
 			wayland_server_protocol_h,
 			wayland_protocol_c,
 		],
-		'deps': [ wayland_private_dep, wayland_util_dep, ffi_dep, poor_loop_dep ],
+		'deps': [ wayland_private_dep, wayland_util_dep, poor_loop_dep ],
 	},
 	'display-test': {
 		'extra_sources': [

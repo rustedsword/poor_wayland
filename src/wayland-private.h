@@ -134,12 +134,6 @@ int poor_wl_connection_demarshal(struct poor_wl_connection *connection, struct p
 bool poor_wl_object_is_zombie(struct poor_wl_map *map, uint32_t id);
 int poor_wl_closure_lookup_objects(struct poor_wl_closure *closure, struct poor_wl_map *objects);
 
-enum poor_wl_closure_invoke_flag {
-	POOR_WL_CLOSURE_INVOKE_CLIENT = (1 << 0),
-	POOR_WL_CLOSURE_INVOKE_SERVER = (1 << 1),
-};
-
-void poor_wl_closure_invoke(struct poor_wl_closure *closure, uint32_t flags, struct poor_wl_object *target, uint32_t opcode, void *data);
 void poor_wl_closure_dispatch(struct poor_wl_closure *closure, poor_wl_dispatcher_func_t dispatcher, struct poor_wl_object *target, uint32_t opcode);
 void poor_wl_closure_close_fds(struct poor_wl_closure *closure, struct poor_loop *loop);
 bool poor_wl_check_env_token(const char *env, const char *token);

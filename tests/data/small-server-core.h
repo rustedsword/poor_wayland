@@ -242,6 +242,44 @@ struct poor_intf_A_interface {
 
 /** @ingroup iface_poor_intf_A */
 static inline int
+poor_intf_A_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+			     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_intf_A_interface *impl = (const struct poor_intf_A_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->rq1)
+			return -1;
+		impl->rq1(resource->client, (struct poor_intf_A_resource *) resource, args[0].s, args[1].u, args[2].n);
+		return 0;
+	case 1:
+		if (!impl->rq2)
+			return -1;
+		impl->rq2(resource->client, (struct poor_intf_A_resource *) resource, args[0].n, args[1].s, args[2].i, args[3].u, args[4].f, args[5].h, (struct poor_another_intf_resource *) args[6].o);
+		return 0;
+	case 2:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_intf_A_resource *) resource);
+		return 0;
+	case 3:
+		if (!impl->rq3)
+			return -1;
+		impl->rq3(resource->client, (struct poor_intf_A_resource *) resource, args[0].s, args[1].u, args[2].n, (struct poor_another_intf_resource *) args[3].o);
+		return 0;
+	case 4:
+		if (!impl->rq4)
+			return -1;
+		impl->rq4(resource->client, (struct poor_intf_A_resource *) resource, (struct poor_wl_resource *) args[0].o);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_intf_A */
+static inline int
 poor_intf_A_resource_init(struct poor_intf_A_resource *resource,
 			  struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -254,7 +292,7 @@ poor_intf_A_resource_set_implementation(struct poor_intf_A_resource *resource,
 					const struct poor_intf_A_interface *implementation, void *data,
 					poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_intf_A_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_INTF_A_HEY 0

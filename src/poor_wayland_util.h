@@ -691,11 +691,11 @@ union poor_wl_argument {
 /**
  * Dispatcher function type alias
  *
- * A dispatcher is a function that handles the emitting of callbacks in client
- * code. For programs directly using the C library, this is done by using
- * libffi to call function pointers. When binding to languages other than C,
- * dispatchers provide a way to abstract the function calling process to be
- * friendlier to other function calling systems.
+ * A dispatcher is a function that calls the handler of a received message.
+ * The scanner generates one for the listeners and the implementations of
+ * every interface. When binding to languages other than C, dispatchers
+ * provide a way to abstract the function calling process to be friendlier to
+ * other function calling systems.
  *
  * A dispatcher takes five arguments: The first is the dispatcher-specific
  * implementation associated with the target object. The second is the object
@@ -710,7 +710,8 @@ union poor_wl_argument {
  * \param msg Callback message signature
  * \param args Array of received arguments
  *
- * \return 0 on success, or -1 on failure
+ * \return 0 on success, or -1 if the implementation has no handler for the
+ * message, which aborts the program
  */
 typedef int (*poor_wl_dispatcher_func_t)(const void *user_data, void *target,
 				    uint32_t opcode, const struct poor_wl_message *msg,

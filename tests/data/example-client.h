@@ -939,6 +939,29 @@ struct poor_wl_display_listener {
 			  uint32_t id);
 };
 
+/** @ingroup iface_poor_wl_display */
+static inline int
+poor_wl_display_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_display_listener *listener = (const struct poor_wl_display_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->error)
+			return -1;
+		listener->error(proxy->user_data, (struct poor_wl_display *) proxy, args[0].o, args[1].u, args[2].s);
+		return 0;
+	case 1:
+		if (!listener->delete_id)
+			return -1;
+		listener->delete_id(proxy->user_data, (struct poor_wl_display *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_display
  */
@@ -946,8 +969,8 @@ static inline int
 poor_wl_display_add_listener(struct poor_wl_display *poor_wl_display,
 			     const struct poor_wl_display_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_display,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_display,
+					    poor_wl_display_dispatch_event, listener, data);
 }
 
 #define POOR_WL_DISPLAY_SYNC 0
@@ -1077,6 +1100,29 @@ struct poor_wl_registry_listener {
 			      uint32_t name);
 };
 
+/** @ingroup iface_poor_wl_registry */
+static inline int
+poor_wl_registry_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_registry_listener *listener = (const struct poor_wl_registry_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->global)
+			return -1;
+		listener->global(proxy->user_data, (struct poor_wl_registry *) proxy, args[0].u, args[1].s, args[2].u);
+		return 0;
+	case 1:
+		if (!listener->global_remove)
+			return -1;
+		listener->global_remove(proxy->user_data, (struct poor_wl_registry *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_registry
  */
@@ -1084,8 +1130,8 @@ static inline int
 poor_wl_registry_add_listener(struct poor_wl_registry *poor_wl_registry,
 			      const struct poor_wl_registry_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_registry,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_registry,
+					    poor_wl_registry_dispatch_event, listener, data);
 }
 
 #define POOR_WL_REGISTRY_BIND 0
@@ -1168,6 +1214,24 @@ struct poor_wl_callback_listener {
 		     uint32_t callback_data);
 };
 
+/** @ingroup iface_poor_wl_callback */
+static inline int
+poor_wl_callback_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_callback_listener *listener = (const struct poor_wl_callback_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->done)
+			return -1;
+		listener->done(proxy->user_data, (struct poor_wl_callback *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_callback
  */
@@ -1175,8 +1239,8 @@ static inline int
 poor_wl_callback_add_listener(struct poor_wl_callback *poor_wl_callback,
 			      const struct poor_wl_callback_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_callback,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_callback,
+					    poor_wl_callback_dispatch_event, listener, data);
 }
 
 /**
@@ -1684,6 +1748,24 @@ struct poor_wl_shm_listener {
 		       uint32_t format);
 };
 
+/** @ingroup iface_poor_wl_shm */
+static inline int
+poor_wl_shm_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			   const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shm_listener *listener = (const struct poor_wl_shm_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->format)
+			return -1;
+		listener->format(proxy->user_data, (struct poor_wl_shm *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_shm
  */
@@ -1691,8 +1773,8 @@ static inline int
 poor_wl_shm_add_listener(struct poor_wl_shm *poor_wl_shm,
 			 const struct poor_wl_shm_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_shm,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_shm,
+					    poor_wl_shm_dispatch_event, listener, data);
 }
 
 #define POOR_WL_SHM_CREATE_POOL 0
@@ -1783,6 +1865,24 @@ struct poor_wl_buffer_listener {
 			struct poor_wl_buffer *poor_wl_buffer);
 };
 
+/** @ingroup iface_poor_wl_buffer */
+static inline int
+poor_wl_buffer_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			      const struct poor_wl_message *, union poor_wl_argument *)
+{
+	const struct poor_wl_buffer_listener *listener = (const struct poor_wl_buffer_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->release)
+			return -1;
+		listener->release(proxy->user_data, (struct poor_wl_buffer *) proxy);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_buffer
  */
@@ -1790,8 +1890,8 @@ static inline int
 poor_wl_buffer_add_listener(struct poor_wl_buffer *poor_wl_buffer,
 			    const struct poor_wl_buffer_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_buffer,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_buffer,
+					    poor_wl_buffer_dispatch_event, listener, data);
 }
 
 #define POOR_WL_BUFFER_DESTROY 0
@@ -1947,6 +2047,34 @@ struct poor_wl_data_offer_listener {
 		       uint32_t dnd_action);
 };
 
+/** @ingroup iface_poor_wl_data_offer */
+static inline int
+poor_wl_data_offer_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				  const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_offer_listener *listener = (const struct poor_wl_data_offer_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->offer)
+			return -1;
+		listener->offer(proxy->user_data, (struct poor_wl_data_offer *) proxy, args[0].s);
+		return 0;
+	case 1:
+		if (!listener->source_actions)
+			return -1;
+		listener->source_actions(proxy->user_data, (struct poor_wl_data_offer *) proxy, args[0].u);
+		return 0;
+	case 2:
+		if (!listener->action)
+			return -1;
+		listener->action(proxy->user_data, (struct poor_wl_data_offer *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_data_offer
  */
@@ -1954,8 +2082,8 @@ static inline int
 poor_wl_data_offer_add_listener(struct poor_wl_data_offer *poor_wl_data_offer,
 				const struct poor_wl_data_offer_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_offer,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_data_offer,
+					    poor_wl_data_offer_dispatch_event, listener, data);
 }
 
 #define POOR_WL_DATA_OFFER_ACCEPT 0
@@ -2291,6 +2419,49 @@ struct poor_wl_data_source_listener {
 		       uint32_t dnd_action);
 };
 
+/** @ingroup iface_poor_wl_data_source */
+static inline int
+poor_wl_data_source_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				   const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_source_listener *listener = (const struct poor_wl_data_source_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->target)
+			return -1;
+		listener->target(proxy->user_data, (struct poor_wl_data_source *) proxy, args[0].s);
+		return 0;
+	case 1:
+		if (!listener->send)
+			return -1;
+		listener->send(proxy->user_data, (struct poor_wl_data_source *) proxy, args[0].s, args[1].h);
+		return 0;
+	case 2:
+		if (!listener->cancelled)
+			return -1;
+		listener->cancelled(proxy->user_data, (struct poor_wl_data_source *) proxy);
+		return 0;
+	case 3:
+		if (!listener->dnd_drop_performed)
+			return -1;
+		listener->dnd_drop_performed(proxy->user_data, (struct poor_wl_data_source *) proxy);
+		return 0;
+	case 4:
+		if (!listener->dnd_finished)
+			return -1;
+		listener->dnd_finished(proxy->user_data, (struct poor_wl_data_source *) proxy);
+		return 0;
+	case 5:
+		if (!listener->action)
+			return -1;
+		listener->action(proxy->user_data, (struct poor_wl_data_source *) proxy, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_data_source
  */
@@ -2298,8 +2469,8 @@ static inline int
 poor_wl_data_source_add_listener(struct poor_wl_data_source *poor_wl_data_source,
 				 const struct poor_wl_data_source_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_source,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_data_source,
+					    poor_wl_data_source_dispatch_event, listener, data);
 }
 
 #define POOR_WL_DATA_SOURCE_OFFER 0
@@ -2536,6 +2707,49 @@ struct poor_wl_data_device_listener {
 			  struct poor_wl_data_offer *id);
 };
 
+/** @ingroup iface_poor_wl_data_device */
+static inline int
+poor_wl_data_device_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				   const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_device_listener *listener = (const struct poor_wl_data_device_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->data_offer)
+			return -1;
+		listener->data_offer(proxy->user_data, (struct poor_wl_data_device *) proxy, (struct poor_wl_data_offer *) args[0].o);
+		return 0;
+	case 1:
+		if (!listener->enter)
+			return -1;
+		listener->enter(proxy->user_data, (struct poor_wl_data_device *) proxy, args[0].u, (struct poor_wl_surface *) args[1].o, args[2].f, args[3].f, (struct poor_wl_data_offer *) args[4].o);
+		return 0;
+	case 2:
+		if (!listener->leave)
+			return -1;
+		listener->leave(proxy->user_data, (struct poor_wl_data_device *) proxy);
+		return 0;
+	case 3:
+		if (!listener->motion)
+			return -1;
+		listener->motion(proxy->user_data, (struct poor_wl_data_device *) proxy, args[0].u, args[1].f, args[2].f);
+		return 0;
+	case 4:
+		if (!listener->drop)
+			return -1;
+		listener->drop(proxy->user_data, (struct poor_wl_data_device *) proxy);
+		return 0;
+	case 5:
+		if (!listener->selection)
+			return -1;
+		listener->selection(proxy->user_data, (struct poor_wl_data_device *) proxy, (struct poor_wl_data_offer *) args[0].o);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_data_device
  */
@@ -2543,8 +2757,8 @@ static inline int
 poor_wl_data_device_add_listener(struct poor_wl_data_device *poor_wl_data_device,
 				 const struct poor_wl_data_device_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_data_device,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_data_device,
+					    poor_wl_data_device_dispatch_event, listener, data);
 }
 
 #define POOR_WL_DATA_DEVICE_START_DRAG 0
@@ -3033,6 +3247,34 @@ struct poor_wl_shell_surface_listener {
 			   struct poor_wl_shell_surface *poor_wl_shell_surface);
 };
 
+/** @ingroup iface_poor_wl_shell_surface */
+static inline int
+poor_wl_shell_surface_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shell_surface_listener *listener = (const struct poor_wl_shell_surface_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->ping)
+			return -1;
+		listener->ping(proxy->user_data, (struct poor_wl_shell_surface *) proxy, args[0].u);
+		return 0;
+	case 1:
+		if (!listener->configure)
+			return -1;
+		listener->configure(proxy->user_data, (struct poor_wl_shell_surface *) proxy, args[0].u, args[1].i, args[2].i);
+		return 0;
+	case 2:
+		if (!listener->popup_done)
+			return -1;
+		listener->popup_done(proxy->user_data, (struct poor_wl_shell_surface *) proxy);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_shell_surface
  */
@@ -3040,8 +3282,8 @@ static inline int
 poor_wl_shell_surface_add_listener(struct poor_wl_shell_surface *poor_wl_shell_surface,
 				   const struct poor_wl_shell_surface_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_shell_surface,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_shell_surface,
+					    poor_wl_shell_surface_dispatch_event, listener, data);
 }
 
 #define POOR_WL_SHELL_SURFACE_PONG 0
@@ -3411,6 +3653,29 @@ struct poor_wl_surface_listener {
 		      struct poor_wl_output *output);
 };
 
+/** @ingroup iface_poor_wl_surface */
+static inline int
+poor_wl_surface_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_surface_listener *listener = (const struct poor_wl_surface_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->enter)
+			return -1;
+		listener->enter(proxy->user_data, (struct poor_wl_surface *) proxy, (struct poor_wl_output *) args[0].o);
+		return 0;
+	case 1:
+		if (!listener->leave)
+			return -1;
+		listener->leave(proxy->user_data, (struct poor_wl_surface *) proxy, (struct poor_wl_output *) args[0].o);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_surface
  */
@@ -3418,8 +3683,8 @@ static inline int
 poor_wl_surface_add_listener(struct poor_wl_surface *poor_wl_surface,
 			     const struct poor_wl_surface_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_surface,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_surface,
+					    poor_wl_surface_dispatch_event, listener, data);
 }
 
 #define POOR_WL_SURFACE_DESTROY 0
@@ -3938,6 +4203,29 @@ struct poor_wl_seat_listener {
 		     const char *name);
 };
 
+/** @ingroup iface_poor_wl_seat */
+static inline int
+poor_wl_seat_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			    const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_seat_listener *listener = (const struct poor_wl_seat_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->capabilities)
+			return -1;
+		listener->capabilities(proxy->user_data, (struct poor_wl_seat *) proxy, args[0].u);
+		return 0;
+	case 1:
+		if (!listener->name)
+			return -1;
+		listener->name(proxy->user_data, (struct poor_wl_seat *) proxy, args[0].s);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_seat
  */
@@ -3945,8 +4233,8 @@ static inline int
 poor_wl_seat_add_listener(struct poor_wl_seat *poor_wl_seat,
 			  const struct poor_wl_seat_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_seat,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_seat,
+					    poor_wl_seat_dispatch_event, listener, data);
 }
 
 #define POOR_WL_SEAT_GET_POINTER 0
@@ -4431,6 +4719,64 @@ struct poor_wl_pointer_listener {
 			      int32_t discrete);
 };
 
+/** @ingroup iface_poor_wl_pointer */
+static inline int
+poor_wl_pointer_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_pointer_listener *listener = (const struct poor_wl_pointer_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->enter)
+			return -1;
+		listener->enter(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, (struct poor_wl_surface *) args[1].o, args[2].f, args[3].f);
+		return 0;
+	case 1:
+		if (!listener->leave)
+			return -1;
+		listener->leave(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, (struct poor_wl_surface *) args[1].o);
+		return 0;
+	case 2:
+		if (!listener->motion)
+			return -1;
+		listener->motion(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, args[1].f, args[2].f);
+		return 0;
+	case 3:
+		if (!listener->button)
+			return -1;
+		listener->button(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, args[1].u, args[2].u, args[3].u);
+		return 0;
+	case 4:
+		if (!listener->axis)
+			return -1;
+		listener->axis(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, args[1].u, args[2].f);
+		return 0;
+	case 5:
+		if (!listener->frame)
+			return -1;
+		listener->frame(proxy->user_data, (struct poor_wl_pointer *) proxy);
+		return 0;
+	case 6:
+		if (!listener->axis_source)
+			return -1;
+		listener->axis_source(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u);
+		return 0;
+	case 7:
+		if (!listener->axis_stop)
+			return -1;
+		listener->axis_stop(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, args[1].u);
+		return 0;
+	case 8:
+		if (!listener->axis_discrete)
+			return -1;
+		listener->axis_discrete(proxy->user_data, (struct poor_wl_pointer *) proxy, args[0].u, args[1].i);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_pointer
  */
@@ -4438,8 +4784,8 @@ static inline int
 poor_wl_pointer_add_listener(struct poor_wl_pointer *poor_wl_pointer,
 			     const struct poor_wl_pointer_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_pointer,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_pointer,
+					    poor_wl_pointer_dispatch_event, listener, data);
 }
 
 #define POOR_WL_POINTER_SET_CURSOR 0
@@ -4733,6 +5079,49 @@ struct poor_wl_keyboard_listener {
 			    int32_t delay);
 };
 
+/** @ingroup iface_poor_wl_keyboard */
+static inline int
+poor_wl_keyboard_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_keyboard_listener *listener = (const struct poor_wl_keyboard_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->keymap)
+			return -1;
+		listener->keymap(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].u, args[1].h, args[2].u);
+		return 0;
+	case 1:
+		if (!listener->enter)
+			return -1;
+		listener->enter(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].u, (struct poor_wl_surface *) args[1].o, args[2].a);
+		return 0;
+	case 2:
+		if (!listener->leave)
+			return -1;
+		listener->leave(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].u, (struct poor_wl_surface *) args[1].o);
+		return 0;
+	case 3:
+		if (!listener->key)
+			return -1;
+		listener->key(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].u, args[1].u, args[2].u, args[3].u);
+		return 0;
+	case 4:
+		if (!listener->modifiers)
+			return -1;
+		listener->modifiers(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].u, args[1].u, args[2].u, args[3].u, args[4].u);
+		return 0;
+	case 5:
+		if (!listener->repeat_info)
+			return -1;
+		listener->repeat_info(proxy->user_data, (struct poor_wl_keyboard *) proxy, args[0].i, args[1].i);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_keyboard
  */
@@ -4740,8 +5129,8 @@ static inline int
 poor_wl_keyboard_add_listener(struct poor_wl_keyboard *poor_wl_keyboard,
 			      const struct poor_wl_keyboard_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_keyboard,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_keyboard,
+					    poor_wl_keyboard_dispatch_event, listener, data);
 }
 
 #define POOR_WL_KEYBOARD_RELEASE 0
@@ -4979,6 +5368,54 @@ struct poor_wl_touch_listener {
 			    poor_wl_fixed_t orientation);
 };
 
+/** @ingroup iface_poor_wl_touch */
+static inline int
+poor_wl_touch_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_touch_listener *listener = (const struct poor_wl_touch_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->down)
+			return -1;
+		listener->down(proxy->user_data, (struct poor_wl_touch *) proxy, args[0].u, args[1].u, (struct poor_wl_surface *) args[2].o, args[3].i, args[4].f, args[5].f);
+		return 0;
+	case 1:
+		if (!listener->up)
+			return -1;
+		listener->up(proxy->user_data, (struct poor_wl_touch *) proxy, args[0].u, args[1].u, args[2].i);
+		return 0;
+	case 2:
+		if (!listener->motion)
+			return -1;
+		listener->motion(proxy->user_data, (struct poor_wl_touch *) proxy, args[0].u, args[1].i, args[2].f, args[3].f);
+		return 0;
+	case 3:
+		if (!listener->frame)
+			return -1;
+		listener->frame(proxy->user_data, (struct poor_wl_touch *) proxy);
+		return 0;
+	case 4:
+		if (!listener->cancel)
+			return -1;
+		listener->cancel(proxy->user_data, (struct poor_wl_touch *) proxy);
+		return 0;
+	case 5:
+		if (!listener->shape)
+			return -1;
+		listener->shape(proxy->user_data, (struct poor_wl_touch *) proxy, args[0].i, args[1].f, args[2].f);
+		return 0;
+	case 6:
+		if (!listener->orientation)
+			return -1;
+		listener->orientation(proxy->user_data, (struct poor_wl_touch *) proxy, args[0].i, args[1].f);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_touch
  */
@@ -4986,8 +5423,8 @@ static inline int
 poor_wl_touch_add_listener(struct poor_wl_touch *poor_wl_touch,
 			   const struct poor_wl_touch_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_touch,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_touch,
+					    poor_wl_touch_dispatch_event, listener, data);
 }
 
 #define POOR_WL_TOUCH_RELEASE 0
@@ -5279,6 +5716,39 @@ struct poor_wl_output_listener {
 		      int32_t factor);
 };
 
+/** @ingroup iface_poor_wl_output */
+static inline int
+poor_wl_output_dispatch_event(const void *implementation, void *target, uint32_t opcode,
+			      const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_output_listener *listener = (const struct poor_wl_output_listener *) implementation;
+	struct poor_wl_proxy *proxy = (struct poor_wl_proxy *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!listener->geometry)
+			return -1;
+		listener->geometry(proxy->user_data, (struct poor_wl_output *) proxy, args[0].i, args[1].i, args[2].i, args[3].i, args[4].i, args[5].s, args[6].s, args[7].i);
+		return 0;
+	case 1:
+		if (!listener->mode)
+			return -1;
+		listener->mode(proxy->user_data, (struct poor_wl_output *) proxy, args[0].u, args[1].i, args[2].i, args[3].i);
+		return 0;
+	case 2:
+		if (!listener->done)
+			return -1;
+		listener->done(proxy->user_data, (struct poor_wl_output *) proxy);
+		return 0;
+	case 3:
+		if (!listener->scale)
+			return -1;
+		listener->scale(proxy->user_data, (struct poor_wl_output *) proxy, args[0].i);
+		return 0;
+	}
+	return -1;
+}
+
 /**
  * @ingroup iface_poor_wl_output
  */
@@ -5286,8 +5756,8 @@ static inline int
 poor_wl_output_add_listener(struct poor_wl_output *poor_wl_output,
 			    const struct poor_wl_output_listener *listener, void *data)
 {
-	return poor_wl_proxy_add_listener((struct poor_wl_proxy *) poor_wl_output,
-				     (void (**)(void)) listener, data);
+	return poor_wl_proxy_add_dispatcher((struct poor_wl_proxy *) poor_wl_output,
+					    poor_wl_output_dispatch_event, listener, data);
 }
 
 #define POOR_WL_OUTPUT_RELEASE 0

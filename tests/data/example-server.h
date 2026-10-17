@@ -964,6 +964,29 @@ struct poor_wl_display_interface {
 			     uint32_t registry);
 };
 
+/** @ingroup iface_poor_wl_display */
+static inline int
+poor_wl_display_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				 const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_display_interface *impl = (const struct poor_wl_display_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->sync)
+			return -1;
+		impl->sync(resource->client, (struct poor_wl_display_resource *) resource, args[0].n);
+		return 0;
+	case 1:
+		if (!impl->get_registry)
+			return -1;
+		impl->get_registry(resource->client, (struct poor_wl_display_resource *) resource, args[0].n);
+		return 0;
+	}
+	return -1;
+}
+
 #define POOR_WL_DISPLAY_ERROR 0
 #define POOR_WL_DISPLAY_DELETE_ID 1
 
@@ -1016,6 +1039,24 @@ struct poor_wl_registry_interface {
 
 /** @ingroup iface_poor_wl_registry */
 static inline int
+poor_wl_registry_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				  const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_registry_interface *impl = (const struct poor_wl_registry_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->bind)
+			return -1;
+		impl->bind(resource->client, (struct poor_wl_registry_resource *) resource, args[0].u, args[1].s, args[2].u, args[3].n);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_registry */
+static inline int
 poor_wl_registry_resource_init(struct poor_wl_registry_resource *resource,
 			       struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -1028,7 +1069,7 @@ poor_wl_registry_resource_set_implementation(struct poor_wl_registry_resource *r
 					     const struct poor_wl_registry_interface *implementation, void *data,
 					     poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_registry_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_REGISTRY_GLOBAL 0
@@ -1145,6 +1186,29 @@ struct poor_wl_compositor_interface {
 
 /** @ingroup iface_poor_wl_compositor */
 static inline int
+poor_wl_compositor_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				    const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_compositor_interface *impl = (const struct poor_wl_compositor_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->create_surface)
+			return -1;
+		impl->create_surface(resource->client, (struct poor_wl_compositor_resource *) resource, args[0].n);
+		return 0;
+	case 1:
+		if (!impl->create_region)
+			return -1;
+		impl->create_region(resource->client, (struct poor_wl_compositor_resource *) resource, args[0].n);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_compositor */
+static inline int
 poor_wl_compositor_resource_init(struct poor_wl_compositor_resource *resource,
 				 struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -1157,7 +1221,7 @@ poor_wl_compositor_resource_set_implementation(struct poor_wl_compositor_resourc
 					       const struct poor_wl_compositor_interface *implementation, void *data,
 					       poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_compositor_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -1238,6 +1302,34 @@ struct poor_wl_shm_pool_interface {
 
 /** @ingroup iface_poor_wl_shm_pool */
 static inline int
+poor_wl_shm_pool_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				  const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shm_pool_interface *impl = (const struct poor_wl_shm_pool_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->create_buffer)
+			return -1;
+		impl->create_buffer(resource->client, (struct poor_wl_shm_pool_resource *) resource, args[0].n, args[1].i, args[2].i, args[3].i, args[4].i, args[5].u);
+		return 0;
+	case 1:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_shm_pool_resource *) resource);
+		return 0;
+	case 2:
+		if (!impl->resize)
+			return -1;
+		impl->resize(resource->client, (struct poor_wl_shm_pool_resource *) resource, args[0].i);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_shm_pool */
+static inline int
 poor_wl_shm_pool_resource_init(struct poor_wl_shm_pool_resource *resource,
 			       struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -1250,7 +1342,7 @@ poor_wl_shm_pool_resource_set_implementation(struct poor_wl_shm_pool_resource *r
 					     const struct poor_wl_shm_pool_interface *implementation, void *data,
 					     poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_shm_pool_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -1735,6 +1827,24 @@ struct poor_wl_shm_interface {
 
 /** @ingroup iface_poor_wl_shm */
 static inline int
+poor_wl_shm_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+			     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shm_interface *impl = (const struct poor_wl_shm_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->create_pool)
+			return -1;
+		impl->create_pool(resource->client, (struct poor_wl_shm_resource *) resource, args[0].n, args[1].h, args[2].i);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_shm */
+static inline int
 poor_wl_shm_resource_init(struct poor_wl_shm_resource *resource,
 			  struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -1747,7 +1857,7 @@ poor_wl_shm_resource_set_implementation(struct poor_wl_shm_resource *resource,
 					const struct poor_wl_shm_interface *implementation, void *data,
 					poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_shm_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_SHM_FORMAT 0
@@ -1801,6 +1911,24 @@ struct poor_wl_buffer_interface {
 
 /** @ingroup iface_poor_wl_buffer */
 static inline int
+poor_wl_buffer_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *)
+{
+	const struct poor_wl_buffer_interface *impl = (const struct poor_wl_buffer_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_buffer_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_buffer */
+static inline int
 poor_wl_buffer_resource_init(struct poor_wl_buffer_resource *resource,
 			     struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -1813,7 +1941,7 @@ poor_wl_buffer_resource_set_implementation(struct poor_wl_buffer_resource *resou
 					   const struct poor_wl_buffer_interface *implementation, void *data,
 					   poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_buffer_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_BUFFER_RELEASE 0
@@ -2021,6 +2149,44 @@ struct poor_wl_data_offer_interface {
 
 /** @ingroup iface_poor_wl_data_offer */
 static inline int
+poor_wl_data_offer_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				    const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_offer_interface *impl = (const struct poor_wl_data_offer_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->accept)
+			return -1;
+		impl->accept(resource->client, (struct poor_wl_data_offer_resource *) resource, args[0].u, args[1].s);
+		return 0;
+	case 1:
+		if (!impl->receive)
+			return -1;
+		impl->receive(resource->client, (struct poor_wl_data_offer_resource *) resource, args[0].s, args[1].h);
+		return 0;
+	case 2:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_data_offer_resource *) resource);
+		return 0;
+	case 3:
+		if (!impl->finish)
+			return -1;
+		impl->finish(resource->client, (struct poor_wl_data_offer_resource *) resource);
+		return 0;
+	case 4:
+		if (!impl->set_actions)
+			return -1;
+		impl->set_actions(resource->client, (struct poor_wl_data_offer_resource *) resource, args[0].u, args[1].u);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_data_offer */
+static inline int
 poor_wl_data_offer_resource_init(struct poor_wl_data_offer_resource *resource,
 				 struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -2033,7 +2199,7 @@ poor_wl_data_offer_resource_set_implementation(struct poor_wl_data_offer_resourc
 					       const struct poor_wl_data_offer_interface *implementation, void *data,
 					       poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_data_offer_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_DATA_OFFER_OFFER 0
@@ -2203,6 +2369,34 @@ struct poor_wl_data_source_interface {
 
 /** @ingroup iface_poor_wl_data_source */
 static inline int
+poor_wl_data_source_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_source_interface *impl = (const struct poor_wl_data_source_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->offer)
+			return -1;
+		impl->offer(resource->client, (struct poor_wl_data_source_resource *) resource, args[0].s);
+		return 0;
+	case 1:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_data_source_resource *) resource);
+		return 0;
+	case 2:
+		if (!impl->set_actions)
+			return -1;
+		impl->set_actions(resource->client, (struct poor_wl_data_source_resource *) resource, args[0].u);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_data_source */
+static inline int
 poor_wl_data_source_resource_init(struct poor_wl_data_source_resource *resource,
 				  struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -2215,7 +2409,7 @@ poor_wl_data_source_resource_set_implementation(struct poor_wl_data_source_resou
 						const struct poor_wl_data_source_interface *implementation, void *data,
 						poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_data_source_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_DATA_SOURCE_TARGET 0
@@ -2443,6 +2637,34 @@ struct poor_wl_data_device_interface {
 
 /** @ingroup iface_poor_wl_data_device */
 static inline int
+poor_wl_data_device_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_device_interface *impl = (const struct poor_wl_data_device_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->start_drag)
+			return -1;
+		impl->start_drag(resource->client, (struct poor_wl_data_device_resource *) resource, (struct poor_wl_data_source_resource *) args[0].o, (struct poor_wl_surface_resource *) args[1].o, (struct poor_wl_surface_resource *) args[2].o, args[3].u);
+		return 0;
+	case 1:
+		if (!impl->set_selection)
+			return -1;
+		impl->set_selection(resource->client, (struct poor_wl_data_device_resource *) resource, (struct poor_wl_data_source_resource *) args[0].o, args[1].u);
+		return 0;
+	case 2:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_data_device_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_data_device */
+static inline int
 poor_wl_data_device_resource_init(struct poor_wl_data_device_resource *resource,
 				  struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -2455,7 +2677,7 @@ poor_wl_data_device_resource_set_implementation(struct poor_wl_data_device_resou
 						const struct poor_wl_data_device_interface *implementation, void *data,
 						poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_data_device_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_DATA_DEVICE_DATA_OFFER 0
@@ -2690,6 +2912,29 @@ struct poor_wl_data_device_manager_interface {
 
 /** @ingroup iface_poor_wl_data_device_manager */
 static inline int
+poor_wl_data_device_manager_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+					     const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_data_device_manager_interface *impl = (const struct poor_wl_data_device_manager_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->create_data_source)
+			return -1;
+		impl->create_data_source(resource->client, (struct poor_wl_data_device_manager_resource *) resource, args[0].n);
+		return 0;
+	case 1:
+		if (!impl->get_data_device)
+			return -1;
+		impl->get_data_device(resource->client, (struct poor_wl_data_device_manager_resource *) resource, args[0].n, (struct poor_wl_seat_resource *) args[1].o);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_data_device_manager */
+static inline int
 poor_wl_data_device_manager_resource_init(struct poor_wl_data_device_manager_resource *resource,
 					  struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -2702,7 +2947,7 @@ poor_wl_data_device_manager_resource_set_implementation(struct poor_wl_data_devi
 							const struct poor_wl_data_device_manager_interface *implementation, void *data,
 							poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_data_device_manager_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -2777,6 +3022,24 @@ struct poor_wl_shell_interface {
 
 /** @ingroup iface_poor_wl_shell */
 static inline int
+poor_wl_shell_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+			       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shell_interface *impl = (const struct poor_wl_shell_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->get_shell_surface)
+			return -1;
+		impl->get_shell_surface(resource->client, (struct poor_wl_shell_resource *) resource, args[0].n, (struct poor_wl_surface_resource *) args[1].o);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_shell */
+static inline int
 poor_wl_shell_resource_init(struct poor_wl_shell_resource *resource,
 			    struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -2789,7 +3052,7 @@ poor_wl_shell_resource_set_implementation(struct poor_wl_shell_resource *resourc
 					  const struct poor_wl_shell_interface *implementation, void *data,
 					  poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_shell_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -3201,6 +3464,69 @@ struct poor_wl_shell_surface_interface {
 
 /** @ingroup iface_poor_wl_shell_surface */
 static inline int
+poor_wl_shell_surface_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_shell_surface_interface *impl = (const struct poor_wl_shell_surface_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->pong)
+			return -1;
+		impl->pong(resource->client, (struct poor_wl_shell_surface_resource *) resource, args[0].u);
+		return 0;
+	case 1:
+		if (!impl->move)
+			return -1;
+		impl->move(resource->client, (struct poor_wl_shell_surface_resource *) resource, (struct poor_wl_seat_resource *) args[0].o, args[1].u);
+		return 0;
+	case 2:
+		if (!impl->resize)
+			return -1;
+		impl->resize(resource->client, (struct poor_wl_shell_surface_resource *) resource, (struct poor_wl_seat_resource *) args[0].o, args[1].u, args[2].u);
+		return 0;
+	case 3:
+		if (!impl->set_toplevel)
+			return -1;
+		impl->set_toplevel(resource->client, (struct poor_wl_shell_surface_resource *) resource);
+		return 0;
+	case 4:
+		if (!impl->set_transient)
+			return -1;
+		impl->set_transient(resource->client, (struct poor_wl_shell_surface_resource *) resource, (struct poor_wl_surface_resource *) args[0].o, args[1].i, args[2].i, args[3].u);
+		return 0;
+	case 5:
+		if (!impl->set_fullscreen)
+			return -1;
+		impl->set_fullscreen(resource->client, (struct poor_wl_shell_surface_resource *) resource, args[0].u, args[1].u, (struct poor_wl_output_resource *) args[2].o);
+		return 0;
+	case 6:
+		if (!impl->set_popup)
+			return -1;
+		impl->set_popup(resource->client, (struct poor_wl_shell_surface_resource *) resource, (struct poor_wl_seat_resource *) args[0].o, args[1].u, (struct poor_wl_surface_resource *) args[2].o, args[3].i, args[4].i, args[5].u);
+		return 0;
+	case 7:
+		if (!impl->set_maximized)
+			return -1;
+		impl->set_maximized(resource->client, (struct poor_wl_shell_surface_resource *) resource, (struct poor_wl_output_resource *) args[0].o);
+		return 0;
+	case 8:
+		if (!impl->set_title)
+			return -1;
+		impl->set_title(resource->client, (struct poor_wl_shell_surface_resource *) resource, args[0].s);
+		return 0;
+	case 9:
+		if (!impl->set_class)
+			return -1;
+		impl->set_class(resource->client, (struct poor_wl_shell_surface_resource *) resource, args[0].s);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_shell_surface */
+static inline int
 poor_wl_shell_surface_resource_init(struct poor_wl_shell_surface_resource *resource,
 				    struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -3213,7 +3539,7 @@ poor_wl_shell_surface_resource_set_implementation(struct poor_wl_shell_surface_r
 						  const struct poor_wl_shell_surface_interface *implementation, void *data,
 						  poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_shell_surface_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_SHELL_SURFACE_PING 0
@@ -3720,6 +4046,69 @@ struct poor_wl_surface_interface {
 
 /** @ingroup iface_poor_wl_surface */
 static inline int
+poor_wl_surface_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				 const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_surface_interface *impl = (const struct poor_wl_surface_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_surface_resource *) resource);
+		return 0;
+	case 1:
+		if (!impl->attach)
+			return -1;
+		impl->attach(resource->client, (struct poor_wl_surface_resource *) resource, (struct poor_wl_buffer_resource *) args[0].o, args[1].i, args[2].i);
+		return 0;
+	case 2:
+		if (!impl->damage)
+			return -1;
+		impl->damage(resource->client, (struct poor_wl_surface_resource *) resource, args[0].i, args[1].i, args[2].i, args[3].i);
+		return 0;
+	case 3:
+		if (!impl->frame)
+			return -1;
+		impl->frame(resource->client, (struct poor_wl_surface_resource *) resource, args[0].n);
+		return 0;
+	case 4:
+		if (!impl->set_opaque_region)
+			return -1;
+		impl->set_opaque_region(resource->client, (struct poor_wl_surface_resource *) resource, (struct poor_wl_region_resource *) args[0].o);
+		return 0;
+	case 5:
+		if (!impl->set_input_region)
+			return -1;
+		impl->set_input_region(resource->client, (struct poor_wl_surface_resource *) resource, (struct poor_wl_region_resource *) args[0].o);
+		return 0;
+	case 6:
+		if (!impl->commit)
+			return -1;
+		impl->commit(resource->client, (struct poor_wl_surface_resource *) resource);
+		return 0;
+	case 7:
+		if (!impl->set_buffer_transform)
+			return -1;
+		impl->set_buffer_transform(resource->client, (struct poor_wl_surface_resource *) resource, args[0].i);
+		return 0;
+	case 8:
+		if (!impl->set_buffer_scale)
+			return -1;
+		impl->set_buffer_scale(resource->client, (struct poor_wl_surface_resource *) resource, args[0].i);
+		return 0;
+	case 9:
+		if (!impl->damage_buffer)
+			return -1;
+		impl->damage_buffer(resource->client, (struct poor_wl_surface_resource *) resource, args[0].i, args[1].i, args[2].i, args[3].i);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_surface */
+static inline int
 poor_wl_surface_resource_init(struct poor_wl_surface_resource *resource,
 			      struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -3732,7 +4121,7 @@ poor_wl_surface_resource_set_implementation(struct poor_wl_surface_resource *res
 					    const struct poor_wl_surface_interface *implementation, void *data,
 					    poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_surface_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_SURFACE_ENTER 0
@@ -3930,6 +4319,39 @@ struct poor_wl_seat_interface {
 
 /** @ingroup iface_poor_wl_seat */
 static inline int
+poor_wl_seat_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+			      const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_seat_interface *impl = (const struct poor_wl_seat_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->get_pointer)
+			return -1;
+		impl->get_pointer(resource->client, (struct poor_wl_seat_resource *) resource, args[0].n);
+		return 0;
+	case 1:
+		if (!impl->get_keyboard)
+			return -1;
+		impl->get_keyboard(resource->client, (struct poor_wl_seat_resource *) resource, args[0].n);
+		return 0;
+	case 2:
+		if (!impl->get_touch)
+			return -1;
+		impl->get_touch(resource->client, (struct poor_wl_seat_resource *) resource, args[0].n);
+		return 0;
+	case 3:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_seat_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_seat */
+static inline int
 poor_wl_seat_resource_init(struct poor_wl_seat_resource *resource,
 			   struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -3942,7 +4364,7 @@ poor_wl_seat_resource_set_implementation(struct poor_wl_seat_resource *resource,
 					 const struct poor_wl_seat_interface *implementation, void *data,
 					 poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_seat_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_SEAT_CAPABILITIES 0
@@ -4261,6 +4683,29 @@ struct poor_wl_pointer_interface {
 
 /** @ingroup iface_poor_wl_pointer */
 static inline int
+poor_wl_pointer_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				 const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_pointer_interface *impl = (const struct poor_wl_pointer_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->set_cursor)
+			return -1;
+		impl->set_cursor(resource->client, (struct poor_wl_pointer_resource *) resource, args[0].u, (struct poor_wl_surface_resource *) args[1].o, args[2].i, args[3].i);
+		return 0;
+	case 1:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_pointer_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_pointer */
+static inline int
 poor_wl_pointer_resource_init(struct poor_wl_pointer_resource *resource,
 			      struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -4273,7 +4718,7 @@ poor_wl_pointer_resource_set_implementation(struct poor_wl_pointer_resource *res
 					    const struct poor_wl_pointer_interface *implementation, void *data,
 					    poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_pointer_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_POINTER_ENTER 0
@@ -4562,6 +5007,24 @@ struct poor_wl_keyboard_interface {
 
 /** @ingroup iface_poor_wl_keyboard */
 static inline int
+poor_wl_keyboard_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				  const struct poor_wl_message *, union poor_wl_argument *)
+{
+	const struct poor_wl_keyboard_interface *impl = (const struct poor_wl_keyboard_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_keyboard_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_keyboard */
+static inline int
 poor_wl_keyboard_resource_init(struct poor_wl_keyboard_resource *resource,
 			       struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -4574,7 +5037,7 @@ poor_wl_keyboard_resource_set_implementation(struct poor_wl_keyboard_resource *r
 					     const struct poor_wl_keyboard_interface *implementation, void *data,
 					     poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_keyboard_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_KEYBOARD_KEYMAP 0
@@ -4724,6 +5187,24 @@ struct poor_wl_touch_interface {
 
 /** @ingroup iface_poor_wl_touch */
 static inline int
+poor_wl_touch_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+			       const struct poor_wl_message *, union poor_wl_argument *)
+{
+	const struct poor_wl_touch_interface *impl = (const struct poor_wl_touch_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_touch_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_touch */
+static inline int
 poor_wl_touch_resource_init(struct poor_wl_touch_resource *resource,
 			    struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -4736,7 +5217,7 @@ poor_wl_touch_resource_set_implementation(struct poor_wl_touch_resource *resourc
 					  const struct poor_wl_touch_interface *implementation, void *data,
 					  poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_touch_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_TOUCH_DOWN 0
@@ -5098,6 +5579,24 @@ struct poor_wl_output_interface {
 
 /** @ingroup iface_poor_wl_output */
 static inline int
+poor_wl_output_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *)
+{
+	const struct poor_wl_output_interface *impl = (const struct poor_wl_output_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->release)
+			return -1;
+		impl->release(resource->client, (struct poor_wl_output_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_output */
+static inline int
 poor_wl_output_resource_init(struct poor_wl_output_resource *resource,
 			     struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -5110,7 +5609,7 @@ poor_wl_output_resource_set_implementation(struct poor_wl_output_resource *resou
 					   const struct poor_wl_output_interface *implementation, void *data,
 					   poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_output_dispatch_request, implementation, data, destroy);
 }
 
 #define POOR_WL_OUTPUT_GEOMETRY 0
@@ -5251,6 +5750,34 @@ struct poor_wl_region_interface {
 
 /** @ingroup iface_poor_wl_region */
 static inline int
+poor_wl_region_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_region_interface *impl = (const struct poor_wl_region_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_region_resource *) resource);
+		return 0;
+	case 1:
+		if (!impl->add)
+			return -1;
+		impl->add(resource->client, (struct poor_wl_region_resource *) resource, args[0].i, args[1].i, args[2].i, args[3].i);
+		return 0;
+	case 2:
+		if (!impl->subtract)
+			return -1;
+		impl->subtract(resource->client, (struct poor_wl_region_resource *) resource, args[0].i, args[1].i, args[2].i, args[3].i);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_region */
+static inline int
 poor_wl_region_resource_init(struct poor_wl_region_resource *resource,
 			     struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -5263,7 +5790,7 @@ poor_wl_region_resource_set_implementation(struct poor_wl_region_resource *resou
 					   const struct poor_wl_region_interface *implementation, void *data,
 					   poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_region_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -5355,6 +5882,29 @@ struct poor_wl_subcompositor_interface {
 
 /** @ingroup iface_poor_wl_subcompositor */
 static inline int
+poor_wl_subcompositor_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				       const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_subcompositor_interface *impl = (const struct poor_wl_subcompositor_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_subcompositor_resource *) resource);
+		return 0;
+	case 1:
+		if (!impl->get_subsurface)
+			return -1;
+		impl->get_subsurface(resource->client, (struct poor_wl_subcompositor_resource *) resource, args[0].n, (struct poor_wl_surface_resource *) args[1].o, (struct poor_wl_surface_resource *) args[2].o);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_subcompositor */
+static inline int
 poor_wl_subcompositor_resource_init(struct poor_wl_subcompositor_resource *resource,
 				    struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -5367,7 +5917,7 @@ poor_wl_subcompositor_resource_set_implementation(struct poor_wl_subcompositor_r
 						  const struct poor_wl_subcompositor_interface *implementation, void *data,
 						  poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_subcompositor_dispatch_request, implementation, data, destroy);
 }
 
 
@@ -5543,6 +6093,49 @@ struct poor_wl_subsurface_interface {
 
 /** @ingroup iface_poor_wl_subsurface */
 static inline int
+poor_wl_subsurface_dispatch_request(const void *implementation, void *target, uint32_t opcode,
+				    const struct poor_wl_message *, union poor_wl_argument *args)
+{
+	const struct poor_wl_subsurface_interface *impl = (const struct poor_wl_subsurface_interface *) implementation;
+	struct poor_wl_resource *resource = (struct poor_wl_resource *) target;
+
+	switch (opcode) {
+	case 0:
+		if (!impl->destroy)
+			return -1;
+		impl->destroy(resource->client, (struct poor_wl_subsurface_resource *) resource);
+		return 0;
+	case 1:
+		if (!impl->set_position)
+			return -1;
+		impl->set_position(resource->client, (struct poor_wl_subsurface_resource *) resource, args[0].i, args[1].i);
+		return 0;
+	case 2:
+		if (!impl->place_above)
+			return -1;
+		impl->place_above(resource->client, (struct poor_wl_subsurface_resource *) resource, (struct poor_wl_surface_resource *) args[0].o);
+		return 0;
+	case 3:
+		if (!impl->place_below)
+			return -1;
+		impl->place_below(resource->client, (struct poor_wl_subsurface_resource *) resource, (struct poor_wl_surface_resource *) args[0].o);
+		return 0;
+	case 4:
+		if (!impl->set_sync)
+			return -1;
+		impl->set_sync(resource->client, (struct poor_wl_subsurface_resource *) resource);
+		return 0;
+	case 5:
+		if (!impl->set_desync)
+			return -1;
+		impl->set_desync(resource->client, (struct poor_wl_subsurface_resource *) resource);
+		return 0;
+	}
+	return -1;
+}
+
+/** @ingroup iface_poor_wl_subsurface */
+static inline int
 poor_wl_subsurface_resource_init(struct poor_wl_subsurface_resource *resource,
 				 struct poor_wl_client *client, int version, uint32_t id)
 {
@@ -5555,7 +6148,7 @@ poor_wl_subsurface_resource_set_implementation(struct poor_wl_subsurface_resourc
 					       const struct poor_wl_subsurface_interface *implementation, void *data,
 					       poor_wl_resource_destroy_func_t destroy)
 {
-	poor_wl_resource_set_implementation(&resource->resource, implementation, data, destroy);
+	poor_wl_resource_set_dispatcher(&resource->resource, poor_wl_subsurface_dispatch_request, implementation, data, destroy);
 }
 
 
