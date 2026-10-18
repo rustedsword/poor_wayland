@@ -998,7 +998,8 @@ TEST(global_withdrawn_without_registries)
 	poor_wl_global_init(&global, &display, &poor_test_global_interface, 1, nullptr, bind_nothing);
 	poor_wl_global_set_withdrawn_listener(&global, withdrawn);
 	poor_wl_global_remove(&global);
-	assert(order_len == 1);
+	assert(!order_len);
+	run_until(order_len == 1);
 	server_stop();
 }
 

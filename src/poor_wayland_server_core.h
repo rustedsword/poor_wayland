@@ -337,6 +337,7 @@ struct poor_wl_global {
 	poor_wl_global_bind_func_t bind;
 	poor_wl_global_withdrawn_func_t withdrawn;
 	bool removed;
+	bool withdrawing;
 };
 
 struct poor_wl_socket {

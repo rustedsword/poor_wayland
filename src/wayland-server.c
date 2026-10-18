@@ -704,10 +704,19 @@ static bool registry_announced(struct registry *registry, const struct poor_wl_g
 	       (!global->removed || global->removed_generation > registry->generation);
 }
 
+static void global_withdraw(struct poor_wl_global *global)
+{
+	struct poor_wl_display *display = global->display;
+
+	global->withdrawing = true;
+	if (!poor_loop_timer_armed(&display->timer))
+		poor_loop_group_timer_arm(display->loop, &display->io, &display->timer, 0);
+}
+
 static void global_acked(struct poor_wl_global *global)
 {
-	if (!--global->pending_acks && global->withdrawn)
-		global->withdrawn(global);
+	if (!--global->pending_acks)
+		global_withdraw(global);
 }
 
 static void registry_bind(struct poor_wl_client *client, struct poor_wl_registry_resource *resource, uint32_t name,
@@ -799,8 +808,27 @@ static const struct poor_wl_display_interface display_interface = {
 	display_get_registry,
 };
 
+static struct poor_wl_global *withdrawing_global(struct poor_wl_display *display)
+{
+	struct poor_wl_global *global;
+
+	poor_wl_list_for_each(global, &display->global_list, link)
+		if (global->withdrawing)
+			return global;
+	return nullptr;
+}
+
+/* A withdrawn listener can destroy any global, so the search starts over after each one */
 POOR_LOOP_GROUP_TIMER(display_on_timer, loop, io, timer)
 {
+	struct poor_wl_display *display = container_of(io, struct poor_wl_display, io);
+	struct poor_wl_global *global;
+
+	while ((global = withdrawing_global(display))) {
+		global->withdrawing = false;
+		if (global->withdrawn)
+			global->withdrawn(global);
+	}
 }
 
 POOR_LOOP_GROUP_DONE(poor_wl_display_io, loop, io)
@@ -897,7 +925,7 @@ POOR_WL_EXPORT void poor_wl_global_init(struct poor_wl_global *global, struct po
 	global->data = data;
 	global->bind = bind;
 	global->withdrawn = nullptr;
-	global->removed = false;
+	global->removed = global->withdrawing = false;
 	poor_wl_list_insert(display->global_list.prev, &global->link);
 	poor_wl_list_for_each(registry, &display->registry_list, resource.resource.link)
 		if (poor_wl_global_is_visible(registry->resource.resource.client, global))
@@ -924,8 +952,8 @@ static void global_unpublish(struct poor_wl_global *global)
  * once per global.
  *
  * Due to the Wayland protocol being asynchronous, a removed global can still be bound for a while. The withdrawn
- * listener is called once every client has acknowledged the removal with wl_fixes.ack_global_remove, or has dropped
- * the registry, and then poor_wl_global_destroy() can be called. The acknowledgements are tracked with one of 64 bits,
+ * listener is called from the loop once every client has acknowledged the removal with wl_fixes.ack_global_remove,
+ * or has dropped the registry, and then poor_wl_global_destroy() can be called. The acknowledgements are tracked with one of 64 bits,
  * so at most 64 removed globals can wait for poor_wl_global_destroy() at once.
  */
 POOR_WL_EXPORT void poor_wl_global_remove(struct poor_wl_global *global)
@@ -939,8 +967,8 @@ POOR_WL_EXPORT void poor_wl_global_remove(struct poor_wl_global *global)
 	global->ack_slot = __builtin_ctzll(~display->ack_slots);
 	display->ack_slots |= 1ull << global->ack_slot;
 	global_unpublish(global);
-	if (global->withdrawn && !global->pending_acks)
-		global->withdrawn(global);
+	if (!global->pending_acks)
+		global_withdraw(global);
 }
 
 POOR_WL_EXPORT void poor_wl_global_set_withdrawn_listener(struct poor_wl_global *global, poor_wl_global_withdrawn_func_t func)
