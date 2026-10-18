@@ -953,7 +953,8 @@ static void global_unpublish(struct poor_wl_global *global)
  *
  * Due to the Wayland protocol being asynchronous, a removed global can still be bound for a while. The withdrawn
  * listener is called from the loop once every client has acknowledged the removal with wl_fixes.ack_global_remove,
- * or has dropped the registry, and then poor_wl_global_destroy() can be called. The acknowledgements are tracked with one of 64 bits,
+ * or has dropped the registry, and then poor_wl_global_destroy() can be called. The listener can also be called
+ * after poor_wl_display_destroy(), before the display is done. The acknowledgements are tracked with one of 64 bits,
  * so at most 64 removed globals can wait for poor_wl_global_destroy() at once.
  */
 POOR_WL_EXPORT void poor_wl_global_remove(struct poor_wl_global *global)
