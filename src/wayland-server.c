@@ -1136,7 +1136,7 @@ static void socket_start(struct poor_wl_socket *socket)
 static void socket_lock_failed(struct poor_wl_socket *socket, int err)
 {
 	if (socket->fd_lock >= 0) {
-		poor_loop_close_fd_or_submit(socket->display->loop, socket->fd_lock, 0);
+		poor_loop_close_fd_or_submit(socket->display->loop, socket->fd_lock, IOSQE_ASYNC);
 		socket->fd_lock = -1;
 	}
 	if (socket->auto_name) {
@@ -1159,7 +1159,7 @@ POOR_LOOP_GROUP_OP(socket_on_lock, loop, io, op, cqe)
 
 	if (socket->closing) {
 		if (cqe->res >= 0)
-			poor_loop_close_fd_or_submit(loop, cqe->res, 0);
+			poor_loop_close_fd_or_submit(loop, cqe->res, IOSQE_ASYNC);
 		return;
 	}
 	if (cqe->res < 0) {
@@ -1333,7 +1333,7 @@ POOR_LOOP_GROUP_DONE(poor_wl_socket_io, loop, io)
 	if (socket->fd >= 0)
 		poor_loop_close_fd_or_submit(loop, socket->fd, IOSQE_ASYNC);
 	if (socket->fd_lock >= 0)
-		poor_loop_close_fd_or_submit(loop, socket->fd_lock, 0);
+		poor_loop_close_fd_or_submit(loop, socket->fd_lock, IOSQE_ASYNC);
 	poor_wl_list_remove(&socket->link);
 	socket->done(socket);
 	display_release(display);

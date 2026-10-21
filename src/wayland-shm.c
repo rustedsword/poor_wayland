@@ -300,7 +300,7 @@ static void shm_create_pool(struct poor_wl_client *client, struct poor_wl_shm_re
 	mapping->new_size = size;
 	poor_wl_shm_pool_resource_set_implementation(&mapping->resource, &shm_pool_interface, nullptr, destroy_pool);
 out:
-	poor_loop_close_fd_or_submit(display->loop, fd, 0);
+	poor_loop_close_fd_or_submit(display->loop, fd, IOSQE_ASYNC);
 }
 
 static void shm_release(struct poor_wl_client *, struct poor_wl_shm_resource *resource)

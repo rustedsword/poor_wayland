@@ -120,7 +120,7 @@ static int fds_get(struct poor_wl_fd_ring *r)
 static void fds_close(struct poor_wl_fd_ring *r, struct poor_loop *loop, uint32_t count)
 {
 	while (count--)
-		poor_loop_close_fd_or_submit(loop, fds_get(r), 0);
+		poor_loop_close_fd_or_submit(loop, fds_get(r), IOSQE_ASYNC);
 }
 
 static void ring_init(struct poor_wl_ring_buffer *b, char *data, uint32_t size)
@@ -178,7 +178,7 @@ int poor_wl_connection_recv_done(struct poor_wl_connection *connection, struct p
 		foreach_array_const_ref(received, fd) {
 			if (overflow || !fds_free(&connection->fds_in)) {
 				overflow = true;
-				poor_loop_close_fd_or_submit(loop, *fd, 0);
+				poor_loop_close_fd_or_submit(loop, *fd, IOSQE_ASYNC);
 			} else {
 				fds_put(&connection->fds_in, *fd);
 			}
@@ -508,7 +508,7 @@ void poor_wl_message_close_fds(const struct poor_wl_message *message, const unio
 	foreach_array_index(array_ptr(args, arg_count_for_signature(message->signature)), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD)
-			poor_loop_close_fd_or_submit(loop, args[i].h, 0);
+			poor_loop_close_fd_or_submit(loop, args[i].h, IOSQE_ASYNC);
 	}
 }
 
@@ -760,7 +760,7 @@ void poor_wl_closure_close_fds(struct poor_wl_closure *closure, struct poor_loop
 	foreach_array_index(arrview_first(closure->count, closure->args), i) {
 		signature = get_next_argument(signature, &arg);
 		if (arg.type == POOR_WL_ARG_FD && closure->args[i].h >= 0) {
-			poor_loop_close_fd_or_submit(loop, closure->args[i].h, 0);
+			poor_loop_close_fd_or_submit(loop, closure->args[i].h, IOSQE_ASYNC);
 			closure->args[i].h = -1;
 		}
 	}
